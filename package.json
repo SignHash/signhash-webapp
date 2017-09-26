@@ -1,0 +1,47 @@
+{
+  "name": "pux-starter-app",
+  "version": "13.0.0",
+  "description": "Pux starter app with hot-reloading and isomorphic rendering and routing.",
+  "main": "support/index.js",
+  "keywords": [
+    "pux",
+    "purescript-pux",
+    "boilerplate",
+    "starter-app"
+  ],
+  "scripts": {
+    "postinstall": "bower cache clean && bower install",
+    "clean": "rimraf static/dist",
+    "build": "npm run clean && webpack --config ./webpack.config.js --progress --profile --colors",
+    "watch": "npm run clean && webpack-dev-server --content-base static/ --hot --inline --config webpack.config.js",
+    "serve": "npm run build && serve -s static",
+    "start": "npm run watch",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/alexmingoia/pux-starter-app.git"
+  },
+  "author": "Alexander C. Mingoia",
+  "license": "BSD-3-Clause",
+  "bugs": {
+    "url": "https://github.com/alexmingoia/pux-starter-app/issues"
+  },
+  "engines": {
+    "node": "^6.0.0"
+  },
+  "dependencies": {
+    "bower": "^1.7.9",
+    "preact": "^8.2.1",
+    "preact-compat": "^3.17.0",
+    "purescript": "^0.11.6",
+    "purescript-psa": "^0.5.1",
+    "purs-loader": "^3.1.0",
+    "rimraf": "^2.5.2",
+    "serve": "^5.2.4",
+    "webpack": "^2.7.0",
+    "webpack-dev-server": "^2.7.1",
+    "webpack-node-externals": "^1.5.4",
+    "xhr2": "^0.1.3"
+  }
+}
