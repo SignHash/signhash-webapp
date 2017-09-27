@@ -2,18 +2,16 @@ module Lib.Files where
 
 import Prelude
 
-import Data.Foreign (
-  F, Foreign, readString, toForeign, unsafeFromForeign, unsafeReadTagged)
+import DOM.File.Types (File)
+import Data.Foreign (F, Foreign, readString, toForeign, unsafeFromForeign, unsafeReadTagged)
 import Data.Foreign.Index ((!))
 import Data.Traversable (traverse)
 import Pux.DOM.Events (DOMEvent)
 
 
-foreign import data FileRef :: Type
-
 type FileData = {
   name :: String,
-  ref :: FileRef
+  ref :: File
 }
 
 readFiles :: Foreign -> F (Array Foreign)
@@ -28,6 +26,6 @@ getFiles event = do
   where
     readFileData :: Foreign -> F FileData
     readFileData f = do
-      let ref = unsafeFromForeign f :: FileRef
+      let ref = unsafeFromForeign f :: File
       name <- readString =<< f ! "name"
       pure { name, ref }
