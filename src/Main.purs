@@ -5,6 +5,7 @@ import App.State (State, init)
 import App.View (view)
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff (Eff)
+import DOM (DOM)
 import Prelude hiding (div)
 import Pux (App, CoreEffects, start)
 import Pux.DOM.Events (DOMEvent)
@@ -12,7 +13,7 @@ import Pux.Renderer.React (renderToDOM)
 
 
 type WebApp = App (DOMEvent -> Event) Event State
-type AppEffects = Eff (CoreEffects ( console :: CONSOLE ))
+type AppEffects = Eff (CoreEffects ( console :: CONSOLE, dom :: DOM ))
 
 
 -- | Start and render the app
