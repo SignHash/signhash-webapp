@@ -41,8 +41,8 @@ sliceFile :: File -> Int -> Int -> Blob
 sliceFile = runFn3 _sliceFile
 
 
-getFiles :: DOMEvent -> F (Array FileData)
-getFiles event = do
+getFilesFromEvent :: DOMEvent -> F (Array FileData)
+getFilesFromEvent event = do
   let obj = toForeign event
   files <- readFiles =<< (obj ! "target" ! "files")
   fileData <- traverse readFileData files
@@ -59,9 +59,7 @@ getFiles event = do
 
 
 readFileContent ::
-  forall eff.
-  File ->
-  Aff (dom :: DOM, console :: CONSOLE | eff) Unit
+  forall eff. File -> Aff (dom :: DOM, console :: CONSOLE | eff) Event
 readFileContent file = do
   let chunkSize = 8
       chunks = (ceil $ size file) / chunkSize

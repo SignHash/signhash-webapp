@@ -12,7 +12,7 @@ import Data.Foreign (ForeignError, renderForeignError)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (joinWith)
-import Lib.Files (FileData, getFiles, readFileContent)
+import Lib.Files (FileData, getFilesFromEvent, readFileContent)
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (DOMEvent)
 
@@ -34,7 +34,7 @@ handleNewFile evt = case readFiles of
   Left errors -> FileError $ renderForeignErrors errors
   Right files -> maybe NoFile NewFile $ head files
   where
-    readFiles = runExcept $ getFiles evt
+    readFiles = runExcept $ getFilesFromEvent evt
 
 
 renderForeignErrors :: NonEmptyList ForeignError -> String
