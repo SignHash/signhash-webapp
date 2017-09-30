@@ -24,8 +24,13 @@ view { filename, completed, hash } =
         div $ text "Please provide a file"
       Just value -> do
         div $ text ("Filename: " <> value)
+        div processingStatus
+
+    processingStatus = do
         div $ text $ "Status:" <> statusText
-        div $ text $ "sha256:" <> hashText
+        if completed then
+          div $ text $ "sha256:" <> hashText
+          else pure unit
 
     hashText = maybe "unknown" id hash
 
