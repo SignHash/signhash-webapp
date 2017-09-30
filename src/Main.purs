@@ -1,12 +1,14 @@
 module Main where
 
-import App.Events (Event, foldp)
+import App.Events.Foldp (foldp)
+import App.Events.Types (Event)
 import App.State (State, init)
 import App.View (view)
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
+import Lib.Hash (SJCL)
 import Prelude hiding (div)
 import Pux (App, CoreEffects, start)
 import Pux.DOM.Events (DOMEvent)
@@ -15,7 +17,12 @@ import Pux.Renderer.React (renderToDOM)
 
 type WebApp = App (DOMEvent -> Event) Event State
 type AppEffects = Eff (
-  CoreEffects ( console :: CONSOLE, dom :: DOM, now :: NOW ))
+  CoreEffects (
+     console :: CONSOLE,
+     dom :: DOM,
+     now :: NOW,
+     sjcl :: SJCL
+  ))
 
 
 -- | Start and render the app

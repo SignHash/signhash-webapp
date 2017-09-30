@@ -16,18 +16,30 @@ import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Seconds)
 import Lib.Files (readFileByChunks)
+import Lib.Hash as Hash
 
 
 processNewFile ::
   forall eff.
   File ->
-  Aff (console :: CONSOLE, now :: NOW, dom :: DOM | eff) (Maybe Event)
+  Aff (
+    console :: CONSOLE,
+    now :: NOW,
+    dom :: DOM,
+    sjcl :: Hash.SJCL
+               | eff) (Maybe Event)
 processNewFile file = do
   log $ "Size: " <> (show $ floor $ size file) <> " Bytes"
 
+  sha <- liftEff $ Hash.sha256
+
   started <- liftEff $ nowDateTime
 
-  readFileByChunks file 512 onChunk
+  readFileByChunks file 512 (onChunk sha)
+
+  hash <- liftEff $ Hash.finalize sha
+
+  log $ "Sha256:" <> show hash
 
   finished <- liftEff $ nowDateTime
 
@@ -38,5 +50,6 @@ processNewFile file = do
   pure $ Just FileLoaded
 
   where
-    onChunk i chunk = do
+    onChunk sha i chunk = do
       log $ "Chunk " <> show i <> "\n" <> chunk
+      liftEff $ Hash.update sha chunk

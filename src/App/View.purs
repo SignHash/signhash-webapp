@@ -2,7 +2,8 @@ module App.View where
 
 import Prelude hiding (div)
 
-import App.Events (Event, handleNewFile)
+import App.Events.Types (Event)
+import App.Events.Foldp (handleNewFile)
 import App.State (State)
 import Data.Maybe (Maybe(..))
 import Pux.DOM.Events (onChange)

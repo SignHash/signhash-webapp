@@ -16,6 +16,7 @@ import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (joinWith)
 import Lib.Files (getFilesFromEvent)
+import Lib.Hash (SJCL)
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (DOMEvent)
 
@@ -23,7 +24,9 @@ import Pux.DOM.Events (DOMEvent)
 foldp ::
   Event ->
   State ->
-  EffModel State Event (console :: CONSOLE, dom :: DOM, now :: NOW)
+  EffModel State Event (
+    console :: CONSOLE, dom :: DOM, now :: NOW, sjcl :: SJCL
+  )
 foldp NoFile state =
   noEffects $ state { filename = Nothing }
 foldp (NewFile file) state =
