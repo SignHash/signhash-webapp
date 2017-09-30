@@ -34,7 +34,7 @@ foldp (NewFile file) state =
       filename = Just file.name,
       completed = false
    },
-   effects: [processNewFile file.ref]}
+   effects: [processNewFile file]}
 foldp (FileError err) state =
   { state, effects: [ log err *> pure Nothing ]}
 foldp (FileLoaded hash) state =

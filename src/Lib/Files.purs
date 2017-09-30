@@ -20,6 +20,7 @@ import Pux.DOM.Events (DOMEvent)
 
 type FileData = {
   name :: String,
+  size :: Int,
   ref :: File
 }
 
@@ -54,21 +55,25 @@ getFilesFromEvent event = do
     readFileData f = do
       let ref = unsafeFromForeign f :: File
       name <- readString =<< f ! "name"
-      pure { name, ref }
+      pure {
+        name,
+        size: ceil $ size ref,
+        ref
+      }
 
 
 readFileByChunks ::
   forall eff.
-  File ->
+  FileData ->
   Int ->
   (Int -> String -> Aff (dom :: DOM | eff) Unit) ->
   Aff (dom :: DOM | eff) Unit
 readFileByChunks file chunkSize onChunk = do
-  let chunks = (ceil $ size file) / chunkSize
+  let chunks = file.size / chunkSize
 
   reader <- liftEff fileReader
 
   for_ (0 .. chunks) \i -> do
-    let blob = sliceFile file (i * chunkSize) ((i + 1) * chunkSize)
+    let blob = sliceFile file.ref (i * chunkSize) ((i + 1) * chunkSize)
     chunk <- readBlobAsync blob reader
     onChunk i chunk

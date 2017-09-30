@@ -9,19 +9,17 @@ import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import DOM (DOM)
-import DOM.File.File (size)
-import DOM.File.Types (File)
 import Data.DateTime (diff)
 import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Seconds)
-import Lib.Files (readFileByChunks)
+import Lib.Files (FileData, readFileByChunks)
 import Lib.Hash as Hash
 
 
 processNewFile ::
   forall eff.
-  File ->
+  FileData ->
   Aff (
     console :: CONSOLE,
     now :: NOW,
@@ -29,7 +27,7 @@ processNewFile ::
     sjcl :: Hash.SJCL
                | eff) (Maybe Event)
 processNewFile file = do
-  log $ "Size: " <> (show $ floor $ size file) <> " Bytes"
+  log $ "Size: " <> (show file.size) <> " Bytes"
 
   sha <- liftEff $ Hash.sha256
 
