@@ -2,8 +2,8 @@ module App.View where
 
 import App.Events.Foldp (handleNewFile)
 import App.Events.Types (Event)
-import App.State (State)
-import Data.Maybe (Maybe(..), maybe)
+import App.State (State, FileState)
+import Data.Maybe (Maybe(..))
 import Prelude hiding (div)
 import Pux.DOM.Events (onChange)
 import Pux.DOM.HTML (HTML)
@@ -13,7 +13,7 @@ import Text.Smolder.Markup (text, (!), (#!))
 
 
 view :: State -> HTML Event
-view { file, completed, hash } =
+view { file } =
   div do
     input #! onChange handleNewFile ! type' "file"
     div fileStatus
@@ -23,20 +23,19 @@ view { file, completed, hash } =
       Nothing ->
         div $ text "Please provide a file"
       Just value -> do
-        div $ text ("Filename: " <> value.name)
-        div $ text ("Size: " <> show value.size <> " Bytes")
-        div processingStatus
+        viewFile value
 
-    processingStatus = do
-        div $ text $ "Status:" <> statusText
-        if completed then
-          div $ text $ "sha256:" <> hashText
-          else pure unit
 
-    hashText = maybe "unknown" id hash
-
-    statusText =
-      if completed then
-        "Completed"
-      else
-        "Loading"
+viewFile :: FileState -> HTML Event
+viewFile { meta, result } =
+  div do
+    div $ text ("Filename: " <> meta.name)
+    div $ text ("Size: " <> show meta.size <> " Bytes")
+    div resultComponent
+  where
+    resultComponent = case result of
+      Nothing ->
+        div $ text $ "Loading..."
+      Just value -> do
+        div $ text $ "sha256: " <> value.hash
+        div $ text $ "elapsed:" <> show value.elapsed

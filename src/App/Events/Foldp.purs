@@ -31,17 +31,21 @@ foldp NoFile state =
   noEffects $ state { file = Nothing }
 foldp (NewFile file) state =
   {state: state {
-      file = Just file,
-      completed = false
-   },
-   effects: [processNewFile file]}
+      file = Just {
+         meta: file,
+         result: Nothing
+      }
+   }, effects: [processNewFile file]}
 foldp (FileError err) state =
   { state, effects: [ log err *> pure Nothing ]}
-foldp (FileLoaded hash) state =
+foldp (FileLoaded event) state =
   noEffects $ state {
-    completed = true,
-    hash = Just hash
+    file = updateHash state.file
   }
+  where
+    updateHash =
+      maybe Nothing (\file -> Just $ file { result = Just event })
+
 
 
 handleNewFile :: DOMEvent -> Event

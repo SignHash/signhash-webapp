@@ -1,19 +1,25 @@
 module App.State where
 
 import Data.Maybe (Maybe(..))
-import Lib.Files (FileData)
+import Data.Time.Duration (Seconds)
+import Lib.Files (FileMeta)
+
+
+type FileState = {
+  meta :: FileMeta,
+  result :: Maybe {
+    hash :: String,
+    elapsed :: Seconds
+  }
+}
 
 
 type State = {
-  file :: Maybe FileData,
-  completed :: Boolean,
-  hash :: Maybe String
+  file :: Maybe FileState
 }
 
 
 init :: State
 init = {
-  file: Nothing,
-  completed: false,
-  hash: Nothing
+  file: Nothing
 }

@@ -5,23 +5,20 @@ import Prelude
 import App.Events.Types (Event(..))
 import Control.Comonad (extract)
 import Control.Monad.Aff (Aff)
-import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import DOM (DOM)
 import Data.DateTime (diff)
-import Data.Int (floor)
 import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Seconds)
-import Lib.Files (FileData, readFileByChunks)
+import Lib.Files (FileMeta, readFileByChunks)
 import Lib.Hash as Hash
 
 
 processNewFile ::
   forall eff.
-  FileData ->
+  FileMeta ->
   Aff (
-    console :: CONSOLE,
     now :: NOW,
     dom :: DOM,
     sjcl :: Hash.SJCL
@@ -37,11 +34,10 @@ processNewFile file = do
 
   finished <- liftEff $ nowDateTime
 
-  let dt :: Seconds
-      dt = diff (extract finished) (extract started)
-  log $ show dt
+  let elapsed :: Seconds
+      elapsed = diff (extract finished) (extract started)
 
-  pure $ Just $ FileLoaded hash
+  pure $ Just $ FileLoaded { hash, elapsed }
 
   where
     onChunk sha i chunk = do

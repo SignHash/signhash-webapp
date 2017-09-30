@@ -1,8 +1,13 @@
 module App.Events.Types where
 
-import Lib.Files (FileData)
+import Data.Time.Duration (Seconds)
+import Lib.Files (FileMeta)
 
-data Event = NewFile FileData |
+
+data Event = NewFile FileMeta |
              FileError String |
              NoFile |
-             FileLoaded String
+             FileLoaded {
+               hash :: String,
+               elapsed :: Seconds
+             }

@@ -18,7 +18,7 @@ import Data.Traversable (for_, traverse)
 import Pux.DOM.Events (DOMEvent)
 
 
-type FileData = {
+type FileMeta = {
   name :: String,
   size :: Int,
   ref :: File
@@ -41,18 +41,18 @@ sliceFile :: File -> Int -> Int -> Blob
 sliceFile = runFn3 _sliceFile
 
 
-getFilesFromEvent :: DOMEvent -> F (Array FileData)
+getFilesFromEvent :: DOMEvent -> F (Array FileMeta)
 getFilesFromEvent event = do
   let obj = toForeign event
   files <- readFiles =<< (obj ! "target" ! "files")
-  fileData <- traverse readFileData files
+  fileData <- traverse readFileMeta files
   pure fileData
   where
     readFiles :: Foreign -> F (Array Foreign)
     readFiles = unsafeReadTagged "FileList"
 
-    readFileData :: Foreign -> F FileData
-    readFileData f = do
+    readFileMeta :: Foreign -> F FileMeta
+    readFileMeta f = do
       let ref = unsafeFromForeign f :: File
       name <- readString =<< f ! "name"
       pure {
@@ -64,7 +64,7 @@ getFilesFromEvent event = do
 
 readFileByChunks ::
   forall eff.
-  FileData ->
+  FileMeta ->
   Int ->
   (Int -> String -> Aff (dom :: DOM | eff) Unit) ->
   Aff (dom :: DOM | eff) Unit
