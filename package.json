@@ -31,6 +31,7 @@
     "node": "^6.0.0"
   },
   "dependencies": {
+    "asmcrypto.js": "0.0.11",
     "bower": "^1.7.9",
     "preact": "^8.2.1",
     "preact-compat": "^3.17.0",
@@ -39,7 +40,6 @@
     "purs-loader": "^3.1.0",
     "rimraf": "^2.5.2",
     "serve": "^5.2.4",
-    "sjcl": "^1.0.7",
     "webpack": "^2.7.0",
     "webpack-dev-server": "^2.7.1",
     "webpack-node-externals": "^1.5.4",
