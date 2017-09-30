@@ -2,19 +2,12 @@ module Lib.Files where
 
 import Prelude
 
-import Control.Monad.Aff (Aff, makeAff)
-import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Class (liftEff)
-import DOM (DOM)
 import DOM.File.File (size)
-import DOM.File.FileReader (fileReader)
-import DOM.File.Types (Blob, File, FileReader)
-import Data.Array ((..))
+import DOM.File.Types (File)
 import Data.Foreign (F, Foreign, readString, toForeign, unsafeFromForeign, unsafeReadTagged)
 import Data.Foreign.Index ((!))
-import Data.Function.Uncurried (Fn3, runFn3)
 import Data.Int (ceil)
-import Data.Traversable (for_, traverse)
+import Data.Traversable (traverse)
 import Pux.DOM.Events (DOMEvent)
 
 
@@ -23,22 +16,6 @@ type FileMeta = {
   size :: Int,
   ref :: File
 }
-
-foreign import _sliceFile :: Fn3 File Int Int Blob
-foreign import _readBlobAsync ::
-  forall e.
-  (String -> Eff e Unit) ->
-  Blob ->
-  FileReader ->
-  Eff e Unit
-
-readBlobAsync :: forall e. Blob -> FileReader -> Aff e String
-readBlobAsync blob reader =
-  makeAff (\error success -> _readBlobAsync success blob reader)
-
-
-sliceFile :: File -> Int -> Int -> Blob
-sliceFile = runFn3 _sliceFile
 
 
 getFilesFromEvent :: DOMEvent -> F (Array FileMeta)
@@ -60,20 +37,3 @@ getFilesFromEvent event = do
         size: ceil $ size ref,
         ref
       }
-
-
-readFileByChunks ::
-  forall eff.
-  FileMeta ->
-  Int ->
-  (Int -> String -> Aff (dom :: DOM | eff) Unit) ->
-  Aff (dom :: DOM | eff) Unit
-readFileByChunks file chunkSize onChunk = do
-  let chunks = file.size / chunkSize
-
-  reader <- liftEff fileReader
-
-  for_ (0 .. chunks) \i -> do
-    let blob = sliceFile file.ref (i * chunkSize) ((i + 1) * chunkSize)
-    chunk <- readBlobAsync blob reader
-    onChunk i chunk
