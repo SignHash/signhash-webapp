@@ -11,6 +11,7 @@
     "purescript-pux": "^11.0.0",
     "purescript-css": "^3.0.0",
     "purescript-aff": "^3.0.0",
-    "purescript-affjax": "^4.0.0"
+    "purescript-affjax": "^4.0.0",
+    "purescript-now": "^3.0.0"
   }
 }

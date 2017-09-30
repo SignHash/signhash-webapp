@@ -3,7 +3,6 @@ module Lib.Files where
 import Prelude
 
 import Control.Monad.Aff (Aff, makeAff)
-import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
 import DOM (DOM)
@@ -14,7 +13,7 @@ import Data.Array ((..))
 import Data.Foreign (F, Foreign, readString, toForeign, unsafeFromForeign, unsafeReadTagged)
 import Data.Foreign.Index ((!))
 import Data.Function.Uncurried (Fn3, runFn3)
-import Data.Int (ceil, floor)
+import Data.Int (ceil)
 import Data.Traversable (for_, traverse)
 import Pux.DOM.Events (DOMEvent)
 
@@ -58,19 +57,18 @@ getFilesFromEvent event = do
       pure { name, ref }
 
 
-readFileContent ::
-  forall eff. File -> Aff (dom :: DOM, console :: CONSOLE | eff) Unit
-readFileContent file = do
-  let chunkSize = 8
-      chunks = (ceil $ size file) / chunkSize
-
-  log $ "Size: " <> (show $ floor $ size file) <> " Bytes"
+readFileByChunks ::
+  forall eff.
+  File ->
+  Int ->
+  (Int -> String -> Aff (dom :: DOM | eff) Unit) ->
+  Aff (dom :: DOM | eff) Unit
+readFileByChunks file chunkSize onChunk = do
+  let chunks = (ceil $ size file) / chunkSize
 
   reader <- liftEff fileReader
 
   for_ (0 .. chunks) \i -> do
     let blob = sliceFile file (i * chunkSize) ((i + 1) * chunkSize)
     chunk <- readBlobAsync blob reader
-    log $ "Chunk " <> show i <> "\n" <> chunk
-
-  pure unit
+    onChunk i chunk
