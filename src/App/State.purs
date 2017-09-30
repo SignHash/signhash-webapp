@@ -4,11 +4,13 @@ import Data.Maybe (Maybe(..))
 
 
 type State = {
-  filename :: Maybe String
+  filename :: Maybe String,
+  completed :: Boolean
 }
 
 
 init :: State
 init = {
-  filename: Nothing
+  filename: Nothing,
+  completed: false
 }

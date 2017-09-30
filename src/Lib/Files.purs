@@ -59,7 +59,7 @@ getFilesFromEvent event = do
 
 
 readFileContent ::
-  forall eff. File -> Aff (dom :: DOM, console :: CONSOLE | eff) Event
+  forall eff. File -> Aff (dom :: DOM, console :: CONSOLE | eff) Unit
 readFileContent file = do
   let chunkSize = 8
       chunks = (ceil $ size file) / chunkSize

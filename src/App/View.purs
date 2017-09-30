@@ -1,10 +1,10 @@
 module App.View where
 
-import Prelude
+import Prelude hiding (div)
 
 import App.Events (Event, handleNewFile)
 import App.State (State)
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..))
 import Pux.DOM.Events (onChange)
 import Pux.DOM.HTML (HTML)
 import Text.Smolder.HTML (div, input)
@@ -13,10 +13,21 @@ import Text.Smolder.Markup (text, (!), (#!))
 
 
 view :: State -> HTML Event
-view { filename } =
+view { filename, completed } =
   div do
     input #! onChange handleNewFile ! type' "file"
-    div $ text fileDescription
+    div fileStatus
+
   where
-    fileDescription =
-      maybe "Please provide a file" id filename
+    fileStatus = case filename of
+      Nothing ->
+        div $ text "Please provide a file"
+      Just value -> do
+        div $ text ("Filename: " <> value)
+        div $ text $ "Status:" <> statusText
+
+    statusText =
+      if completed then
+        "Completed"
+      else
+        "Loading"

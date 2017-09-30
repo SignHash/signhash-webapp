@@ -16,7 +16,7 @@ import Lib.Files (FileData, getFilesFromEvent, readFileContent)
 import Pux (EffModel, noEffects)
 import Pux.DOM.Events (DOMEvent)
 
-data Event = NewFile FileData | FileError String | NoFile
+data Event = NewFile FileData | FileError String | NoFile | FileLoaded
 
 
 foldp :: Event -> State -> EffModel State Event (console :: CONSOLE, dom :: DOM)
@@ -24,9 +24,14 @@ foldp NoFile state =
   noEffects $ state { filename = Nothing }
 foldp (NewFile file) state =
   {state: state { filename = Just file.name },
-   effects: [readFileContent file.ref *> pure Nothing]}
+   effects: [do
+                readFileContent file.ref
+                pure $ Just FileLoaded
+            ]}
 foldp (FileError err) state =
   { state, effects: [ log err *> pure Nothing ]}
+foldp FileLoaded state =
+  { state: state { completed = true }, effects: [] }
 
 
 handleNewFile :: DOMEvent -> Event
