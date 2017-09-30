@@ -27,8 +27,6 @@ processNewFile ::
     sjcl :: Hash.SJCL
                | eff) (Maybe Event)
 processNewFile file = do
-  log $ "Size: " <> (show file.size) <> " Bytes"
-
   sha <- liftEff $ Hash.sha256
 
   started <- liftEff $ nowDateTime

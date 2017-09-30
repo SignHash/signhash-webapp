@@ -1,10 +1,11 @@
 module App.State where
 
 import Data.Maybe (Maybe(..))
+import Lib.Files (FileData)
 
 
 type State = {
-  filename :: Maybe String,
+  file :: Maybe FileData,
   completed :: Boolean,
   hash :: Maybe String
 }
@@ -12,7 +13,7 @@ type State = {
 
 init :: State
 init = {
-  filename: Nothing,
+  file: Nothing,
   completed: false,
   hash: Nothing
 }

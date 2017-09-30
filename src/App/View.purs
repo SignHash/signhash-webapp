@@ -13,17 +13,18 @@ import Text.Smolder.Markup (text, (!), (#!))
 
 
 view :: State -> HTML Event
-view { filename, completed, hash } =
+view { file, completed, hash } =
   div do
     input #! onChange handleNewFile ! type' "file"
     div fileStatus
 
   where
-    fileStatus = case filename of
+    fileStatus = case file of
       Nothing ->
         div $ text "Please provide a file"
       Just value -> do
-        div $ text ("Filename: " <> value)
+        div $ text ("Filename: " <> value.name)
+        div $ text ("Size: " <> show value.size <> " Bytes")
         div processingStatus
 
     processingStatus = do

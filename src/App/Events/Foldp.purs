@@ -28,10 +28,10 @@ foldp ::
     console :: CONSOLE, dom :: DOM, now :: NOW, sjcl :: SJCL
   )
 foldp NoFile state =
-  noEffects $ state { filename = Nothing }
+  noEffects $ state { file = Nothing }
 foldp (NewFile file) state =
   {state: state {
-      filename = Just file.name,
+      file = Just file,
       completed = false
    },
    effects: [processNewFile file]}
