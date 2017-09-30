@@ -2,6 +2,7 @@ module App.Effects where
 
 import Prelude
 
+import App.Events.Types (Event(..))
 import Control.Comonad (extract)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Console (CONSOLE, log)
@@ -12,6 +13,7 @@ import DOM.File.File (size)
 import DOM.File.Types (File)
 import Data.DateTime (diff)
 import Data.Int (floor)
+import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Seconds)
 import Lib.Files (readFileByChunks)
 
@@ -19,7 +21,7 @@ import Lib.Files (readFileByChunks)
 processNewFile ::
   forall eff.
   File ->
-  Aff (console :: CONSOLE, now :: NOW, dom :: DOM | eff) Unit
+  Aff (console :: CONSOLE, now :: NOW, dom :: DOM | eff) (Maybe Event)
 processNewFile file = do
   log $ "Size: " <> (show $ floor $ size file) <> " Bytes"
 
@@ -32,6 +34,8 @@ processNewFile file = do
   let dt :: Seconds
       dt = diff (extract finished) (extract started)
   log $ show dt
+
+  pure $ Just FileLoaded
 
   where
     onChunk i chunk = do
