@@ -47,7 +47,7 @@ processNewFile file = do
       dt = diff (extract finished) (extract started)
   log $ show dt
 
-  pure $ Just FileLoaded
+  pure $ Just $ FileLoaded hash
 
   where
     onChunk sha i chunk = do

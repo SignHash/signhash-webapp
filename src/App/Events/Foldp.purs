@@ -37,8 +37,11 @@ foldp (NewFile file) state =
    effects: [processNewFile file.ref]}
 foldp (FileError err) state =
   { state, effects: [ log err *> pure Nothing ]}
-foldp FileLoaded state =
-  { state: state { completed = true }, effects: [] }
+foldp (FileLoaded hash) state =
+  noEffects $ state {
+    completed = true,
+    hash = Just hash
+  }
 
 
 handleNewFile :: DOMEvent -> Event

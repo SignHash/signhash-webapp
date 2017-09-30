@@ -5,4 +5,4 @@ import Lib.Files (FileData)
 data Event = NewFile FileData |
              FileError String |
              NoFile |
-             FileLoaded
+             FileLoaded String
