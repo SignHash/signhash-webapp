@@ -39,8 +39,6 @@ processNewFile file = do
 
   hash <- liftEff $ Hash.finalize sha
 
-  log $ "Sha256:" <> show hash
-
   finished <- liftEff $ nowDateTime
 
   let dt :: Seconds
@@ -51,5 +49,4 @@ processNewFile file = do
 
   where
     onChunk sha i chunk = do
-      log $ "Chunk " <> show i <> "\n" <> chunk
       liftEff $ Hash.update sha chunk
