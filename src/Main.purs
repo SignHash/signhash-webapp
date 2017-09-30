@@ -2,13 +2,13 @@ module Main where
 
 import App.Events.Foldp (foldp)
 import App.Events.Types (Event)
+import App.Hash.Worker (WORKER)
 import App.State (State, init)
 import App.View (view)
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
-import Lib.Hash (SJCL)
 import Prelude hiding (div)
 import Pux (App, CoreEffects, start)
 import Pux.DOM.Events (DOMEvent)
@@ -21,7 +21,7 @@ type AppEffects = Eff (
      console :: CONSOLE,
      dom :: DOM,
      now :: NOW,
-     sjcl :: SJCL
+     worker :: WORKER
   ))
 
 
