@@ -1,7 +1,7 @@
 {
-  "name": "pux-starter-app",
+  "name": "signhash-webapp",
   "version": "13.0.0",
-  "description": "Pux starter app with hot-reloading and isomorphic rendering and routing.",
+  "description": "SignHash web client .",
   "main": "support/index.js",
   "keywords": [
     "pux",
@@ -20,12 +20,12 @@
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/alexmingoia/pux-starter-app.git"
+    "url": "git://github.com/signhash/signhash-webapp.git"
   },
-  "author": "Alexander C. Mingoia",
+  "author": "SignHash",
   "license": "BSD-3-Clause",
   "bugs": {
-    "url": "https://github.com/alexmingoia/pux-starter-app/issues"
+    "url": "https://github.com/signhash/signhash-webapp/issues"
   },
   "engines": {
     "node": "^6.0.0"
