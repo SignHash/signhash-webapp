@@ -2,6 +2,7 @@ module Lib.Files where
 
 import Prelude
 
+import Control.Alternative ((<|>))
 import DOM.File.File (size)
 import DOM.File.Types (File)
 import Data.Foreign (F, Foreign, readString, toForeign, unsafeFromForeign, unsafeReadTagged)
@@ -21,10 +22,16 @@ type FileMeta = {
 getFilesFromEvent :: DOMEvent -> F (Array FileMeta)
 getFilesFromEvent event = do
   let obj = toForeign event
-  files <- readFiles =<< (obj ! "target" ! "files")
+  files <- getFiles obj
   fileData <- traverse readFileMeta files
   pure fileData
   where
+    getFiles :: Foreign -> F (Array Foreign)
+    getFiles obj =
+      (readFiles =<< (obj ! "target" ! "files"))
+      <|>
+      (readFiles =<< (obj ! "dataTransfer" ! "files"))
+
     readFiles :: Foreign -> F (Array Foreign)
     readFiles = unsafeReadTagged "FileList"
 
