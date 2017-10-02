@@ -42,7 +42,7 @@ foldp (FileError err) state = {
   state,
   effects: [ log err *> pure Nothing ]
 }
-foldp (FileLoaded event) state =
+foldp (HashCalculated event) state =
   noEffects $ state { file = updateHash state.file }
   where
     updateHash = maybe Nothing (\file -> Just $ file { result = Just event })

@@ -41,7 +41,7 @@ processNewFile file = do
   let elapsed :: Seconds
       elapsed = diff (extract finished) (extract started)
 
-  pure $ Just $ FileLoaded { hash, elapsed }
+  pure $ Just $ HashCalculated { hash, elapsed }
 
 
 processDOMFiles :: forall eff. DOMEvent -> Aff ( dom :: DOM | eff) (Maybe Event)

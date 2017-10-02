@@ -12,7 +12,7 @@ data Event =
   NewFile FileMeta |
   FileError String |
   NoFile |
-  FileLoaded {
+  HashCalculated {
     hash :: String,
     elapsed :: Seconds
     }
