@@ -10,15 +10,23 @@ import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
 import Data.Maybe (Maybe(..), maybe)
+import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects)
+
+
+type AppEffects = (
+    console :: CONSOLE,
+    dom :: DOM,
+    now :: NOW,
+    worker :: WORKER,
+    ajax :: AJAX
+)
 
 
 foldp ::
   Event ->
   State ->
-  EffModel State Event (
-    console :: CONSOLE, dom :: DOM, now :: NOW, worker :: WORKER
-  )
+  EffModel State Event AppEffects
 foldp (DOMDragFiles event) state = {
   state,
   effects: [ preventDefaultEffect event ]

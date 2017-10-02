@@ -1,14 +1,10 @@
 module Main where
 
-import App.Events.Foldp (foldp)
+import App.Events.Foldp (AppEffects, foldp)
 import App.Events.Types (Event)
-import App.Hash.Worker (WORKER)
 import App.State (State, init)
 import App.View (view)
-import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff (Eff)
-import Control.Monad.Eff.Now (NOW)
-import DOM (DOM)
 import Prelude hiding (div)
 import Pux (App, CoreEffects, start)
 import Pux.DOM.Events (DOMEvent)
@@ -16,17 +12,11 @@ import Pux.Renderer.React (renderToDOM)
 
 
 type WebApp = App (DOMEvent -> Event) Event State
-type AppEffects = Eff (
-  CoreEffects (
-     console :: CONSOLE,
-     dom :: DOM,
-     now :: NOW,
-     worker :: WORKER
-  ))
+type AllEffects = Eff (CoreEffects AppEffects)
 
 
 -- | Start and render the app
-main :: String -> State -> AppEffects WebApp
+main :: String -> State -> AllEffects WebApp
 main url state = do
   app <- start
     { initialState: state
