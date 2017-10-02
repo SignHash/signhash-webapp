@@ -1,11 +1,9 @@
 module App.View where
 
-import App.Events.Foldp (handleNewFiles)
 import App.Events.Types (Event(..))
 import App.State (State, FileState)
 import CSS as S
 import CSS.TextAlign (textAlign, center)
-import Data.CatList (empty)
 import Data.Maybe (Maybe(..))
 import Prelude hiding (div,id)
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
@@ -28,15 +26,15 @@ view { file } =
         S.height (200.0 # S.px)
         S.lineHeight (200.0 # S.px)
         S.border S.solid (1.0 # S.px) S.black
-      #! onDrop handleNewFiles
-      #! onDragOver DragFiles
+      #! onDrop DOMNewFiles
+      #! onDragOver DOMDragFiles
       $ text "Click or drag and drop files"
 
     input ! id "file-upload"
       ! type' "file"
       ! style do
         S.display S.displayNone
-      #! onChange handleNewFiles
+      #! onChange DOMNewFiles
 
     div fileStatus
 

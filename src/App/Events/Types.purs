@@ -6,11 +6,13 @@ import Lib.Files (FileMeta)
 import Pux.DOM.Events (DOMEvent)
 
 
-data Event = NewFile DOMEvent FileMeta |
-             DragFiles DOMEvent |
-             FileError DOMEvent String |
-             NoFile |
-             FileLoaded {
-               hash :: String,
-               elapsed :: Seconds
-             }
+data Event =
+  DOMNewFiles DOMEvent |
+  DOMDragFiles DOMEvent |
+  NewFile FileMeta |
+  FileError String |
+  NoFile |
+  FileLoaded {
+    hash :: String,
+    elapsed :: Seconds
+    }
