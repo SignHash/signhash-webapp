@@ -4,8 +4,9 @@ import Prelude
 
 import App.Events.Types (Event(..))
 import App.Hash.Worker (WORKER, calcHash, hashWorker)
+import App.Types (Signer(..))
 import Control.Comonad (extract)
-import Control.Monad.Aff (Aff)
+import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW, nowDateTime)
 import Control.Monad.Except (runExcept)
@@ -13,13 +14,14 @@ import DOM (DOM)
 import DOM.Event.Event (preventDefault)
 import Data.Array (fromFoldable, head)
 import Data.DateTime (diff)
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Foreign (ForeignError, renderForeignError)
 import Data.List.Types (NonEmptyList)
 import Data.Maybe (Maybe(..), maybe)
 import Data.String (joinWith)
 import Data.Time.Duration (Seconds)
 import Lib.Files (FileMeta, getFilesFromEvent)
+import Network.HTTP.Affjax (AJAX, get)
 import Pux.DOM.Events (DOMEvent)
 
 
@@ -55,6 +57,14 @@ processDOMFiles domEvent = do
 
   pure $ Just next
 
+
+fetchSigners :: forall eff. String -> Aff ( ajax :: AJAX | eff) (Maybe Event)
+fetchSigners hash = do
+  result <- attempt $ get "http://setgetgo.com/randomword/get.php"
+  let
+    signer = either (const NoSigner) (\v -> Signer v.response) result
+
+  pure $ Just $ SignerFetched signer
 
 renderForeignErrors :: NonEmptyList ForeignError -> String
 renderForeignErrors errors =
