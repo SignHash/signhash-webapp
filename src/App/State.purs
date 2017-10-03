@@ -1,5 +1,6 @@
 module App.State where
 
+import App.Types (Signer)
 import Data.Maybe (Maybe(..))
 import Data.Time.Duration (Seconds)
 import Lib.Files (FileMeta)
@@ -10,7 +11,8 @@ type FileState = {
   result :: Maybe {
     hash :: String,
     elapsed :: Seconds
-  }
+  },
+  signer :: Maybe Signer
 }
 
 

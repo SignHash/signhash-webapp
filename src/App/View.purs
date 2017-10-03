@@ -1,7 +1,8 @@
 module App.View where
 
 import App.Events.Types (Event(..))
-import App.State (State, FileState)
+import App.State (FileState, State)
+import App.Types (Signer(..))
 import CSS as S
 import CSS.TextAlign (textAlign, center)
 import Data.Maybe (Maybe(..))
@@ -47,7 +48,7 @@ view { file } =
 
 
 viewFile :: FileState -> HTML Event
-viewFile { meta, result } =
+viewFile { meta, result, signer } =
   div do
     div $ text ("Filename: " <> meta.name)
     div $ text ("Size: " <> show meta.size <> " Bytes")
@@ -59,3 +60,12 @@ viewFile { meta, result } =
       Just value -> do
         div $ text $ "sha256: " <> value.hash
         div $ text $ "elapsed:" <> show value.elapsed
+        signerComponent
+
+    signerComponent = case signer of
+      Nothing ->
+        div $ text $ "Fetching signer..."
+      Just (Signer address) ->
+        div $ text $ "Signer address: " <> address
+      Just NoSigner ->
+        div $ text $ "Not signed"
