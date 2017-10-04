@@ -2,14 +2,17 @@ module App.Events.Foldp where
 
 import Prelude
 
-import App.Effects (fetchSigners, preventDefaultEffect, processDOMFiles, processNewFile)
+import App.Events.Effects (fetchSigners, processNewFile)
 import App.Events.Types (Event(..))
 import App.Hash.Worker (WORKER)
 import App.State (State)
 import Control.Monad.Aff.Console (CONSOLE, log)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
+import DOM.Event.Event (preventDefault)
 import Data.Maybe (Maybe(..))
+import Data.Traversable (traverse)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects)
 
@@ -27,13 +30,14 @@ foldp ::
   Event ->
   State ->
   EffModel State Event AppEffects
-foldp (DOMDragFiles event) state = {
+foldp NoOp state = noEffects $ state
+foldp (PreventDefault next event) state = {
   state,
-  effects: [ preventDefaultEffect event ]
-}
-foldp (DOMNewFiles event) state = {
-  state,
-  effects: [ processDOMFiles event ]
+  effects: [
+    do
+      liftEff $ preventDefault event
+      pure $ Just $ next
+    ]
 }
 foldp NoFile state =
   noEffects $ state { file = Nothing }
@@ -49,7 +53,7 @@ foldp (NewFile file) state = {
 }
 foldp (FileError err) state = {
   state,
-  effects: [ log err *> pure Nothing ]
+  effects: [ (traverse log err) *> pure Nothing ]
 }
 foldp (HashCalculated event) state = {
   state: state { file = updateHash <$> state.file },
