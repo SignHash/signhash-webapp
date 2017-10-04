@@ -1,10 +1,10 @@
-module App.Effects where
+module App.Events.Effects where
 
 import Prelude
 
 import App.Events.Types (Event(..))
 import App.Hash.Worker (WORKER, calcHash, hashWorker)
-import App.Types (Signer(..))
+import App.Hash.Types (Signer(..))
 import Control.Comonad (extract)
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff.Class (liftEff)

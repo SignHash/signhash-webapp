@@ -1,3 +1,3 @@
-module App.Types where
+module App.Hash.Types where
 
 data Signer = Signer String | NoSigner

@@ -2,7 +2,7 @@ module App.Events.Foldp where
 
 import Prelude
 
-import App.Effects (fetchSigners, processNewFile)
+import App.Events.Effects (fetchSigners, processNewFile)
 import App.Events.Types (Event(..))
 import App.Hash.Worker (WORKER)
 import App.State (State)
