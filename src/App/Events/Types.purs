@@ -7,10 +7,10 @@ import Pux.DOM.Events (DOMEvent)
 
 
 data Event =
-  DOMNewFiles DOMEvent |
-  DOMDragFiles DOMEvent |
+  NoOp |
+  PreventDefault Event DOMEvent |
   NewFile FileMeta |
-  FileError String |
+  FileError (Array String) |
   NoFile |
   HashCalculated {
     hash :: String,

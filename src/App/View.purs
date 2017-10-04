@@ -1,5 +1,6 @@
 module App.View where
 
+import App.Events.Creators (newFilesEvent)
 import App.Events.Types (Event(..))
 import App.State (FileState, State)
 import App.Types (Signer(..))
@@ -27,15 +28,15 @@ view { file } =
         S.height (200.0 # S.px)
         S.lineHeight (200.0 # S.px)
         S.border S.solid (1.0 # S.px) S.black
-      #! onDrop DOMNewFiles
-      #! onDragOver DOMDragFiles
+      #! onDrop newFilesEvent
+      #! onDragOver (PreventDefault NoOp)
       $ text "Click or drag and drop files"
 
     input ! id "file-upload"
       ! type' "file"
       ! style do
         S.display S.displayNone
-      #! onChange DOMNewFiles
+      #! onChange newFilesEvent
 
     div fileStatus
 
