@@ -1,6 +1,6 @@
 module App.Events.Types where
 
-import App.Hash.Types (Signer)
+import App.Hash.Types (HashSigner)
 import Data.Time.Duration (Seconds)
 import Lib.Files (FileMeta)
 import Pux.DOM.Events (DOMEvent)
@@ -16,4 +16,4 @@ data Event =
     hash :: String,
     elapsed :: Seconds
     } |
-  SignerFetched Signer
+  SignerFetched HashSigner

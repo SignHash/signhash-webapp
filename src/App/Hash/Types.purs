@@ -1,3 +1,6 @@
 module App.Hash.Types where
 
-data Signer = Signer String | NoSigner
+
+type Address = String
+
+data HashSigner = HashSigner Address | NoSigner

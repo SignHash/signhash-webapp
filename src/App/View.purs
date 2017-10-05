@@ -3,7 +3,7 @@ module App.View where
 import App.Events.Creators (newFilesEvent)
 import App.Events.Types (Event(..))
 import App.State (FileState, State)
-import App.Hash.Types (Signer(..))
+import App.Hash.Types (HashSigner(..))
 import CSS as S
 import CSS.TextAlign (textAlign, center)
 import Data.Maybe (Maybe(..))
@@ -66,7 +66,7 @@ viewFile { meta, result, signer } =
     signerComponent = case signer of
       Nothing ->
         div $ text $ "Fetching signer..."
-      Just (Signer address) ->
+      Just (HashSigner address) ->
         div $ text $ "Signer address: " <> address
       Just NoSigner ->
         div $ text $ "Not signed"
