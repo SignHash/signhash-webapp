@@ -1,6 +1,6 @@
 module App.Events.Types where
 
-import App.Hash.Types (HashSigner)
+import App.Hash.Types (Address, HashSigner, ProofMethod, ProofVerification)
 import Data.Time.Duration (Seconds)
 import Lib.Files (FileMeta)
 import Pux.DOM.Events (DOMEvent)
@@ -16,4 +16,6 @@ data Event =
     hash :: String,
     elapsed :: Seconds
     } |
-  SignerFetched HashSigner
+  SignerFetched HashSigner |
+  FetchProof Address ProofMethod |
+  ProofFetched Address ProofMethod ProofVerification

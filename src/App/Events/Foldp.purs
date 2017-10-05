@@ -4,13 +4,16 @@ import Prelude
 
 import App.Events.Effects (fetchSigners, processNewFile)
 import App.Events.Types (Event(..))
+import App.Hash.Proofs (fetchProof)
+import App.Hash.Types (HashSigner(HashSigner, NoSigner), allProofMethods)
 import App.Hash.Worker (WORKER)
-import App.State (State)
+import App.State (ProofState(..), State, SignerState)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
 import DOM.Event.Event (preventDefault)
+import Data.Map (empty, insert, update)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Network.HTTP.Affjax (AJAX)
@@ -62,7 +65,45 @@ foldp (HashCalculated event) state = {
   where
     updateHash file = file { result = Just event }
 
-foldp (SignerFetched signer) state =
-  noEffects $ state { file = updateSigner <$> state.file }
+foldp (SignerFetched signer) state = {
+  state: state {
+    file = updateFileSigner <$> state.file,
+    signer = case signer of
+      NoSigner -> Nothing
+      HashSigner address -> Just { address, proofs: empty }
+    },
+  effects: case signer of
+    NoSigner -> []
+    HashSigner address -> createProofEvents address
+  }
   where
-    updateSigner file = file { signer = Just signer }
+    updateFileSigner file = file { signer = Just signer }
+    createProofEvents address =
+      pure <$> Just <$>
+      (FetchProof address) <$> allProofMethods
+
+foldp (FetchProof address method) state = {
+  state: state {
+     signer = addPendingProof <$> state.signer
+     },
+  effects: [fetchProofEffect]
+  }
+  where
+    addPendingProof signer = signer {
+      proofs = insert method Pending signer.proofs
+      }
+    fetchProofEffect = do
+      proof <- fetchProof address method
+      pure $ Just $ ProofFetched address method proof
+
+foldp (ProofFetched address method proof) state = {
+  state: state {
+     signer = updateProof <$> state.signer
+     },
+  effects: []
+  }
+  where
+    updateProof :: SignerState -> SignerState
+    updateProof signer = signer {
+      proofs = update (\_ -> Just $ Finished proof) method signer.proofs
+      }
