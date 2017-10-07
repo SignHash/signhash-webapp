@@ -7,12 +7,13 @@ import App.Events.Types (Event(..))
 import App.Hash.Proofs (fetchProof)
 import App.Hash.Types (HashSigner(HashSigner, NoSigner), allProofMethods)
 import App.Hash.Worker (WORKER)
-import App.State (ProofState(..), State, SignerState)
+import App.State (ProofState(Finished, Pending), State, fileResult, fileSigner, signerProofs, signerProp)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
 import DOM.Event.Event (preventDefault)
+import Data.Lens ((%~), (.~))
 import Data.Map (empty, insert, update)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
@@ -58,52 +59,32 @@ foldp (FileError err) state = {
   state,
   effects: [ (traverse log err) *> pure Nothing ]
 }
-foldp (HashCalculated event) state = {
-  state: state { file = updateHash <$> state.file },
-  effects: [ fetchSigners event.hash ]
-}
-  where
-    updateHash file = file { result = Just event }
+foldp (HashCalculated event) state =
+  { state: (fileResult .~ event) state,
+    effects: [ fetchSigners event.hash ] }
 
-foldp (SignerFetched signer) state = {
-  state: state {
-    file = updateFileSigner <$> state.file,
-    signer = case signer of
-      NoSigner -> Nothing
-      HashSigner address -> Just { address, proofs: empty }
-    },
-  effects: case signer of
-    NoSigner -> []
-    HashSigner address -> createProofEvents address
+foldp (SignerFetched NoSigner) state =
+  noEffects $ fileSigner .~ NoSigner $ state
+foldp (SignerFetched (HashSigner address)) state = {
+  state: updateSigner <<< updateFileSigner $ state,
+  effects:
+    pure <$> Just <$> (FetchProof address) <$> allProofMethods
   }
   where
-    updateFileSigner file = file { signer = Just signer }
-    createProofEvents address =
-      pure <$> Just <$>
-      (FetchProof address) <$> allProofMethods
+    updateSigner = (signerProp .~ { address, proofs: empty })
+    updateFileSigner = (fileSigner .~ (HashSigner address))
 
 foldp (FetchProof address method) state = {
-  state: state {
-     signer = addPendingProof <$> state.signer
-     },
+  state: signerProofs %~ insertProof $ state,
   effects: [fetchProofEffect]
   }
   where
-    addPendingProof signer = signer {
-      proofs = insert method Pending signer.proofs
-      }
+    insertProof = insert method Pending
     fetchProofEffect = do
       proof <- fetchProof address method
       pure $ Just $ ProofFetched address method proof
 
-foldp (ProofFetched address method proof) state = {
-  state: state {
-     signer = updateProof <$> state.signer
-     },
-  effects: []
-  }
+foldp (ProofFetched address method proof) state =
+  noEffects $ signerProofs %~ updateProof $ state
   where
-    updateProof :: SignerState -> SignerState
-    updateProof signer = signer {
-      proofs = update (\_ -> Just $ Finished proof) method signer.proofs
-      }
+    updateProof = update (\_ -> Just $ Finished proof) method
