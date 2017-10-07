@@ -1,5 +1,7 @@
 # HashSign Web UI
 
+[![Codeship](https://img.shields.io/codeship/87c04150-8dac-0135-07c8-724a96aff59c.svg)]()
+
 Web UI to HashSign functionality.
 
 ## Installation

@@ -1,0 +1,6 @@
+- name: all tests
+  type: parallel
+  steps:
+  - name: build
+    service: app
+    command: npm run build
