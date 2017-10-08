@@ -4,7 +4,7 @@ import Prelude
 
 import App.Events.Types (Event(..))
 import App.Hash.Worker (WORKER, calcHash, hashWorker)
-import App.Hash.Types (Signer(..))
+import App.Hash.Types (HashSigner(..))
 import Control.Comonad (extract)
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff.Class (liftEff)
@@ -43,6 +43,6 @@ fetchSigners :: forall eff. String -> Aff ( ajax :: AJAX | eff) (Maybe Event)
 fetchSigners hash = do
   result <- attempt $ get "http://setgetgo.com/randomword/get.php"
   let
-    signer = either (const NoSigner) (\v -> Signer v.response) result
+    signer = either (const NoSigner) (\v -> HashSigner v.response) result
 
   pure $ Just $ SignerFetched signer

@@ -2,22 +2,25 @@ module App.View where
 
 import App.Events.Creators (newFilesEvent)
 import App.Events.Types (Event(..))
-import App.State (FileState, State)
-import App.Hash.Types (Signer(..))
+import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
+import App.State (FileState, ProofState(..), SignerProofs, SignerState, State)
 import CSS as S
 import CSS.TextAlign (textAlign, center)
+import Data.Map (toUnfoldable)
 import Data.Maybe (Maybe(..))
+import Data.Traversable (for_)
+import Data.Tuple (Tuple(..))
 import Prelude hiding (div,id)
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML)
 import Pux.DOM.HTML.Attributes (style)
-import Text.Smolder.HTML (div, input, label)
+import Text.Smolder.HTML (div, hr, input, label, li, ul)
 import Text.Smolder.HTML.Attributes (className, for, id, type')
 import Text.Smolder.Markup (text, (!), (#!))
 
 
 view :: State -> HTML Event
-view { file } =
+view { file, signer } =
   div do
     label ! for "file-upload" ! className "custom-file-upload"
       ! style do
@@ -38,14 +41,20 @@ view { file } =
         S.display S.displayNone
       #! onChange newFilesEvent
 
+    hr
     div fileStatus
+    hr
+    div signerStatus
 
   where
     fileStatus = case file of
       Nothing ->
         div $ text "Please provide a file"
-      Just value -> do
-        viewFile value
+      Just value -> viewFile value
+
+    signerStatus = case signer of
+      Nothing -> div $ text "No signer"
+      Just value -> viewSigner value
 
 
 viewFile :: FileState -> HTML Event
@@ -66,7 +75,35 @@ viewFile { meta, result, signer } =
     signerComponent = case signer of
       Nothing ->
         div $ text $ "Fetching signer..."
-      Just (Signer address) ->
+      Just (HashSigner address) ->
         div $ text $ "Signer address: " <> address
       Just NoSigner ->
         div $ text $ "Not signed"
+
+
+viewSigner :: SignerState -> HTML Event
+viewSigner { address, proofs } =
+  div do
+    div $ text "Signer"
+    div $ text ("Address: " <> address)
+    div $ text "Proofs:"
+    viewProofs proofs
+
+
+viewProofs :: SignerProofs -> HTML Event
+viewProofs proofs =
+  ul $ for_ unfolded renderProof
+  where
+    unfolded :: Array (Tuple ProofMethod ProofState)
+    unfolded = toUnfoldable proofs
+    renderProof (Tuple method state) = do
+      li do
+        div $ text ("Method: " <> show method)
+        div $ text ("Verification: " <> viewProofState state)
+
+    viewProofState Pending = "Pending..."
+    viewProofState Error = "Network error"
+    viewProofState (Finished (Verified msg)) =
+      "Verified: " <> msg
+    viewProofState (Finished (Unverified msg)) =
+      "Unverified: " <> msg
