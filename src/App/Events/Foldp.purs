@@ -18,7 +18,7 @@ import Data.Map (empty, insert, update)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Network.HTTP.Affjax (AJAX)
-import Pux (EffModel, noEffects)
+import Pux (EffModel, noEffects, onlyEffects)
 
 
 type AppEffects = (
@@ -34,49 +34,52 @@ foldp ::
   Event ->
   State ->
   EffModel State Event AppEffects
+
 foldp NoOp state = noEffects $ state
-foldp (PreventDefault next event) state = {
-  state,
-  effects: [
+
+foldp (PreventDefault next event) state =
+  { state
+  , effects: [
     do
       liftEff $ preventDefault event
       pure $ Just $ next
     ]
-}
-foldp NoFile state =
-  noEffects $ state { file = Nothing }
-foldp (NewFile file) state = {
-  state: state {
-     file = Just {
-        meta: file,
-        result: Nothing,
-        signer: Nothing
-        }
-     },
-  effects: [ processNewFile file ]
-}
-foldp (FileError err) state = {
-  state,
-  effects: [ (traverse log err) *> pure Nothing ]
-}
+  }
+
+foldp NoFile state = noEffects $ state { file = Nothing }
+
+foldp (NewFile file) state =
+  { state: state {
+       file = Just {
+          meta: file
+          , result: Nothing
+          , signer: Nothing
+          }
+       }
+  , effects: [ processNewFile file ]
+  }
+
+foldp (FileError err) state =
+  onlyEffects state $ [ (traverse log err) *> pure Nothing ]
+
 foldp (HashCalculated event) state =
-  { state: (fileResult .~ event) state,
-    effects: [ fetchSigners event.hash ] }
+  { state: (fileResult .~ event) state
+  , effects: [ fetchSigners event.hash ]
+  }
 
 foldp (SignerFetched NoSigner) state =
   noEffects $ fileSigner .~ NoSigner $ state
-foldp (SignerFetched (HashSigner address)) state = {
-  state: updateSigner <<< updateFileSigner $ state,
-  effects:
-    pure <$> Just <$> (FetchProof address) <$> allProofMethods
+foldp (SignerFetched (HashSigner address)) state =
+  { state: updateSigner <<< updateFileSigner $ state
+  , effects: pure <$> Just <$> (FetchProof address) <$> allProofMethods
   }
   where
     updateSigner = (signerProp .~ { address, proofs: empty })
     updateFileSigner = (fileSigner .~ (HashSigner address))
 
-foldp (FetchProof address method) state = {
-  state: signerProofs %~ insertProof $ state,
-  effects: [fetchProofEffect]
+foldp (FetchProof address method) state =
+  { state: signerProofs %~ insertProof $ state
+  , effects: [fetchProofEffect]
   }
   where
     insertProof = insert method Pending
