@@ -63,19 +63,19 @@ foldp (FileError err) state =
   onlyEffects state $ [ (traverse log err) *> pure Nothing ]
 
 foldp (HashCalculated event) state =
-  { state: (fileResult .~ event) state
+  { state: (fileResult .~ Just event) state
   , effects: [ fetchSigners event.hash ]
   }
 
 foldp (SignerFetched NoSigner) state =
-  noEffects $ fileSigner .~ NoSigner $ state
+  noEffects $ fileSigner .~ Just NoSigner $ state
 foldp (SignerFetched (HashSigner address)) state =
   { state: updateSigner <<< updateFileSigner $ state
   , effects: pure <$> Just <$> (FetchProof address) <$> allProofMethods
   }
   where
-    updateSigner = (signerProp .~ { address, proofs: empty })
-    updateFileSigner = (fileSigner .~ (HashSigner address))
+    updateSigner = (signerProp .~ Just { address, proofs: empty })
+    updateFileSigner = (fileSigner .~ (Just $ HashSigner address))
 
 foldp (FetchProof address method) state =
   { state: signerProofs %~ insertProof $ state

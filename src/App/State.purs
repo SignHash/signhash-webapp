@@ -46,20 +46,20 @@ data ProofState =
   Finished ProofVerification
 
 
-fileProp :: Traversal' State FileState
-fileProp = prop (SProxy :: SProxy "file") <<< _Just
+fileProp :: Traversal' State (Maybe FileState)
+fileProp = prop (SProxy :: SProxy "file")
 
-fileSigner :: Traversal' State HashSigner
-fileSigner = fileProp <<< prop (SProxy :: SProxy "signer") <<< _Just
+fileSigner :: Traversal' State (Maybe HashSigner)
+fileSigner = fileProp <<< _Just <<< prop (SProxy :: SProxy "signer")
 
-fileResult :: Traversal' State FileHashResult
-fileResult = fileProp <<< prop (SProxy :: SProxy "result") <<< _Just
+fileResult :: Traversal' State (Maybe FileHashResult)
+fileResult = fileProp <<< _Just <<< prop (SProxy :: SProxy "result")
 
-signerProp :: Traversal' State SignerState
-signerProp = prop(SProxy :: SProxy "signer") <<< _Just
+signerProp :: Traversal' State (Maybe SignerState)
+signerProp = prop(SProxy :: SProxy "signer")
 
 signerProofs :: Traversal' State SignerProofs
-signerProofs = signerProp <<< prop (SProxy :: SProxy "proofs")
+signerProofs = signerProp <<< _Just <<< prop (SProxy :: SProxy "proofs")
 
 
 init :: State

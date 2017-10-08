@@ -10,6 +10,13 @@ type Address = String
 
 data HashSigner = HashSigner Address | NoSigner
 
+derive instance eqHashSigner :: Eq HashSigner
+derive instance genericHashSigner :: Generic HashSigner _
+
+instance showHashSigner :: Show HashSigner where
+  show = genericShow
+
+
 data ProofMethod = HTTP | GitHub
 
 derive instance eqProofMethod :: Eq ProofMethod
