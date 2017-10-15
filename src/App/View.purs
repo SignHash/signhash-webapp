@@ -1,9 +1,10 @@
 module App.View where
 
 import App.Events.Creators (newFilesEvent)
+import App.Events.Signers as Signers
 import App.Events.Types (Event(..))
 import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
-import App.State (FileState, ProofState(..), SignerProofs, SignerState, State)
+import App.State (FileState, State)
 import CSS as S
 import CSS.TextAlign (textAlign, center)
 import Data.Map (toUnfoldable)
@@ -12,7 +13,7 @@ import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Prelude hiding (div,id)
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
-import Pux.DOM.HTML (HTML)
+import Pux.DOM.HTML (HTML, child)
 import Pux.DOM.HTML.Attributes (style)
 import Text.Smolder.HTML (div, hr, input, label, li, ul)
 import Text.Smolder.HTML.Attributes (className, for, id, type')
@@ -54,7 +55,7 @@ view { file, signer } =
 
     signerStatus = case signer of
       Nothing -> div $ text "No signer"
-      Just value -> viewSigner value
+      Just value -> child Signer viewSigner value
 
 
 viewFile :: FileState -> HTML Event
@@ -81,7 +82,7 @@ viewFile { meta, result, signer } =
         div $ text $ "Not signed"
 
 
-viewSigner :: SignerState -> HTML Event
+viewSigner :: Signers.State -> HTML Signers.Event
 viewSigner { address, proofs } =
   div do
     div $ text "Signer"
@@ -90,22 +91,22 @@ viewSigner { address, proofs } =
     viewProofs proofs
 
 
-viewProofs :: SignerProofs -> HTML Event
+viewProofs :: Signers.SignerProofs -> HTML Signers.Event
 viewProofs proofs =
   ul $ for_ unfolded renderProof
   where
-    unfolded :: Array (Tuple ProofMethod ProofState)
+    unfolded :: Array (Tuple ProofMethod Signers.ProofState)
     unfolded = toUnfoldable proofs
     renderProof (Tuple method state) = do
       li do
         div $ text ("Method: " <> show method)
         div $ text ("Verification: " <> viewProofState state)
 
-    viewProofState Pending = "Pending..."
-    viewProofState NetworkError = "Network error"
-    viewProofState (Finished (Verified msg)) =
+    viewProofState Signers.Pending = "Pending..."
+    viewProofState Signers.NetworkError = "Network error"
+    viewProofState (Signers.Finished (Verified msg)) =
       "Verified: " <> msg
-    viewProofState (Finished (Unverified msg)) =
+    viewProofState (Signers.Finished (Unverified msg)) =
       "Verification failed: " <> msg
-    viewProofState (Finished Unavailable) =
+    viewProofState (Signers.Finished Unavailable) =
       "No proof defined"

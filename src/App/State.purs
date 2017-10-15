@@ -2,8 +2,8 @@ module App.State where
 
 import Prelude
 
-import App.Hash.Types (Address, HashSigner, ProofMethod, ProofVerification)
-import Data.Map (Map)
+import App.Hash.Types (HashSigner)
+import App.Events.Signers as Signers
 import Data.Lens (Traversal', _Just)
 import Data.Lens.Record (prop)
 import Data.Maybe (Maybe(..))
@@ -14,7 +14,7 @@ import Lib.Files (FileMeta)
 
 type State = {
   file :: Maybe FileState,
-  signer :: Maybe SignerState
+  signer :: Maybe Signers.State
 }
 
 
@@ -31,36 +31,17 @@ type FileHashResult = {
 }
 
 
-type SignerState = {
-  address :: Address,
-  proofs :: SignerProofs
-}
-
-
-type SignerProofs = Map ProofMethod ProofState
-
-
-data ProofState =
-  Pending |
-  NetworkError |
-  Finished ProofVerification
-
-
 fileProp :: Traversal' State (Maybe FileState)
 fileProp = prop (SProxy :: SProxy "file")
+
+signerProp :: Traversal' State (Maybe Signers.State)
+signerProp = prop (SProxy :: SProxy "signer")
 
 fileSigner :: Traversal' State (Maybe HashSigner)
 fileSigner = fileProp <<< _Just <<< prop (SProxy :: SProxy "signer")
 
 fileResult :: Traversal' State (Maybe FileHashResult)
 fileResult = fileProp <<< _Just <<< prop (SProxy :: SProxy "result")
-
-signerProp :: Traversal' State (Maybe SignerState)
-signerProp = prop(SProxy :: SProxy "signer")
-
-signerProofs :: Traversal' State SignerProofs
-signerProofs = signerProp <<< _Just <<< prop (SProxy :: SProxy "proofs")
-
 
 init :: State
 init = {

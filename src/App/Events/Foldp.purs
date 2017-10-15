@@ -3,34 +3,32 @@ module App.Events.Foldp where
 import Prelude
 
 import App.Events.Effects (fetchSigners, processNewFile)
+import App.Events.Signers as Signers
 import App.Events.Types (Event(..))
-import App.Hash.Proofs (fetchProof)
-import App.Hash.Types (HashSigner(HashSigner, NoSigner), allProofMethods)
+import App.Hash.Types (HashSigner(HashSigner, NoSigner))
 import App.Hash.Worker (WORKER)
-import App.State (ProofState(..), State, fileResult, fileSigner, signerProofs, signerProp)
+import App.State (State, fileResult, fileSigner, signerProp)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
 import DOM.Event.Event (preventDefault)
-import Data.Either (either)
-import Data.Lens ((%~), (.~))
-import Data.Map (empty, insert)
+import Data.Lens ((.~))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Network.HTTP.Affjax (AJAX)
-import Pux (EffModel, noEffects, onlyEffects)
+import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
 
-type AppEffects = (
-    console :: CONSOLE,
-    dom :: DOM,
-    now :: NOW,
-    worker :: WORKER,
-    ajax :: AJAX,
-    random :: RANDOM
-)
+type AppEffects =
+  ( console :: CONSOLE
+  , dom :: DOM
+  , now :: NOW
+  , worker :: WORKER
+  , ajax :: AJAX
+  , random :: RANDOM
+  )
 
 
 foldp ::
@@ -74,34 +72,17 @@ foldp (HashCalculated event) state =
 foldp (SignerFetched NoSigner) state =
   noEffects $ fileSigner .~ Just NoSigner $ state
 foldp (SignerFetched (HashSigner address)) state =
-  { state: updateSigner <<< updateFileSigner $ state
-  , effects: pure <$> Just <$> (FetchProof address) <$> allProofMethods
+  { state: initSigner <<< updateFileSigner $ state
+  , effects: [pure $ Just $ Signer $ Signers.Init address]
   }
   where
-    updateSigner = (signerProp .~ Just { address, proofs: empty })
+    initSigner = signerProp .~ (Just $ Signers.init address)
     updateFileSigner = (fileSigner .~ (Just $ HashSigner address))
 
-foldp (FetchProof address method) state =
-  { state: signerProofs %~ insertProof $ state
-  , effects: [fetchProofEffect]
-  }
-  where
-    insertProof = insert method Pending
-    fetchProofEffect = do
-      proof <- fetchProof address method
-      pure $ Just $
-        either
-        (ProofFetchingError address method)
-        (ProofFetched address method)
-        proof
-
-foldp (ProofFetched address method proof) state =
-  noEffects $ signerProofs %~ updateProof $ state
-  where
-    updateProof = insert method $ Finished proof
-
-foldp (ProofFetchingError address method error) state =
-  { state: signerProofs %~ setError $ state,
-    effects: [ (log $ show error) *> pure Nothing ] }
-  where
-    setError = insert method NetworkError
+foldp (Signer event) state =
+  case state.signer of
+    Nothing -> noEffects $ state
+    Just signerState ->
+      Signers.foldp event signerState
+      # mapEffects Signer
+      # mapState \s -> state { signer = Just s }

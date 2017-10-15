@@ -1,7 +1,7 @@
 module App.Events.Types where
 
-import App.Hash.Types (Address, HashSigner, ProofMethod, ProofVerification)
-import Control.Monad.Eff.Exception (Error)
+import App.Hash.Types (HashSigner)
+import App.Events.Signers as Signers
 import Data.Time.Duration (Seconds)
 import Lib.Files (FileMeta)
 import Pux.DOM.Events (DOMEvent)
@@ -18,6 +18,4 @@ data Event =
     elapsed :: Seconds
     } |
   SignerFetched HashSigner |
-  FetchProof Address ProofMethod |
-  ProofFetched Address ProofMethod ProofVerification |
-  ProofFetchingError Address ProofMethod Error
+  Signer Signers.Event
