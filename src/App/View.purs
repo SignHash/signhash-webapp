@@ -2,9 +2,10 @@ module App.View where
 
 import App.Events.Creators (newFilesEvent)
 import App.Events.Signers as Signers
+import App.Events.Files as Files
 import App.Events.Types (Event(..))
 import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
-import App.State (FileState, State)
+import App.State (State)
 import CSS as S
 import CSS.TextAlign (textAlign, center)
 import Data.Map (toUnfoldable)
@@ -58,7 +59,7 @@ view { file, signer } =
       Just value -> child Signer viewSigner value
 
 
-viewFile :: FileState -> HTML Event
+viewFile :: Files.State -> HTML Event
 viewFile { meta, result, signer } =
   div do
     div $ text ("Filename: " <> meta.name)

@@ -2,12 +2,12 @@ module App.Events.Foldp where
 
 import Prelude
 
-import App.Events.Effects (fetchSigners, processNewFile)
+import App.Events.Files as Files
 import App.Events.Signers as Signers
 import App.Events.Types (Event(..))
-import App.Hash.Types (HashSigner(HashSigner, NoSigner))
+import App.Hash.Types (HashSigner(HashSigner))
 import App.Hash.Worker (WORKER)
-import App.State (State, fileResult, fileSigner, signerProp)
+import App.State (State, signerProp)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
@@ -17,6 +17,7 @@ import DOM.Event.Event (preventDefault)
 import Data.Lens ((.~))
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
+import Lib.Pux (mergeEffModels)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
@@ -47,37 +48,26 @@ foldp (PreventDefault next event) state =
     ]
   }
 
-foldp NoFile state = noEffects $ state { file = Nothing }
+foldp NoFile state =
+  noEffects $ state { file = Nothing }
 
 foldp (NewFile file) state =
-  { state: state {
-       file = Just {
-          meta: file
-          , result: Nothing
-          , signer: Nothing
-          }
-       , signer = Nothing
-       }
-  , effects: [ processNewFile file ]
+  { state: state { file = Just $ Files.init file, signer = Nothing }
+  , effects: [ pure $ Just $ File $ Files.CalculateHash ]
   }
 
 foldp (FileError err) state =
   onlyEffects state $ [ (traverse log err) *> pure Nothing ]
 
-foldp (HashCalculated event) state =
-  { state: (fileResult .~ Just event) state
-  , effects: [ fetchSigners event.hash ]
-  }
-
-foldp (SignerFetched NoSigner) state =
-  noEffects $ fileSigner .~ Just NoSigner $ state
-foldp (SignerFetched (HashSigner address)) state =
-  { state: initSigner <<< updateFileSigner $ state
-  , effects: [pure $ Just $ Signer $ Signers.Init]
-  }
+foldp (File event) baseState =
+  mergeEffModels fileEff (fileFoldp event) baseState
   where
-    initSigner = signerProp .~ (Just $ Signers.init address)
-    updateFileSigner = (fileSigner .~ (Just $ HashSigner address))
+    fileEff state = case state.file of
+      Nothing -> noEffects $ state
+      Just fileState ->
+        Files.foldp event fileState
+        # mapEffects File
+        # mapState \s -> state { file = Just s }
 
 foldp (Signer event) state =
   case state.signer of
@@ -86,3 +76,17 @@ foldp (Signer event) state =
       Signers.foldp event signerState
       # mapEffects Signer
       # mapState \s -> state { signer = Just s }
+
+
+fileFoldp ::
+  Files.Event ->
+  State ->
+  EffModel State Event AppEffects
+fileFoldp (Files.SignerFetched (HashSigner address)) state =
+  { state: initSigner $ state
+  , effects: [pure $ Just $ Signer $ Signers.Init]
+  }
+  where
+    initSigner = signerProp .~ (Just $ Signers.init address)
+
+fileFoldp _ state = noEffects $ state
