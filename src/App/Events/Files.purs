@@ -2,7 +2,8 @@ module App.Events.Files where
 
 import Prelude
 
-import App.Events.Effects (fetchSigners, processNewFile)
+import App.Hash.Files (calculateFileHash)
+import App.Hash.Signers (fetchHashSigners)
 import App.Hash.Types (HashSigner(..))
 import App.Hash.Worker (WORKER)
 import Control.Monad.Aff.Console (CONSOLE)
@@ -72,7 +73,7 @@ foldp ::
 foldp CalculateHash state =
   onlyEffects state $ [
     do
-      result <- processNewFile state.meta
+      result <- calculateFileHash state.meta
       pure $ Just $ HashCalculated result
   ]
 
@@ -80,7 +81,7 @@ foldp (HashCalculated event) state =
   { state: (fileResult .~ Just event) state
   , effects: [
     do
-      signer <- fetchSigners event.hash
+      signer <- fetchHashSigners event.hash
       pure $ Just $ SignerFetched signer
     ]
   }
