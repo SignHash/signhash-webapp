@@ -1,6 +1,5 @@
 module App.View where
 
-import App.Events.Creators (newFilesEvent)
 import App.Events.Signers as Signers
 import App.Events.Files as Files
 import App.Events.FileInputs as FileInputs
@@ -55,7 +54,7 @@ viewFileInput _ =
         S.height (200.0 # S.px)
         S.lineHeight (200.0 # S.px)
         S.border S.solid (1.0 # S.px) S.black
-      #! onDrop newFilesEvent
+      #! onDrop FileInputs.newFilesEvent
       #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
       $ text "Click or drag and drop files"
 
@@ -63,7 +62,7 @@ viewFileInput _ =
       ! type' "file"
       ! style do
         S.display S.displayNone
-      #! onChange newFilesEvent
+      #! onChange FileInputs.newFilesEvent
 
 
 
