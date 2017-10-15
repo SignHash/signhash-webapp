@@ -5,7 +5,6 @@ import Prelude
 import App.Events.FileInputs as FileInputs
 import App.Events.Files as Files
 import App.Events.Signers as Signers
-import App.Events.Types (Event(..))
 import App.Hash.Types (HashSigner(HashSigner))
 import App.Hash.Worker (WORKER)
 import App.State (State, signerProp)
@@ -18,6 +17,12 @@ import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects)
+
+
+data Event =
+  FileInput FileInputs.Event |
+  File Files.Event |
+  Signer Signers.Event
 
 
 type AppEffects =

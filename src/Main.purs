@@ -1,7 +1,6 @@
 module Main where
 
-import App.Events.Foldp (AppEffects, foldp)
-import App.Events.Types (Event)
+import App.Events.Foldp (AppEffects, foldp, Event)
 import App.State (State, init)
 import App.View (view)
 import Control.Monad.Eff (Eff)

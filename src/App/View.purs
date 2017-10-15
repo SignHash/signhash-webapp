@@ -4,7 +4,7 @@ import App.Events.Creators (newFilesEvent)
 import App.Events.Signers as Signers
 import App.Events.Files as Files
 import App.Events.FileInputs as FileInputs
-import App.Events.Types (Event(..))
+import App.Events.Foldp (Event(..))
 import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import App.State (State)
 import CSS as S
