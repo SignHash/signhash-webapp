@@ -18,10 +18,10 @@ import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event =
-  Init Address |
-  FetchProof Address ProofMethod |
-  ProofFetched Address ProofMethod ProofVerification |
-  ProofFetchingError Address ProofMethod Error
+  Init |
+  FetchProof ProofMethod |
+  ProofFetched ProofMethod ProofVerification |
+  ProofFetchingError ProofMethod Error
 
 
 type State =
@@ -57,29 +57,29 @@ init address = { address, proofs: empty }
 foldp ::
   forall eff.
   Event -> State -> EffModel State Event (SignerEffects eff)
-foldp (Init address) state =
+foldp Init state =
   onlyEffects state $
-  pure <$> Just <$> (FetchProof address) <$> allProofMethods
-foldp (FetchProof address method) state =
+  pure <$> Just <$> FetchProof <$> allProofMethods
+foldp (FetchProof method) state =
   { state: signerProofs %~ insertProof $ state
   , effects: [fetchProofEffect]
   }
   where
     insertProof = insert method Pending
     fetchProofEffect = do
-      proof <- fetchProof address method
+      proof <- fetchProof state.address method
       pure $ Just $
         either
-        (ProofFetchingError address method)
-        (ProofFetched address method)
+        (ProofFetchingError method)
+        (ProofFetched method)
         proof
 
-foldp (ProofFetched address method proof) state =
+foldp (ProofFetched method proof) state =
   noEffects $ signerProofs %~ updateProof $ state
   where
     updateProof = insert method $ Finished proof
 
-foldp (ProofFetchingError address method error) state =
+foldp (ProofFetchingError method error) state =
   { state: signerProofs %~ setError $ state,
     effects: [ (log $ show error) *> pure Nothing ] }
   where

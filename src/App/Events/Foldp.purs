@@ -73,7 +73,7 @@ foldp (SignerFetched NoSigner) state =
   noEffects $ fileSigner .~ Just NoSigner $ state
 foldp (SignerFetched (HashSigner address)) state =
   { state: initSigner <<< updateFileSigner $ state
-  , effects: [pure $ Just $ Signer $ Signers.Init address]
+  , effects: [pure $ Just $ Signer $ Signers.Init]
   }
   where
     initSigner = signerProp .~ (Just $ Signers.init address)
