@@ -42,7 +42,7 @@ type SignerProofs = Map ProofMethod ProofState
 
 data ProofState =
   Pending |
-  Error |
+  NetworkError |
   Finished ProofVerification
 
 

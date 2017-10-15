@@ -16,7 +16,7 @@ import DOM (DOM)
 import DOM.Event.Event (preventDefault)
 import Data.Either (either)
 import Data.Lens ((%~), (.~))
-import Data.Map (empty, insert, update)
+import Data.Map (empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Network.HTTP.Affjax (AJAX)
@@ -103,4 +103,4 @@ foldp (ProofFetchingError address method error) state =
   { state: signerProofs %~ setError $ state,
     effects: [ (log $ show error) *> pure Nothing ] }
   where
-    setError = insert method Error
+    setError = insert method NetworkError
