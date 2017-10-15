@@ -1,4 +1,4 @@
-module App.Events.Signers where
+module App.State.Signers where
 
 import Prelude
 

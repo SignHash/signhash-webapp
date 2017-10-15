@@ -1,9 +1,9 @@
 module App.View where
 
-import App.Events.Signers as Signers
-import App.Events.Files as Files
-import App.Events.FileInputs as FileInputs
-import App.Events.Foldp (Event(..))
+import App.State.Signers as Signers
+import App.State.Files as Files
+import App.State.FileInputs as FileInputs
+import App.State (Event(..))
 import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import App.State (State)
 import CSS as S

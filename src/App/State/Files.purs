@@ -1,4 +1,4 @@
-module App.Events.Files where
+module App.State.Files where
 
 import Prelude
 

@@ -1,18 +1,16 @@
-module App.Events.Foldp where
+module App.State where
 
 import Prelude
 
-import App.Events.FileInputs as FileInputs
-import App.Events.Files as Files
-import App.Events.Signers as Signers
 import App.Hash.Types (HashSigner(HashSigner))
 import App.Hash.Worker (WORKER)
-import App.State (State, signerProp)
+import App.State.FileInputs as FileInputs
+import App.State.Files as Files
+import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
-import Data.Lens ((.~))
 import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
 import Network.HTTP.Affjax (AJAX)
@@ -23,6 +21,19 @@ data Event =
   FileInput FileInputs.Event |
   File Files.Event |
   Signer Signers.Event
+
+
+type State =
+  { file :: Maybe Files.State
+  , signer :: Maybe Signers.State
+  }
+
+
+init :: State
+init =
+  { file: Nothing
+  , signer: Nothing
+  }
 
 
 type AppEffects =
@@ -44,8 +55,10 @@ foldp (FileInput (FileInputs.NewFile file)) state =
   { state: state { file = Just $ Files.init file, signer = Nothing }
   , effects: [ pure $ Just $ File $ Files.CalculateHash ]
   }
+
 foldp (FileInput FileInputs.NoFile) state =
   noEffects $ state { file = Nothing }
+
 foldp (FileInput event) state =
   FileInputs.foldp event unit
   # mapEffects FileInput
@@ -75,10 +88,8 @@ fileFoldp ::
   State ->
   EffModel State Event AppEffects
 fileFoldp (Files.SignerFetched (HashSigner address)) state =
-  { state: initSigner $ state
+  { state: state { signer = (Just $ Signers.init address) }
   , effects: [pure $ Just $ Signer $ Signers.Init]
   }
-  where
-    initSigner = signerProp .~ (Just $ Signers.init address)
 
 fileFoldp _ state = noEffects $ state
