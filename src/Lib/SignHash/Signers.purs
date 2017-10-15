@@ -1,8 +1,8 @@
-module App.Hash.Signers where
+module Lib.SignHash.Signers where
 
 import Prelude
 
-import App.Hash.Types (HashSigner(..))
+import Lib.SignHash.Types (HashSigner(..))
 import Control.Monad.Aff (Aff, attempt)
 import Data.Either (Either(..))
 import Network.HTTP.Affjax (AJAX, get)

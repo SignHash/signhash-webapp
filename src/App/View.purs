@@ -3,9 +3,8 @@ module App.View where
 import App.State.Signers as Signers
 import App.State.Files as Files
 import App.State.FileInputs as FileInputs
-import App.State (Event(..))
-import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
-import App.State (State)
+import App.State (Event(..), State)
+import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import CSS as S
 import CSS.TextAlign (textAlign, center)
 import Data.Map (toUnfoldable)

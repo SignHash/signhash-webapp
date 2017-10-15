@@ -2,10 +2,10 @@ module App.State.Files where
 
 import Prelude
 
-import App.Hash.Files (calculateFileHash)
-import App.Hash.Signers (fetchHashSigners)
-import App.Hash.Types (HashSigner(..))
-import App.Hash.Worker (WORKER)
+import Lib.SignHash.Files (calculateFileHash)
+import Lib.SignHash.Signers (fetchHashSigners)
+import Lib.SignHash.Types (HashSigner(..))
+import Lib.SignHash.Worker (WORKER)
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)

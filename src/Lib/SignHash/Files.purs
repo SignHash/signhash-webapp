@@ -1,8 +1,8 @@
-module App.Hash.Files where
+module Lib.SignHash.Files where
 
 import Prelude
 
-import App.Hash.Worker (WORKER, calcHash, hashWorker)
+import Lib.SignHash.Worker (WORKER, calcHash, hashWorker)
 import Control.Comonad (extract)
 import Control.Monad.Aff (Aff)
 import Control.Monad.Eff.Class (liftEff)

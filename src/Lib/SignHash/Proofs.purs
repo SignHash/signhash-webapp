@@ -1,8 +1,8 @@
-module App.Hash.Proofs where
+module Lib.SignHash.Proofs where
 
 import Prelude
 
-import App.Hash.Types (Address, ProofMethod, ProofVerification(..))
+import Lib.SignHash.Types (Address, ProofMethod, ProofVerification(..))
 import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Exception (Error)

@@ -2,8 +2,8 @@ module App.State where
 
 import Prelude
 
-import App.Hash.Types (HashSigner(HashSigner))
-import App.Hash.Worker (WORKER)
+import Lib.SignHash.Types (HashSigner(HashSigner))
+import Lib.SignHash.Worker (WORKER)
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers

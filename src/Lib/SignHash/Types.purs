@@ -1,4 +1,4 @@
-module App.Hash.Types where
+module Lib.SignHash.Types where
 
 
 import Prelude
