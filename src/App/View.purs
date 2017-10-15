@@ -3,6 +3,7 @@ module App.View where
 import App.Events.Creators (newFilesEvent)
 import App.Events.Signers as Signers
 import App.Events.Files as Files
+import App.Events.FileInputs as FileInputs
 import App.Events.Types (Event(..))
 import App.Hash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import App.State (State)
@@ -23,25 +24,8 @@ import Text.Smolder.Markup (text, (!), (#!))
 
 view :: State -> HTML Event
 view { file, signer } =
-  div do
-    label ! for "file-upload" ! className "custom-file-upload"
-      ! style do
-        S.fontSize (2.0 # S.em)
-        textAlign center
-        S.display S.inlineBlock
-        S.width (500.0 # S.px)
-        S.height (200.0 # S.px)
-        S.lineHeight (200.0 # S.px)
-        S.border S.solid (1.0 # S.px) S.black
-      #! onDrop newFilesEvent
-      #! onDragOver (PreventDefault NoOp)
-      $ text "Click or drag and drop files"
-
-    input ! id "file-upload"
-      ! type' "file"
-      ! style do
-        S.display S.displayNone
-      #! onChange newFilesEvent
+  do
+    child FileInput viewFileInput unit
 
     hr
     div fileStatus
@@ -57,6 +41,31 @@ view { file, signer } =
     signerStatus = case signer of
       Nothing -> div $ text "No signer"
       Just value -> child Signer viewSigner value
+
+
+viewFileInput :: Unit -> HTML FileInputs.Event
+viewFileInput _ =
+  div do
+    label ! for "file-upload" ! className "custom-file-upload"
+      ! style do
+        S.fontSize (2.0 # S.em)
+        textAlign center
+        S.display S.inlineBlock
+        S.width (500.0 # S.px)
+        S.height (200.0 # S.px)
+        S.lineHeight (200.0 # S.px)
+        S.border S.solid (1.0 # S.px) S.black
+      #! onDrop newFilesEvent
+      #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
+      $ text "Click or drag and drop files"
+
+    input ! id "file-upload"
+      ! type' "file"
+      ! style do
+        S.display S.displayNone
+      #! onChange newFilesEvent
+
+
 
 
 viewFile :: Files.State -> HTML Event

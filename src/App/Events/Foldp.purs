@@ -2,24 +2,22 @@ module App.Events.Foldp where
 
 import Prelude
 
+import App.Events.FileInputs as FileInputs
 import App.Events.Files as Files
 import App.Events.Signers as Signers
 import App.Events.Types (Event(..))
 import App.Hash.Types (HashSigner(HashSigner))
 import App.Hash.Worker (WORKER)
 import App.State (State, signerProp)
-import Control.Monad.Aff.Console (CONSOLE, log)
-import Control.Monad.Eff.Class (liftEff)
+import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
-import DOM.Event.Event (preventDefault)
 import Data.Lens ((.~))
 import Data.Maybe (Maybe(..))
-import Data.Traversable (traverse)
 import Lib.Pux (mergeEffModels)
 import Network.HTTP.Affjax (AJAX)
-import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
+import Pux (EffModel, mapEffects, mapState, noEffects)
 
 
 type AppEffects =
@@ -37,27 +35,16 @@ foldp ::
   State ->
   EffModel State Event AppEffects
 
-foldp NoOp state = noEffects $ state
-
-foldp (PreventDefault next event) state =
-  { state
-  , effects: [
-    do
-      liftEff $ preventDefault event
-      pure $ Just $ next
-    ]
-  }
-
-foldp NoFile state =
-  noEffects $ state { file = Nothing }
-
-foldp (NewFile file) state =
+foldp (FileInput (FileInputs.NewFile file)) state =
   { state: state { file = Just $ Files.init file, signer = Nothing }
   , effects: [ pure $ Just $ File $ Files.CalculateHash ]
   }
-
-foldp (FileError err) state =
-  onlyEffects state $ [ (traverse log err) *> pure Nothing ]
+foldp (FileInput FileInputs.NoFile) state =
+  noEffects $ state { file = Nothing }
+foldp (FileInput event) state =
+  FileInputs.foldp event unit
+  # mapEffects FileInput
+  # mapState (const state)
 
 foldp (File event) baseState =
   mergeEffModels fileEff (fileFoldp event) baseState

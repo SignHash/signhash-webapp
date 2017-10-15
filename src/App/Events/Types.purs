@@ -2,15 +2,10 @@ module App.Events.Types where
 
 import App.Events.Signers as Signers
 import App.Events.Files as Files
-import Lib.Files (FileMeta)
-import Pux.DOM.Events (DOMEvent)
+import App.Events.FileInputs as FileInputs
 
 
 data Event =
-  NoOp |
-  NoFile |
-  PreventDefault Event DOMEvent |
-  NewFile FileMeta |
-  FileError (Array String) |
+  FileInput FileInputs.Event |
   File Files.Event |
   Signer Signers.Event

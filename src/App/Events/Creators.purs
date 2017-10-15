@@ -2,7 +2,7 @@ module App.Events.Creators where
 
 import Prelude
 
-import App.Events.Types (Event(..))
+import App.Events.FileInputs (Event(..))
 import Control.Monad.Except (runExcept)
 import Data.Array (fromFoldable, head)
 import Data.Either (Either(..))
