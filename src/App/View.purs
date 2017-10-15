@@ -106,4 +106,6 @@ viewProofs proofs =
     viewProofState (Finished (Verified msg)) =
       "Verified: " <> msg
     viewProofState (Finished (Unverified msg)) =
-      "Unverified: " <> msg
+      "Verification failed: " <> msg
+    viewProofState (Finished Unavailable) =
+      "No proof defined"
