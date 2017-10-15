@@ -58,6 +58,7 @@ foldp (NewFile file) state =
           , result: Nothing
           , signer: Nothing
           }
+       , signer = Nothing
        }
   , effects: [ processNewFile file ]
   }
