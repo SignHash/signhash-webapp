@@ -1,4 +1,4 @@
-module App.Hash.Worker where
+module Lib.SignHash.Worker where
 
 import Control.Monad.Aff (Aff, makeAff)
 import Control.Monad.Eff (Eff, kind Effect)
