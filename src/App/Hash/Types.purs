@@ -29,7 +29,8 @@ instance showProofMethod :: Show ProofMethod where
 
 data ProofVerification =
   Verified String |
-  Unverified String
+  Unverified String |
+  Unavailable
 
 
 allProofMethods :: Array ProofMethod

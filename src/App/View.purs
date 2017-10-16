@@ -102,8 +102,10 @@ viewProofs proofs =
         div $ text ("Verification: " <> viewProofState state)
 
     viewProofState Pending = "Pending..."
-    viewProofState Error = "Network error"
+    viewProofState NetworkError = "Network error"
     viewProofState (Finished (Verified msg)) =
       "Verified: " <> msg
     viewProofState (Finished (Unverified msg)) =
-      "Unverified: " <> msg
+      "Verification failed: " <> msg
+    viewProofState (Finished Unavailable) =
+      "No proof defined"

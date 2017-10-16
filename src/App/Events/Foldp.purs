@@ -7,14 +7,16 @@ import App.Events.Types (Event(..))
 import App.Hash.Proofs (fetchProof)
 import App.Hash.Types (HashSigner(HashSigner, NoSigner), allProofMethods)
 import App.Hash.Worker (WORKER)
-import App.State (ProofState(Finished, Pending), State, fileResult, fileSigner, signerProofs, signerProp)
+import App.State (ProofState(..), State, fileResult, fileSigner, signerProofs, signerProp)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
+import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
 import DOM.Event.Event (preventDefault)
+import Data.Either (either)
 import Data.Lens ((%~), (.~))
-import Data.Map (empty, insert, update)
+import Data.Map (empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (traverse)
 import Network.HTTP.Affjax (AJAX)
@@ -26,7 +28,8 @@ type AppEffects = (
     dom :: DOM,
     now :: NOW,
     worker :: WORKER,
-    ajax :: AJAX
+    ajax :: AJAX,
+    random :: RANDOM
 )
 
 
@@ -55,6 +58,7 @@ foldp (NewFile file) state =
           , result: Nothing
           , signer: Nothing
           }
+       , signer = Nothing
        }
   , effects: [ processNewFile file ]
   }
@@ -85,9 +89,19 @@ foldp (FetchProof address method) state =
     insertProof = insert method Pending
     fetchProofEffect = do
       proof <- fetchProof address method
-      pure $ Just $ ProofFetched address method proof
+      pure $ Just $
+        either
+        (ProofFetchingError address method)
+        (ProofFetched address method)
+        proof
 
 foldp (ProofFetched address method proof) state =
   noEffects $ signerProofs %~ updateProof $ state
   where
-    updateProof = update (\_ -> Just $ Finished proof) method
+    updateProof = insert method $ Finished proof
+
+foldp (ProofFetchingError address method error) state =
+  { state: signerProofs %~ setError $ state,
+    effects: [ (log $ show error) *> pure Nothing ] }
+  where
+    setError = insert method NetworkError
