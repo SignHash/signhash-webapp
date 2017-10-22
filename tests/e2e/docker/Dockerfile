@@ -1,5 +1,6 @@
 FROM mhart/alpine-node
 
+RUN apk add --update curl
 RUN apk --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ add \
  chromium xwininfo xvfb dbus eudev ttf-freefont fluxbox
 
