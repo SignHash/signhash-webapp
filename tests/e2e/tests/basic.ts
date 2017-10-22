@@ -11,7 +11,7 @@ const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
 const knownFile = {
   path: 'foo.txt',
   name: 'foo.txt',
-  hash: readFileSync(path.join(__dirname, 'foo.hash')).toString()
+  hash: readFileSync(path.join(__dirname, 'foo.hash')).toString().trim(),
 };
 
 
@@ -29,13 +29,12 @@ test('Site is available', async t => {
 
 test('Verifying known hash', async t => {
   const file = knownFile;
-  const text = Selector('body').textContent
+  const text = Selector('body').textContent;
 
   await t
     .setFilesToUpload('#file-upload', file.path)
     .expect(text).contains(file.name)
-    .expect(text).contains(file.hash)
-    ;
+    .expect(text).contains(file.hash);
 });
 
 

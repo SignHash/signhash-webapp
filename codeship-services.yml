@@ -4,3 +4,18 @@ services:
     build:
       context: .
       dockerfile: ./docker/app/Dockerfile
+    volumes:
+      - ./dist:/usr/src/app/static/dist
+    expose:
+      - "8080"
+    command: npm run serve
+  e2e:
+    build:
+      context: ./tests/e2e/
+      dockerfile: docker/Dockerfile
+    links:
+      - "app"
+    volumes:
+      - ./tests/e2e:/work
+    environment:
+      - SIGNHASH_URL=http://app:8080

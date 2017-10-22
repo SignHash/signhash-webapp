@@ -7,11 +7,6 @@ RUN apk --no-cache --repository http://dl-3.alpinelinux.org/alpine/edge/testing/
 RUN mkdir -p /work/node_modules
 WORKDIR /work
 
-RUN adduser -D user
-RUN chown -R user:user /work
-
-USER user
-
 EXPOSE 1337 1338
 
 COPY docker/entrypoint.sh /testcafe-docker.sh
