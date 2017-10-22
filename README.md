@@ -34,7 +34,7 @@ hot-reloads your application when sources changes.
 
 #### serve
 
-`NODE_ENV=production npm run serve` builds your application and starts a
+`NODE_ENV=production npm run start:prod` builds your application and starts a
 production server.
 
 #### build
