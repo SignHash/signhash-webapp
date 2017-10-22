@@ -22,7 +22,7 @@ fixture`SignHash`
 
 test('Site is available', async t => {
   await t
-    .expect(Selector('body', { timeout: 10000 }).textContent)
+    .expect(Selector('body').textContent)
     .contains('SignHash');
 });
 
