@@ -11,7 +11,7 @@ services:
       - node_modules:/work/node_modules
     environment:
       - SIGNHASH_URL=http://app:8080
-    command: tests/basic.ts
+    command: tests/
 
   app:
     build:

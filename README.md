@@ -40,3 +40,25 @@ production server.
 #### build
 
 `npm run build` builds application client and server bundles.
+
+### Testing
+
+#### Running end-to-end tests
+
+##### Running locally
+
+Runs on chrome by default.
+
+``` shell
+cd tests/e2e
+npm install
+npm test
+```
+
+##### In Docker container
+
+``` shell
+cd tests/e2e/docker
+docker-compose build
+docker-compose run --rm testcafe
+```
