@@ -13,6 +13,9 @@ type WebApp = App (DOMEvent -> Event) Event State
 type AllEffects = Eff (CoreEffects AppEffects)
 
 
+foreign import load :: Unit
+
+
 -- | Start and render the app
 main :: String -> State -> AllEffects WebApp
 main url state = do

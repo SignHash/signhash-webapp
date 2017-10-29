@@ -1,21 +1,18 @@
 module App.View where
 
-import App.State.Signers as Signers
-import App.State.Files as Files
-import App.State.FileInputs as FileInputs
 import App.State (Event(..), State)
-import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
-import CSS as S
-import CSS.TextAlign (textAlign, center)
+import App.State.FileInputs as FileInputs
+import App.State.Files as Files
+import App.State.Signers as Signers
 import Data.Map (toUnfoldable)
 import Data.Maybe (Maybe(..))
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
+import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import Prelude hiding (div,id)
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
-import Pux.DOM.HTML.Attributes (style)
-import Text.Smolder.HTML (div, hr, input, label, li, ul)
+import Text.Smolder.HTML (div, h1, hr, input, label, li, ul)
 import Text.Smolder.HTML.Attributes (className, for, id, type')
 import Text.Smolder.Markup (text, (!), (#!))
 
@@ -23,12 +20,14 @@ import Text.Smolder.Markup (text, (!), (#!))
 view :: State -> HTML Event
 view { file, signer } =
   do
-    child FileInput viewFileInput unit
-
-    hr
-    div fileStatus
-    hr
-    div signerStatus
+    div ! className "content" $ do
+      h1 $ text "SignHash"
+      hr
+      child FileInput viewFileInput unit
+      hr
+      div fileStatus
+      hr
+      div signerStatus
 
   where
     fileStatus = case file of
@@ -44,26 +43,15 @@ view { file, signer } =
 viewFileInput :: Unit -> HTML FileInputs.Event
 viewFileInput _ =
   div do
-    label ! for "file-upload" ! className "custom-file-upload"
-      ! style do
-        S.fontSize (2.0 # S.em)
-        textAlign center
-        S.display S.inlineBlock
-        S.width (500.0 # S.px)
-        S.height (200.0 # S.px)
-        S.lineHeight (200.0 # S.px)
-        S.border S.solid (1.0 # S.px) S.black
+    label ! for "file-upload" ! className "file-upload"
       #! onDrop FileInputs.newFilesEvent
       #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
       $ text "Click or drag and drop files"
 
-    input ! id "file-upload"
+    input
+      ! id "file-upload"
       ! type' "file"
-      ! style do
-        S.display S.displayNone
       #! onChange FileInputs.newFilesEvent
-
-
 
 
 viewFile :: Files.State -> HTML Event
