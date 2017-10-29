@@ -10,13 +10,12 @@ input#file-upload {
 }
 
 .file-upload {
-  font-size: 2em;
   text-align: center;
   display: block;
   width: 500px;
-  height: 200px;
-  line-height: 200px;
-  border: solid 1px grey;
+  border: dashed 1px grey;
+  color: grey;
+  padding: 50px;
   margin-left: auto;
   margin-right: auto;
 }

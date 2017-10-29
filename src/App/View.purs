@@ -12,7 +12,7 @@ import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import Prelude hiding (div,id)
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
-import Text.Smolder.HTML (div, h1, hr, input, label, li, table, tbody, td, th, thead, tr, ul)
+import Text.Smolder.HTML (div, h1, h3, h4, hr, input, label, li, table, tbody, td, th, tr, ul)
 import Text.Smolder.HTML.Attributes (className, for, id, type')
 import Text.Smolder.Markup (text, (!), (#!))
 
@@ -25,6 +25,7 @@ view { file, signer } =
       hr
       child FileInput viewFileInput unit
       hr
+      h4 $ text "File status"
       div fileStatus
       hr
       div signerStatus
@@ -48,7 +49,8 @@ viewFileInput _ =
       ! className "file-upload"
       #! onDrop FileInputs.newFilesEvent
       #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
-      $ text "Click or drag and drop files"
+      $ div do
+        h3 $ text "Click or drag and drop files"
 
     input
       ! id "file-upload"
