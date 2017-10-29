@@ -1,6 +1,6 @@
-- name: all tests
-  type: parallel
-  steps:
-  - name: build
-    service: app
-    command: npm run build
+- name: build
+  service: app
+  command: npm run build
+- name: e2e
+  service: e2e
+  command: tests/

@@ -7,6 +7,7 @@
   "description": "SignHash web client.",
   "main": "support/entry.client.js",
   "license": "BSD3",
+  "timeout": 60000,
   "dependencies": {
     "purescript-pux": "^11.0.0",
     "purescript-css": "^3.0.0",

@@ -1,0 +1,27 @@
+version: '2'
+services:
+  testcafe:
+    build:
+      context: ../
+      dockerfile: docker/Dockerfile
+    links:
+      - "app"
+    volumes:
+      - ../:/work
+      - node_modules:/work/node_modules
+    environment:
+      - SIGNHASH_URL=http://app:8080
+    command: tests/
+
+  app:
+    build:
+      context: ../../../
+      dockerfile: docker/app/Dockerfile
+    expose:
+      - "8080"
+    ports:
+      - "8080:8080"
+    command: npm run start:prod
+
+volumes:
+  node_modules:

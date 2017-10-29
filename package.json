@@ -11,11 +11,12 @@
   ],
   "scripts": {
     "postinstall": "bower cache clean && bower --allow-root install",
-    "clean": "rimraf static/dist",
+    "clean": "rimraf static/dist/*",
     "build": "npm run clean && webpack --config ./webpack.config.js --progress --profile --colors",
     "watch": "npm run clean && webpack-dev-server --content-base static/ --hot --inline --config webpack.config.js",
-    "serve": "npm run build && serve -s static",
+    "serve": "serve -s static -p 8080",
     "start": "npm run watch",
+    "start:prod": "npm run build && npm run serve",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {

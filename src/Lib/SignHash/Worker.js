@@ -1,4 +1,4 @@
-var Worker = require("worker-loader!./hashWorker.js");
+var Worker = require("worker-loader?inline=true!./hashWorker.js");
 
 
 exports.hashWorker = function () {

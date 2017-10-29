@@ -34,9 +34,31 @@ hot-reloads your application when sources changes.
 
 #### serve
 
-`NODE_ENV=production npm run serve` builds your application and starts a
+`NODE_ENV=production npm run start:prod` builds your application and starts a
 production server.
 
 #### build
 
 `npm run build` builds application client and server bundles.
+
+### Testing
+
+#### Running end-to-end tests
+
+##### Running locally
+
+Runs on chrome by default.
+
+``` shell
+cd tests/e2e
+npm install
+npm test
+```
+
+##### In Docker container
+
+``` shell
+cd tests/e2e/docker
+docker-compose build
+docker-compose run --rm testcafe
+```
