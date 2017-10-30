@@ -1,7 +1,7 @@
-require('../styles/normalize.css');
-require('../styles/skeleton.css');
-require('../styles/signhash.css');
-require('../styles/font-awesome.css');
+require('../static/styles/normalize.css');
+require('../static/styles/skeleton.css');
+require('../static/styles/signhash.css');
+require('../static/styles/font-awesome.css');
 
 
 exports.load = function () {};
