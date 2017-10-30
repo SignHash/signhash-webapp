@@ -9,12 +9,22 @@ import Data.Maybe (Maybe(..), maybe)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
-import Prelude hiding (div,id)
+import Prelude (Unit, discard, show, unit, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
-import Text.Smolder.HTML (div, h1, h3, h4, hr, input, label, li, table, tbody, td, th, tr, ul)
+import Text.Smolder.HTML
 import Text.Smolder.HTML.Attributes (className, for, id, type')
 import Text.Smolder.Markup (text, (!), (#!))
+
+
+loading :: String
+loading = "Loading..."
+
+renderRow :: forall a. String -> String -> HTML a
+renderRow label value =
+  tr $ do
+    th $ text label
+    td $ text value
 
 
 view :: State -> HTML Event
@@ -28,6 +38,7 @@ view { file, signer } =
       h4 $ text "File status"
       div fileStatus
       hr
+      h4 $ text "Signers"
       div signerStatus
 
   where
@@ -60,43 +71,39 @@ viewFileInput _ =
 
 viewFile :: Files.State -> HTML Event
 viewFile { meta, result, signer } =
-  div do
-    table ! className "u-full-width" $ tbody $ do
-      renderRow "FileName" meta.name
-      renderRow "Size" $ show meta.size <> " Bytes"
-      renderRow "SHA256" $ maybe loading _.hash result
-      renderRow "Signer address" $ maybe loading renderSigner signer
+  table ! className "u-full-width" $ tbody $ do
+    renderRow "FileName" meta.name
+    renderRow "Size" $ show meta.size <> " Bytes"
+    renderRow "SHA256" $ maybe loading _.hash result
+    renderRow "Signer address" $ maybe loading renderSigner signer
 
   where
-    loading = "Loading..."
-    renderRow label value =
-      tr $ do
-        th $ text label
-        td $ text value
-
     renderSigner (HashSigner address) = address
     renderSigner NoSigner = "Not signed"
 
 
 viewSigner :: Signers.State -> HTML Signers.Event
-viewSigner { address, proofs } =
-  div do
-    div $ text "Signer"
-    div $ text ("Address: " <> address)
-    div $ text "Proofs:"
+viewSigner { address, proofs } = do
+  div $ do
+    h5 $ text $ "#" <> address
     viewProofs proofs
 
 
 viewProofs :: Signers.SignerProofs -> HTML Signers.Event
 viewProofs proofs =
-  ul $ for_ unfolded renderProof
+  table ! className "u-full-width" $ do
+    thead $ tr do
+      th $ text "Method"
+      th $ text "Verification"
+    tbody $ for_ unfolded renderProof
   where
     unfolded :: Array (Tuple ProofMethod Signers.ProofState)
     unfolded = toUnfoldable proofs
+
     renderProof (Tuple method state) = do
-      li do
-        div $ text ("Method: " <> show method)
-        div $ text ("Verification: " <> viewProofState state)
+      tr do
+        td $ text $ show method
+        td $ text $ viewProofState state
 
     viewProofState Signers.Pending = "Pending..."
     viewProofState Signers.NetworkError = "Network error"
