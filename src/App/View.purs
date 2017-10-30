@@ -26,13 +26,13 @@ view { file, signer } =
       hr
       child FileInput viewFileInput unit
       hr
-      h4 $ text "File status"
-      div fileStatus
       case file of
         Nothing -> text $ ""
         Just value -> do
           h4 $ text "Signers"
           div signerStatus
+      h4 $ text "File status"
+      div fileStatus
 
   where
     fileStatus = case file of
@@ -41,7 +41,9 @@ view { file, signer } =
       Just value -> viewFile value
 
     signerStatus = case signer of
-      Nothing -> div $ text loading
+      Nothing -> div do
+        text loading
+        hr
       Just value -> child Signer viewSigner value
 
 
