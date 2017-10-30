@@ -1,5 +1,7 @@
 module App.View where
 
+import Text.Smolder.HTML
+
 import App.State (Event(..), State)
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
@@ -12,19 +14,8 @@ import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import Prelude (Unit, discard, show, unit, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
-import Text.Smolder.HTML
 import Text.Smolder.HTML.Attributes (className, for, id, type')
 import Text.Smolder.Markup (text, (!), (#!))
-
-
-loading :: String
-loading = "Loading..."
-
-renderRow :: forall a. String -> String -> HTML a
-renderRow label value =
-  tr $ do
-    th $ text label
-    td $ text value
 
 
 view :: State -> HTML Event
@@ -37,9 +28,11 @@ view { file, signer } =
       hr
       h4 $ text "File status"
       div fileStatus
-      hr
-      h4 $ text "Signers"
-      div signerStatus
+      case file of
+        Nothing -> text $ ""
+        Just value -> do
+          h4 $ text "Signers"
+          div signerStatus
 
   where
     fileStatus = case file of
@@ -48,7 +41,7 @@ view { file, signer } =
       Just value -> viewFile value
 
     signerStatus = case signer of
-      Nothing -> div $ text "No signer"
+      Nothing -> div $ text loading
       Just value -> child Signer viewSigner value
 
 
@@ -78,6 +71,11 @@ viewFile { meta, result, signer } =
     renderRow "Signer address" $ maybe loading renderSigner signer
 
   where
+    renderRow label value =
+      tr $ do
+        th $ text label
+        td $ text value
+
     renderSigner (HashSigner address) = address
     renderSigner NoSigner = "Not signed"
 
@@ -94,7 +92,8 @@ viewProofs proofs =
   table ! className "u-full-width" $ do
     thead $ tr do
       th $ text "Method"
-      th $ text "Verification"
+      th $ text "Status"
+      th $ text "Details"
     tbody $ for_ unfolded renderProof
   where
     unfolded :: Array (Tuple ProofMethod Signers.ProofState)
@@ -103,13 +102,26 @@ viewProofs proofs =
     renderProof (Tuple method state) = do
       tr do
         td $ text $ show method
-        td $ text $ viewProofState state
+        td $ renderIcon icon
+        td $ text $ msg
+      where
+        (Tuple icon msg) = proofDetails state
 
-    viewProofState Signers.Pending = "Pending..."
-    viewProofState Signers.NetworkError = "Network error"
-    viewProofState (Signers.Finished (Verified msg)) =
-      "Verified: " <> msg
-    viewProofState (Signers.Finished (Unverified msg)) =
-      "Verification failed: " <> msg
-    viewProofState (Signers.Finished Unavailable) =
-      "No proof defined"
+    proofDetails Signers.Pending =
+      Tuple "fa fa-spinner" ""
+    proofDetails Signers.NetworkError =
+      Tuple "fa fa-exclamation-triangle" "Network error"
+    proofDetails (Signers.Finished (Verified msg)) =
+      Tuple "fa fa-check" msg
+    proofDetails (Signers.Finished (Unverified msg)) =
+      Tuple "fa fa-exclamation-circle" $ "Failed: " <> msg
+    proofDetails (Signers.Finished Unavailable) =
+      Tuple "fa fa-ban" "No proof defined"
+
+
+renderIcon :: forall a. String -> HTML a
+renderIcon name = i ! className ("fa-lg " <> name) $ text ""
+
+
+loading :: String
+loading = "Loading..."
