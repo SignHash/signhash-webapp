@@ -43,6 +43,7 @@
     "ramda": "^0.25.0",
     "rimraf": "^2.5.2",
     "serve": "^5.2.4",
+    "web3": "^0.20.2",
     "webpack-dev-server": "^2.7.1",
     "webpack-node-externals": "^1.5.4",
     "xhr2": "^0.1.3"

@@ -2,22 +2,26 @@ module App.State where
 
 import Prelude
 
-import Lib.SignHash.Types (HashSigner(HashSigner))
-import Lib.SignHash.Worker (WORKER)
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
 import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
+import Lib.SignHash.Types (HashSigner(HashSigner))
+import Lib.SignHash.Worker (WORKER)
+import Lib.Web3 (WEB3, Web3, getOrBuildWeb3)
 import Network.HTTP.Affjax (AJAX)
-import Pux (EffModel, mapEffects, mapState, noEffects)
+import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
 
 data Event =
+  Init |
+  EthLoaded Web3 |
   FileInput FileInputs.Event |
   File Files.Event |
   Signer Signers.Event
@@ -26,6 +30,7 @@ data Event =
 type State =
   { file :: Maybe Files.State
   , signer :: Maybe Signers.State
+  , eth :: Maybe Eth
   }
 
 
@@ -33,6 +38,7 @@ init :: State
 init =
   { file: Nothing
   , signer: Nothing
+  , eth: Nothing
   }
 
 
@@ -46,10 +52,24 @@ type AppEffects =
   )
 
 
+type Eth =
+  { web3 :: Web3 }
+
+
 foldp ::
   Event ->
   State ->
   EffModel State Event AppEffects
+
+foldp Init state =
+  onlyEffects state $ [
+    liftEff do
+      web3 <- getOrBuildWeb3 "http://localhost:8545"
+      pure $ Just $ EthLoaded web3
+  ]
+
+foldp (EthLoaded web3) state =
+  noEffects $ state { eth = Just { web3 } }
 
 foldp (FileInput (FileInputs.NewFile file)) state =
   { state: state { file = Just $ Files.init file, signer = Nothing }
