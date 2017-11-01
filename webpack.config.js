@@ -1,15 +1,15 @@
-const appConfig = require('./src/App/Config.js').config
-const path = require('path')
-const webpack = require('webpack')
-const isProd = process.env.NODE_ENV === 'production'
+const appConfig = require('./src/App/Config.js').config;
+const path = require('path');
+const webpack = require('webpack');
+const isProd = process.env.NODE_ENV === 'production';
 
-const entries = [path.join(__dirname, 'support/entry.js')]
+const entries = [path.join(__dirname, 'support/entry.js')];
 
 const plugins = [
   new webpack.DefinePlugin({
     'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
   })
-]
+];
 
 if (isProd) {
   plugins.push(
@@ -17,7 +17,7 @@ if (isProd) {
       minimize: true,
       debug: false
     })
-  )
+  );
 }
 
 module.exports = {
@@ -42,6 +42,18 @@ module.exports = {
           psc: 'psa',
           pscIde: true
         }
+      },
+      {
+        test: /\.css$/,
+        use: [ 'style-loader', 'css-loader' ]
+      },
+      {
+        test: /\.scss$/,
+        use: [ 'style-loader', 'css-loader', 'sass-loader' ]
+      },
+      {
+        test: /\.(png|woff|woff2|eot|ttf|svg)$/,
+        loader: 'url-loader?limit=100000'
       }
     ],
   },
@@ -77,4 +89,4 @@ module.exports = {
     modules: false,
     chunkModules: false
   }
-}
+};

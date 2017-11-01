@@ -1,0 +1,85 @@
+$color-dimmed: grey;
+$color-success: green;
+$color-warning: yellow;
+$color-error: red;
+
+
+.header {
+  img {
+    float: left;
+    margin-right: 1em;
+  }
+  h1 {
+    line-height: 80px;
+  }
+  margin: 15px;
+}
+
+
+.content {
+  max-width: 800px;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+input#file-upload {
+  display: none;
+}
+
+.file-upload {
+  $size-large: 40px;
+  $size-small: 20px;
+
+  display: block;
+  padding: 1.5em;
+  margin-left: auto;
+  margin-right: auto;
+
+  font-size: $size-large;
+  text-align: center;
+  color: $color-dimmed;
+  border: dashed 1px $color-dimmed;
+  border-radius: 5px;
+  cursor: pointer;
+
+  transition-property: font-size, padding;
+  transition-duration: 0.5s;
+
+  &.small {
+    font-size: $size-small;
+    padding: 0.2em;
+  }
+
+  .hint {
+    font-size: $size-small;
+    padding: 0.5em;
+  }
+
+  i {
+    margin: 10px;
+  }
+}
+
+
+.file-info {
+  td {
+    word-break: break-all;
+  }
+}
+
+
+.signers {
+  .network-error i {
+    color: $color-warning;
+  }
+  .verified i {
+    color: $color-success;
+  }
+  .failed i {
+    color: $color-error;
+  }
+  .not-defined i {
+    color: $color-dimmed;
+  }
+}
