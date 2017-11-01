@@ -4,6 +4,18 @@ $color-warning: yellow;
 $color-error: red;
 
 
+.header {
+  img {
+    float: left;
+    margin-right: 1em;
+  }
+  h1 {
+    line-height: 80px;
+  }
+  margin: 15px;
+}
+
+
 .content {
   max-width: 800px;
   width: 80%;

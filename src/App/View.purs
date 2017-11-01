@@ -14,15 +14,21 @@ import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import Prelude (discard, show, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
-import Text.Smolder.HTML.Attributes (className, for, id, type')
+import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.Markup (text, (!), (#!))
+
+
+foreign import images ::
+  { logo :: String }
 
 
 view :: State -> HTML Event
 view { file, signer } =
   do
     div ! className "content" $ do
-      h1 $ text "SignHash"
+      div ! className "header" $ do
+        img ! src images.logo
+        h1 $ text "SignHash"
       hr
       child FileInput viewFileInput $ isJust file
       case file of
