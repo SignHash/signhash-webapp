@@ -87,7 +87,7 @@ viewSigner { address, proofs } = do
 
 viewProofs :: Signers.SignerProofs -> HTML Signers.Event
 viewProofs proofs =
-  table ! className "u-full-width" $ do
+  table ! className "u-full-width signers" $ do
     thead $ tr do
       th $ text "Method"
       th $ text "Status"
@@ -98,23 +98,24 @@ viewProofs proofs =
     unfolded = toUnfoldable proofs
 
     renderProof (Tuple method state) = do
-      tr do
+      tr ! className cls $ do
         td $ text $ show method
         td $ renderIcon icon
         td $ text $ msg
       where
-        (Tuple icon msg) = proofDetails state
+        {icon, msg, cls} = proofDetails state
 
     proofDetails Signers.Pending =
-      Tuple "fa-spinner" ""
+      { icon: "fa-spinner", msg: "", cls: ""}
     proofDetails Signers.NetworkError =
-      Tuple "fa-exclamation-triangle" "Network error"
+      { icon: "fa-exclamation-triangle"
+      , msg: "Network error", cls: "network-error"}
     proofDetails (Signers.Finished (Verified msg)) =
-      Tuple "fa-check" msg
+      { icon: "fa-check", msg, cls: "verified"}
     proofDetails (Signers.Finished (Unverified msg)) =
-      Tuple "fa-exclamation-circle" $ "Failed: " <> msg
+      { icon: "fa-exclamation-circle", msg: "Failed: " <> msg, cls: "failed" }
     proofDetails (Signers.Finished Unavailable) =
-      Tuple "fa-ban" "No proof defined"
+      { icon: "fa-ban", msg: "No proof defined", cls: "not-defined"}
 
 
 renderIcon :: forall a. String -> HTML a

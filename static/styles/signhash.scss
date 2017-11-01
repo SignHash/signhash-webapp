@@ -1,4 +1,8 @@
 $color-dimmed: grey;
+$color-success: green;
+$color-warning: yellow;
+$color-error: red;
+
 
 .content {
   max-width: 800px;
@@ -49,5 +53,21 @@ input#file-upload {
 .file-info {
   td {
     word-break: break-all;
+  }
+}
+
+
+.signers {
+  .network-error i {
+    color: $color-warning;
+  }
+  .verified i {
+    color: $color-success;
+  }
+  .failed i {
+    color: $color-error;
+  }
+  .not-defined i {
+    color: $color-dimmed;
   }
 }
