@@ -63,7 +63,7 @@ viewFileInput small =
 
 viewFile :: Files.State -> HTML Event
 viewFile { meta, result, signer } = do
-  table ! className "u-full-width file-table" $ tbody $ do
+  table ! className "u-full-width file-info" $ tbody $ do
     renderRow "Name" meta.name
     renderRow "Size" $ show meta.size <> " Bytes"
     renderRow "SHA256" $ maybe loading _.hash result
