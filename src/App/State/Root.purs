@@ -5,8 +5,8 @@ import Prelude
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
+import App.State.Contracts as Contracts
 import Control.Monad.Aff.Console (CONSOLE)
-import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
@@ -14,14 +14,14 @@ import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Types (HashSigner(HashSigner))
 import Lib.SignHash.Worker (WORKER)
-import Lib.Web3 (WEB3, Web3, getOrBuildWeb3)
+import Lib.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
 
 data Event =
   Init |
-  EthLoaded Web3 |
+  Contract Contracts.Event |
   FileInput FileInputs.Event |
   File Files.Event |
   Signer Signers.Event
@@ -30,15 +30,17 @@ data Event =
 type State =
   { file :: Maybe Files.State
   , signer :: Maybe Signers.State
-  , eth :: Maybe Eth
+  , contracts :: Contracts.State
+  , defaults ::
+       { network :: String }
   }
-
 
 init :: State
 init =
   { file: Nothing
   , signer: Nothing
-  , eth: Nothing
+  , contracts: Contracts.Loading
+  , defaults: { network: "http://localhost:8545" }
   }
 
 
@@ -49,11 +51,8 @@ type AppEffects =
   , worker :: WORKER
   , ajax :: AJAX
   , random :: RANDOM
+  , web3 :: WEB3
   )
-
-
-type Eth =
-  { web3 :: Web3 }
 
 
 foldp ::
@@ -62,14 +61,14 @@ foldp ::
   EffModel State Event AppEffects
 
 foldp Init state =
-  onlyEffects state $ [
-    liftEff do
-      web3 <- getOrBuildWeb3 "http://localhost:8545"
-      pure $ Just $ EthLoaded web3
+  onlyEffects state [
+    pure $ Just $ Contract $ Contracts.Load state.defaults.network
   ]
 
-foldp (EthLoaded web3) state =
-  noEffects $ state { eth = Just { web3 } }
+foldp (Contract event) state =
+  Contracts.foldp event state.contracts
+  # mapEffects Contract
+  # mapState \s -> state { contracts  = s}
 
 foldp (FileInput (FileInputs.NewFile file)) state =
   { state: state { file = Just $ Files.init file, signer = Nothing }

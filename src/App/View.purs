@@ -1,8 +1,9 @@
 module App.View where
 
-import Text.Smolder.HTML
+import Text.Smolder.HTML hiding (address)
 
 import App.State (Event(..), State)
+import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
@@ -10,11 +11,13 @@ import Data.Map (toUnfoldable)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
+import Lib.SignHash.Contracts (address)
 import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
 import Prelude (discard, show, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
+import Text.Smolder.HTML.Attributes as A
 import Text.Smolder.Markup (text, (!), (#!))
 
 
@@ -23,7 +26,7 @@ foreign import images ::
 
 
 view :: State -> HTML Event
-view { file, signer } =
+view { file, signer, contracts } =
   do
     div ! className "content" $ do
       div ! className "header" $ do
@@ -37,6 +40,8 @@ view { file, signer } =
           viewFile value
           h4 $ text "Signers"
           div signerStatus
+      hr
+      viewContracts contracts
 
   where
     signerStatus = case signer of
@@ -44,6 +49,17 @@ view { file, signer } =
         text loading
         hr
       Just value -> child Signer viewSigner $ value
+
+
+viewContracts :: Contracts.State -> HTML Event
+viewContracts Contracts.Loading =
+  text $ "Loading contract..."
+viewContracts (Contracts.Loaded state) =
+  text $ "Contract: " <> (address state.signerContract)
+viewContracts (Contracts.Error err) = do
+  div
+    ! A.title err
+    $ text "Error while loading contract"
 
 
 viewFileInput :: Boolean -> HTML FileInputs.Event
