@@ -56,6 +56,9 @@ module.exports = {
         loader: 'url-loader?limit=100000'
       }
     ],
+    // Disable handling of requires with a single expression
+    exprContextRegExp: /$^/,
+    exprContextCritical: false,
   },
   plugins: plugins,
   resolveLoader: {

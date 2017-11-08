@@ -15,8 +15,10 @@
     "build": "npm run clean && webpack --config ./webpack.config.js --progress --profile --colors",
     "watch": "npm run clean && webpack-dev-server --content-base static/ --hot --inline --config webpack.config.js",
     "serve": "serve -s static -p 8080",
-    "start": "npm run watch",
+    "start": "npm-run-all -p testrpc start:dev",
+    "start:dev": "npm run watch",
     "start:prod": "npm run build && npm run serve",
+    "testrpc": "npm explore signhash-contracts -- npm run testrpc:deploy",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -34,6 +36,7 @@
   "dependencies": {
     "asmcrypto.js": "0.0.11",
     "bower": "^1.7.9",
+    "npm-run-all": "^4.1.1",
     "preact": "^8.2.1",
     "preact-compat": "^3.17.0",
     "pulp": "^12.0.1",
@@ -43,6 +46,8 @@
     "ramda": "^0.25.0",
     "rimraf": "^2.5.2",
     "serve": "^5.2.4",
+    "truffle-contract": "^3.0.1",
+    "web3": "^0.20.2",
     "webpack-dev-server": "^2.7.1",
     "webpack-node-externals": "^1.5.4",
     "xhr2": "^0.1.3"
@@ -52,6 +57,7 @@
     "file-loader": "^1.1.5",
     "node-sass": "^4.5.3",
     "sass-loader": "^6.0.6",
+    "signhash-contracts": "git+https://github.com/SignHash/signhash-contracts.git#feature/testrpc-deploy",
     "style-loader": "^0.19.0",
     "url-loader": "^0.6.2",
     "webpack": "^2.7.0",
