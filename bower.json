@@ -9,21 +9,21 @@
   "license": "BSD3",
   "timeout": 60000,
   "dependencies": {
-    "purescript-pux": "^11.0.0",
+    "purescript-pux": "^12.0.0",
     "purescript-css": "^3.0.0",
-    "purescript-aff": "^3.0.0",
-    "purescript-affjax": "^4.0.0",
+    "purescript-aff": "^4.0.0",
+    "purescript-affjax": "^5.0.0",
     "purescript-now": "^3.0.0",
     "purescript-maps": "^3.5.2",
     "purescript-generics-rep": "^5.3.0",
     "purescript-profunctor-lenses": "^3.7.0",
-    "purescript-random": "3.0.0",
-    "purescript-aff-promise": "0.7.0",
-    "purescript-ffi-utils": "2.0.1"
+    "purescript-random": "^3.0.0",
+    "purescript-aff-promise": "^1.0.0",
+    "purescript-ffi-utils": "^3.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
-    "purescript-spec": "1.0.0",
+    "purescript-spec": "^2.0.0",
     "purescript-debug": "^3.0.0"
   }
 }

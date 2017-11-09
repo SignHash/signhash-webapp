@@ -1,25 +1,24 @@
 module Lib.SignHash.Worker where
 
-import Control.Monad.Aff (Aff, makeAff)
+import Prelude
+import Control.Monad.Aff (Aff)
+import Control.Monad.Aff.Compat (EffFnAff, fromEffFnAff)
 import Control.Monad.Eff (Eff, kind Effect)
 import DOM.File.Types (File)
-import Prelude (Unit)
+
+
+type Checksum = String
 
 foreign import data WORKER :: Effect
 foreign import data HashWorker :: Type
 
-type WorkerEff eff v = Eff (worker :: WORKER | eff) v
-
-foreign import hashWorker :: forall eff. WorkerEff eff HashWorker
+foreign import hashWorker :: forall eff. Eff (worker :: WORKER | eff) HashWorker
 foreign import _calcHash ::
   forall eff.
   HashWorker ->
   File ->
-  (String -> WorkerEff eff Unit) ->
-  WorkerEff eff Unit
+  EffFnAff (worker :: WORKER | eff) Checksum
 
 calcHash ::
-  forall eff.
-  HashWorker -> File -> Aff (worker :: WORKER | eff) String
-calcHash worker file =
-  makeAff (\error success -> _calcHash worker file success)
+  forall eff. HashWorker -> File -> Aff (worker :: WORKER | eff) Checksum
+calcHash worker file = fromEffFnAff $ _calcHash worker file

@@ -8,10 +8,12 @@ exports.hashWorker = function () {
 
 exports._calcHash = function (worker) {
   return function (file) {
-    return function (onSuccess) {
-      return function () {
-        worker.onmessage = function (event) { onSuccess(event.data.hash)(); };
-        worker.postMessage({ file: file });
+    return function (onError, onSuccess) {
+      worker.onmessage = function (event) { onSuccess(event.data.hash); };
+      worker.postMessage({ file: file });
+      return function (cancelError, cancelerError, cancelerSuccess) {
+        worker.terminate();
+        cancelerSuccess();
       };
     };
   };
