@@ -18,6 +18,9 @@ foreign import data Web3 :: Type
 foreign import data WEB3 :: Effect
 
 type Web3Config = String
+type Web3Aff eff res = Aff (web3 :: WEB3 | eff) res
+
+newtype Bytes = Bytes String
 
 foreign import buildWeb3 :: Web3Config -> Web3
 foreign import _getInjectedWeb3 :: forall eff. Eff (dom :: DOM | eff) Foreign
@@ -41,5 +44,12 @@ getOrBuildWeb3 config = do
     Nothing -> buildWeb3 config
 
 
-getAccounts :: forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Array Address)
+foreign import bytesFromASCII :: String -> Bytes
+
+
+getAccounts :: forall eff. Web3 -> Web3Aff eff (Array Address)
 getAccounts web3 = callAff0r1 (web3 `property` "eth") "getAccounts"
+
+
+getBlockNumber :: forall eff. Web3 -> Web3Aff eff Int
+getBlockNumber web3 = callAff0r1 (web3 `property` "eth") "getBlockNumber"
