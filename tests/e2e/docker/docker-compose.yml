@@ -19,9 +19,11 @@ services:
       dockerfile: docker/app/Dockerfile
     expose:
       - "8080"
+      - "8545"
     ports:
       - "8080:8080"
-    command: npm run start:prod
+      - "8545:8545"
+    command: npm-run-all testrpc start:prod fixtures:load
 
 volumes:
   node_modules:

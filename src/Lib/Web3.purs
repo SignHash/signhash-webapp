@@ -2,12 +2,16 @@ module Lib.Web3 where
 
 import Prelude
 
+import Control.Monad.Aff (Aff)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Except (runExcept)
 import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Foreign (Foreign, readNullOrUndefined, unsafeFromForeign)
 import Data.Maybe (Maybe(..))
+import FFI.Util (property)
+import FFI.Util.Function (callAff0r1)
+import Lib.SignHash.Types (Address)
 
 
 foreign import data Web3 :: Type
@@ -35,3 +39,7 @@ getOrBuildWeb3 config = do
   pure case injectedWeb3 of
     Just web3 -> web3
     Nothing -> buildWeb3 config
+
+
+getAccounts :: forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Array Address)
+getAccounts web3 = callAff0r1 (web3 `property` "eth") "getAccounts"
