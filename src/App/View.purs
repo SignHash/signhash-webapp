@@ -36,19 +36,23 @@ view { file, signer, contracts } =
       child FileInput viewFileInput $ isJust file
       case file of
         Nothing -> empty
-        Just value -> do
-          viewFile value
-          h4 $ text "Signers"
-          div signerStatus
+        Just loaded -> do
+          viewFile loaded
+          div $ signerStatus loaded.signer
       hr
       viewContracts contracts
 
   where
-    signerStatus = case signer of
-      Nothing -> div do
-        text loading
-        hr
-      Just value -> child Signer viewSigner $ value
+    signerStatus = case _ of
+      Nothing -> h4 $ text "Loading signer..."
+      Just (NoSigner) -> h4 $ text "No signers"
+      Just (HashSigner s) -> do
+        h4 $ text $ "Signers:"
+        case signer of
+          Nothing -> div do
+            text loading
+            hr
+          Just value -> child Signer viewSigner $ value
 
 
 viewContracts :: Contracts.State -> HTML Event

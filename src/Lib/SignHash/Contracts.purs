@@ -10,6 +10,7 @@ import Data.Array (head)
 import Data.Either (Either)
 import Data.Maybe (maybe)
 import FFI.Util (property)
+import FFI.Util.Function (callEff2)
 import Lib.SignHash.Types (Checksum, HashSigner(..))
 import Lib.Web3 (Web3, WEB3)
 
@@ -60,14 +61,17 @@ sign contract checksum signer =
   attempt $ toAffE $ _sign contract checksum signer
 
 
-foreign import _getSigners ::
+getSigners ::
   forall eff.
   SignerContract ->
   Checksum ->
   Int ->
-  Eff (web3 :: WEB3 | eff) (Promise (Array Address))
+  Aff (web3 :: WEB3 | eff) (Array String)
+getSigners contract checksum size =
+  toAffE $ callEff2 contract "getSigners" checksum size
 
-getSigner :: SignerContract -> Checksum -> Aff (web3 :: WEB3) HashSigner
+getSigner ::
+  forall eff. SignerContract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
 getSigner contract checksum = do
-  signers <- toAffE $ _getSigners contract checksum 1
+  signers <- getSigners contract checksum 1
   pure $ maybe NoSigner HashSigner $ head signers

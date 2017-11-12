@@ -26,10 +26,3 @@ exports._sign = R.curry(function(contract, checksum, address) {
     return contract.sign(checksum, { from: address });
   };
 });
-
-
-exports._getSigners = R.curry(function(contract, checksum, count) {
-  return function () {
-    return contract.getSigners(checksum, count);
-  };
-});
