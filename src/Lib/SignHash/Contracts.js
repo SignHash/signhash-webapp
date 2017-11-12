@@ -21,8 +21,15 @@ var getContract = R.curry(function (abi, web3) {
 
 exports.loadSignerContract = getContract(abis.SignHash);
 
-exports._getDeployed = function (contract) {
+exports._sign = R.curry(function(contract, checksum, address) {
   return function () {
-    return contract.deployed();
+    return contract.sign(checksum, { from: address });
   };
-};
+});
+
+
+exports._getSigners = R.curry(function(contract, checksum, count) {
+  return function () {
+    return contract.getSigners(checksum, count);
+  };
+});

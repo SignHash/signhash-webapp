@@ -6,8 +6,11 @@ import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (Error)
 import Control.Promise (Promise, toAffE)
+import Data.Array (head)
 import Data.Either (Either)
+import Data.Maybe (maybe)
 import FFI.Util (property)
+import Lib.SignHash.Types (Checksum, HashSigner(..))
 import Lib.Web3 (Web3, WEB3)
 
 
@@ -25,12 +28,9 @@ prop :: forall a b. String -> a -> b
 prop = flip property
 
 
-foreign import _getDeployed ::
-  forall eff t. ContractABI t -> Eff (web3 :: WEB3 | eff) (Promise t)
-
 getDeployed ::
   forall eff t. ContractABI t -> Aff (web3 :: WEB3 | eff) (Either Error t)
-getDeployed = attempt <<< toAffE <<< _getDeployed
+getDeployed = attempt <<< toAffE <<< prop "deployed"
 
 
 foreign import data SignerContract :: Type
@@ -41,3 +41,33 @@ foreign import loadSignerContract :: Web3 -> ContractABI SignerContract
 signerContract ::
   forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error SignerContract)
 signerContract = getDeployed <<< loadSignerContract
+
+
+foreign import _sign ::
+  forall eff.
+  SignerContract ->
+  Checksum ->
+  Address ->
+  Eff (web3 :: WEB3 | eff) (Promise Unit)
+
+sign ::
+  forall eff.
+  SignerContract ->
+  Checksum ->
+  Address ->
+  Aff (web3 :: WEB3 | eff) (Either Error Unit)
+sign contract checksum signer =
+  attempt $ toAffE $ _sign contract checksum signer
+
+
+foreign import _getSigners ::
+  forall eff.
+  SignerContract ->
+  Checksum ->
+  Int ->
+  Eff (web3 :: WEB3 | eff) (Promise (Array Address))
+
+getSigner :: SignerContract -> Checksum -> Aff (web3 :: WEB3) HashSigner
+getSigner contract checksum = do
+  signers <- toAffE $ _getSigners contract checksum 1
+  pure $ maybe NoSigner HashSigner $ head signers

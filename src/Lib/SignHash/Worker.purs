@@ -1,13 +1,13 @@
 module Lib.SignHash.Worker where
 
 import Prelude
+
 import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Compat (EffFnAff, fromEffFnAff)
 import Control.Monad.Eff (Eff, kind Effect)
 import DOM.File.Types (File)
+import Lib.SignHash.Types (Checksum)
 
-
-type Checksum = String
 
 foreign import data WORKER :: Effect
 foreign import data HashWorker :: Type
