@@ -8,7 +8,8 @@ services:
       - "app"
     volumes:
       - ../:/work
-      - node_modules:/work/node_modules
+      - ../../data:/data
+      - /work/node_modules
     environment:
       - SIGNHASH_URL=http://app:8080
     command: tests/
@@ -17,6 +18,9 @@ services:
     build:
       context: ../../../
       dockerfile: docker/app/Dockerfile
+    volumes:
+      - /usr/src/app/node_modules
+      - /usr/src/app/bower_components
     expose:
       - "8080"
       - "8545"
@@ -24,6 +28,3 @@ services:
       - "8080:8080"
       - "8545:8545"
     command: npm-run-all testrpc start:prod fixtures:load
-
-volumes:
-  node_modules:

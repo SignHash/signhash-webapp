@@ -32,7 +32,7 @@ main = do
   let web3 = buildWeb3 "http://localhost:8545"
 
   content <- readTextFile UTF8 "./tests/data/signed.txt"
-  checksum <- readTextFile UTF8 "./tests/data/signed.sha256"
+  checksum <- readTextFile UTF8 "./tests/data/signed.txt.sha256"
 
   void $ runAff logShow do
     accounts <- getAccounts web3

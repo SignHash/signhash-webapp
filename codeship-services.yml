@@ -17,5 +17,6 @@ services:
       - "app"
     volumes:
       - ./tests/e2e:/work
+      - ./tests/data:/data
     environment:
       - SIGNHASH_URL=http://app:8080
