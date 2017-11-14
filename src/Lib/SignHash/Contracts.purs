@@ -29,9 +29,15 @@ prop :: forall a b. String -> a -> b
 prop = flip property
 
 
+foreign import _getDeployed ::
+  forall a eff.
+  ContractABI a ->
+  Eff (web3 :: WEB3 | eff) (Promise a)
+
+
 getDeployed ::
   forall eff t. ContractABI t -> Aff (web3 :: WEB3 | eff) (Either Error t)
-getDeployed = attempt <<< toAffE <<< prop "deployed"
+getDeployed = attempt <<< toAffE <<< _getDeployed
 
 
 foreign import data SignerContract :: Type
@@ -51,6 +57,7 @@ foreign import _sign ::
   Address ->
   Eff (web3 :: WEB3 | eff) (Promise Unit)
 
+
 sign ::
   forall eff.
   SignerContract ->
@@ -69,6 +76,7 @@ getSigners ::
   Aff (web3 :: WEB3 | eff) (Array String)
 getSigners contract checksum size =
   toAffE $ callEff2 contract "getSigners" checksum size
+
 
 getSigner ::
   forall eff. SignerContract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
