@@ -10,17 +10,22 @@
     "starter-app"
   ],
   "scripts": {
-    "postinstall": "bower cache clean && bower --allow-root install",
+    "postinstall": "bower --allow-root cache clean && bower --allow-root install",
     "clean": "rimraf static/dist/*",
     "build": "npm run clean && webpack --optimize-minimize --config ./webpack.config.js --progress --profile --colors",
     "watch": "npm run clean && webpack-dev-server --content-base static/ --hot --inline --config webpack.config.js",
-    "serve": "serve -s static -p 8080",
     "start": "npm-run-all -p testrpc start:web fixtures:load",
     "start:web": "npm run watch",
-    "start:prod": "npm run build && npm run serve",
-    "testrpc": "npm explore signhash-contracts -- npm run testrpc:deploy",
-    "fixtures:load": "pulp run -m Tests.Data.Setup",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start:prod": "npm run build && npm run start:prod:serve",
+    "start:prod:serve": "serve -s static -p 8080",
+    "testrpc": "npm-run-all --parallel testrpc:run testrpc:data:setup",
+    "testrpc:run": "testrpc -d -m evil yellow twin",
+    "testrpc:persist:build": "npm-run-all --parallel --race testrpc:persist:reset testrpc:data:setup",
+    "testrpc:persist:run": "npm run testrpc:run -- --db ./.testrpc --networkId 32167",
+    "testrpc:persist:reset": "rimraf .testrpc/* && mkdir -p .testrpc && npm run testrpc:persist:run",
+    "testrpc:data:setup": "npm-run-all contracts:migrate fixtures:load",
+    "contracts:migrate": "npm explore signhash-contracts -- npm run migrate",
+    "fixtures:load": "pulp run -m Tests.Data.Setup -I src:tests/data"
   },
   "repository": {
     "type": "git",
@@ -55,6 +60,7 @@
   },
   "devDependencies": {
     "css-loader": "^0.28.7",
+    "ethereumjs-testrpc": "^6.0.3",
     "file-loader": "^1.1.5",
     "node-sass": "^4.5.3",
     "sass-loader": "^6.0.6",

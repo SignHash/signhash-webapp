@@ -3,7 +3,7 @@ import * as got from 'got';
 import { TestFile, buildTestFile, waitForPage, accounts } from './utils';
 
 
-const maxAppWarmup = 15;
+const maxAppWarmup = 45;
 const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
 
 
@@ -21,6 +21,12 @@ test('Site is available', async t => {
     .expect(Selector('body').textContent)
     .contains('SignHash');
 });
+
+
+test('Contract is loaded', async t => {
+  await t
+    .expect(Selector('[data-qa=contract-address]').textContent).ok();
+})
 
 
 test('Verifying not signed file', async t => {

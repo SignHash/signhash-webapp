@@ -1,4 +1,7 @@
-- name: build
+- name: build contracts data
+  service: app
+  command: npm run testrpc:persist:build
+- name: build webapp
   service: app
   command: npm run build
 - name: e2e

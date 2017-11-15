@@ -18,11 +18,15 @@ import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
-import Text.Smolder.Markup (text, (!), (#!))
+import Text.Smolder.Markup (Attribute, attribute, text, (!), (#!))
 
 
 foreign import images ::
   { logo :: String }
+
+
+dataQA :: String -> Attribute
+dataQA = attribute "data-qa"
 
 
 view :: State -> HTML Event
@@ -58,8 +62,9 @@ view { file, signer, contracts } =
 viewContracts :: Contracts.State -> HTML Event
 viewContracts Contracts.Loading =
   text $ "Loading contract..."
-viewContracts (Contracts.Loaded state) =
-  text $ "Contract: " <> (address state.signerContract)
+viewContracts (Contracts.Loaded state) = do
+  span $ text $ "Contract: "
+  span ! dataQA "contract-address" $ text $ address state.signerContract
 viewContracts (Contracts.Error err) = do
   div
     ! A.title err
