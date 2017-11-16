@@ -1,6 +1,6 @@
 # SignHash Web UI
 
-[![Codeship](https://img.shields.io/codeship/87c04150-8dac-0135-07c8-724a96aff59c.svg)](https://app.codeship.com/projects/249705)
+[![Codeship](https://img.shields.io/codeship/87c04150-8dac-0135-07c8-724a96aff59c/master.svg)](https://app.codeship.com/projects/249705)
 
 SignHash dApp
 
