@@ -2,6 +2,7 @@ module App.State where
 
 import Prelude
 
+import App.Env (Env)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
@@ -36,12 +37,12 @@ type State =
        { network :: String }
   }
 
-init :: State
-init =
+init :: Env -> State
+init { rpcUrl } =
   { file: Nothing
   , signer: Nothing
   , contracts: Contracts.Loading
-  , defaults: { network: "http://localhost:8545" }
+  , defaults: { network: rpcUrl }
   }
 
 

@@ -1,4 +1,4 @@
-const appConfig = require('./src/App/Config.js').config;
+const appConfig = require('./src/App/Env.js').env;
 const path = require('path');
 const webpack = require('webpack');
 const isProd = process.env.NODE_ENV === 'production';
@@ -7,7 +7,8 @@ const entries = [path.join(__dirname, 'support/entry.js')];
 
 const plugins = [
   new webpack.DefinePlugin({
-    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV)
+    'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV),
+    'process.env.RPC_URL': JSON.stringify(process.env.RPC_URL)
   })
 ];
 
@@ -20,14 +21,14 @@ if (isProd) {
   );
 }
 
-module.exports = {
+module.exports = env => ({
   entry: entries,
   context: __dirname,
   target: 'web',
   output: {
     path: path.join(__dirname, 'static', 'dist'),
     filename: 'bundle.js',
-    publicPath: appConfig.public_path
+    publicPath: appConfig.publicPath
   },
   module: {
     loaders: [
@@ -92,4 +93,4 @@ module.exports = {
     modules: false,
     chunkModules: false
   }
-};
+});
