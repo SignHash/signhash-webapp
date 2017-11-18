@@ -7,8 +7,9 @@ const maxAppWarmup = 45;
 const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
 
 
-const signedFile = buildTestFile('signed.txt', accounts[0]);
-const unsignedFile = buildTestFile('unsigned.txt')
+const fileBuilder = buildTestFile(accounts);
+const signedFile = fileBuilder('signed.txt');
+const unsignedFile = fileBuilder('unsigned.txt')
 
 
 fixture`SignHash`
@@ -36,7 +37,7 @@ test('Verifying not signed file', async t => {
   await t
     .setFilesToUpload('#file-upload', file.path)
     .expect(text).contains(file.name)
-    .expect(text).contains(file.hash)
+    .expect(text).contains(file.checksum)
     .expect(text).contains("No signers");
 });
 
@@ -48,6 +49,6 @@ test('Verifying signed file', async t => {
   await t
     .setFilesToUpload('#file-upload', file.path)
     .expect(text).contains(file.name)
-    .expect(text).contains(file.hash)
-    .expect(text).contains(file.signer);
+    .expect(text).contains(file.checksum)
+    .expect(text).contains(file.signers[0]);
 });

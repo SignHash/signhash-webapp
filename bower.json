@@ -25,6 +25,7 @@
     "purescript-psci-support": "^3.0.0",
     "purescript-spec": "^2.0.0",
     "purescript-debug": "^3.0.0",
-    "purescript-node-fs": "^4.0.0"
+    "purescript-simple-json": "^1.0.0",
+    "purescript-node-fs-aff": "^5.0.0"
   }
 }
