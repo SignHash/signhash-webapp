@@ -1,5 +1,6 @@
 module Main where
 
+import App.Env (env)
 import App.State (AppEffects, Event(..), State, foldp, init)
 import App.View (view)
 import Control.Monad.Eff (Eff)
@@ -37,4 +38,4 @@ main url state = do
 
 
 initialState :: State
-initialState = init
+initialState = init env

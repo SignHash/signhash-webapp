@@ -2,16 +2,18 @@ module App.State where
 
 import Prelude
 
+import App.Env (Env)
+import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
-import App.State.Contracts as Contracts
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
 import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
+import Lib.SignHash.Contracts (getSigner)
 import Lib.SignHash.Types (HashSigner(HashSigner))
 import Lib.SignHash.Worker (WORKER)
 import Lib.Web3 (WEB3)
@@ -35,12 +37,12 @@ type State =
        { network :: String }
   }
 
-init :: State
-init =
+init :: Env -> State
+init { rpcUrl } =
   { file: Nothing
   , signer: Nothing
   , contracts: Contracts.Loading
-  , defaults: { network: "http://localhost:8545" }
+  , defaults: { network: rpcUrl }
   }
 
 
@@ -106,6 +108,16 @@ fileFoldp ::
   Files.Event ->
   State ->
   EffModel State Event AppEffects
+
+fileFoldp (Files.HashCalculated { hash }) state =
+  case state of
+    { contracts: Contracts.Loaded c } -> onlyEffects state $ [
+    do
+      signer <- getSigner c.signerContract hash
+      pure $ Just $ File $ Files.SignerFetched signer
+    ]
+    _ -> noEffects state
+
 fileFoldp (Files.SignerFetched (HashSigner address)) state =
   { state: state { signer = (Just $ Signers.init address) }
   , effects: [pure $ Just $ Signer $ Signers.Init]

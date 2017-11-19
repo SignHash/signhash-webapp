@@ -3,25 +3,35 @@ services:
   testcafe:
     build:
       context: ../
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/testcafe/Dockerfile
     links:
-      - "app"
+      - app
     volumes:
       - ../:/work
-      - node_modules:/work/node_modules
+      - ../../data:/data
+      - /work/node_modules
     environment:
       - SIGNHASH_URL=http://app:8080
     command: tests/
 
   app:
     build:
-      context: ../../../
-      dockerfile: docker/app/Dockerfile
+      context: .
+      dockerfile: ./app/Dockerfile
+    volumes:
+      - ../../../:/app
+      - /app/node_modules
+      - /app/bower_components
+      - /app/output
     expose:
       - "8080"
+      - "8545"
     ports:
       - "8080:8080"
-    command: npm run start:prod
-
-volumes:
-  node_modules:
+      - "8545:8545"
+    environment:
+      - RPC_URL=http://app:8545
+    # Note that testrpc has to run in the same container as webapp
+    # so that built json files are available
+    command: >
+      bash -c "npm install --unsafe-perm && npm-run-all -p testrpc start:prod"

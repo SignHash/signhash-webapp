@@ -4,5 +4,6 @@ output/
 dist/
 static/dist/
 .psci_modules
+.testrpc
 npm-debug.log
 **DS_Store

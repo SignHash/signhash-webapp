@@ -7,6 +7,7 @@ import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
 
 type Address = String
+type Checksum = String
 
 data HashSigner = HashSigner Address | NoSigner
 

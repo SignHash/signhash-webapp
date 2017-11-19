@@ -1,23 +1,20 @@
 import { Selector } from 'testcafe';
-import { readFileSync } from 'fs';
-import * as path from 'path';
 import * as got from 'got';
+import { TestFile, buildTestFile, waitForPage, accounts } from './utils';
 
 
-const maxAppWarmup = 15;
+const maxAppWarmup = 45;
 const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
 
 
-const knownFile = {
-  path: 'foo.txt',
-  name: 'foo.txt',
-  hash: readFileSync(path.join(__dirname, 'foo.hash')).toString().trim(),
-};
+const fileBuilder = buildTestFile(accounts);
+const signedFile = fileBuilder('signed.txt');
+const unsignedFile = fileBuilder('unsigned.txt')
 
 
 fixture`SignHash`
   .page(rootURL)
-  .before(waitForPage(maxAppWarmup));
+  .before(waitForPage(rootURL, maxAppWarmup));
 
 
 test('Site is available', async t => {
@@ -27,35 +24,31 @@ test('Site is available', async t => {
 });
 
 
-test('Verifying known hash', async t => {
-  const file = knownFile;
+test('Contract is loaded', async t => {
+  await t
+    .expect(Selector('[data-qa=contract-address]').textContent).ok();
+})
+
+
+test('Verifying not signed file', async t => {
+  const file = unsignedFile;
   const text = Selector('body').textContent;
 
   await t
     .setFilesToUpload('#file-upload', file.path)
     .expect(text).contains(file.name)
-    .expect(text).contains(file.hash);
+    .expect(text).contains(file.checksum)
+    .expect(text).contains("No signers");
 });
 
 
-function waitForPage(timeout: number) {
-  return async () => {
-    for (var i = 0; i < timeout; i++) {
-      try {
-        await got(rootURL, { timeout: 1000 });
-        break;
-      } catch (err) {
-        console.log('Fetching page failed, retrying');
-        await sleep(1000);
-      }
-    }
-  }
-}
+test('Verifying signed file', async t => {
+  const file = signedFile;
+  const text = Selector('body').textContent;
 
-
-
-function sleep(ms: number) {
-  return new Promise(resolve => {
-    setTimeout(resolve, ms)
-  })
-}
+  await t
+    .setFilesToUpload('#file-upload', file.path)
+    .expect(text).contains(file.name)
+    .expect(text).contains(file.checksum)
+    .expect(text).contains(file.signers[0]);
+});

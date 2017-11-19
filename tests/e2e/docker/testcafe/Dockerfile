@@ -9,5 +9,5 @@ WORKDIR /work
 
 EXPOSE 1337 1338
 
-COPY docker/entrypoint.sh /testcafe-docker.sh
+COPY docker/testcafe/entrypoint.sh /testcafe-docker.sh
 ENTRYPOINT ["/testcafe-docker.sh"]

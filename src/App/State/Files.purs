@@ -3,7 +3,6 @@ module App.State.Files where
 import Prelude
 
 import Lib.SignHash.Files (calculateFileHash)
-import Lib.SignHash.Signers (fetchHashSigners)
 import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Control.Monad.Aff.Console (CONSOLE)
@@ -78,13 +77,7 @@ foldp CalculateHash state =
   ]
 
 foldp (HashCalculated event) state =
-  { state: (fileResult .~ Just event) state
-  , effects: [
-    do
-      signer <- fetchHashSigners event.hash
-      pure $ Just $ SignerFetched signer
-    ]
-  }
+  noEffects $ (fileResult .~ Just event) state
 
 foldp (SignerFetched NoSigner) state =
   noEffects $ fileSigner .~ Just NoSigner $ state

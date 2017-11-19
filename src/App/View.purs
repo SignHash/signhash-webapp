@@ -18,11 +18,15 @@ import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
-import Text.Smolder.Markup (text, (!), (#!))
+import Text.Smolder.Markup (Attribute, attribute, text, (!), (#!))
 
 
 foreign import images ::
   { logo :: String }
+
+
+dataQA :: String -> Attribute
+dataQA = attribute "data-qa"
 
 
 view :: State -> HTML Event
@@ -36,26 +40,31 @@ view { file, signer, contracts } =
       child FileInput viewFileInput $ isJust file
       case file of
         Nothing -> empty
-        Just value -> do
-          viewFile value
-          h4 $ text "Signers"
-          div signerStatus
+        Just loaded -> do
+          viewFile loaded
+          div $ signerStatus loaded.signer
       hr
       viewContracts contracts
 
   where
-    signerStatus = case signer of
-      Nothing -> div do
-        text loading
-        hr
-      Just value -> child Signer viewSigner $ value
+    signerStatus = case _ of
+      Nothing -> h4 $ text "Loading signer..."
+      Just (NoSigner) -> h4 $ text "No signers"
+      Just (HashSigner s) -> do
+        h4 $ text $ "Signers:"
+        case signer of
+          Nothing -> div do
+            text loading
+            hr
+          Just value -> child Signer viewSigner $ value
 
 
 viewContracts :: Contracts.State -> HTML Event
 viewContracts Contracts.Loading =
   text $ "Loading contract..."
-viewContracts (Contracts.Loaded state) =
-  text $ "Contract: " <> (address state.signerContract)
+viewContracts (Contracts.Loaded state) = do
+  span $ text $ "Contract: "
+  span ! dataQA "contract-address" $ text $ address state.signerContract
 viewContracts (Contracts.Error err) = do
   div
     ! A.title err

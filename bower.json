@@ -19,11 +19,13 @@
     "purescript-profunctor-lenses": "^3.7.0",
     "purescript-random": "^3.0.0",
     "purescript-aff-promise": "^1.0.0",
-    "purescript-ffi-utils": "^3.0.0"
+    "purescript-ffi-utils": "^4.0.0"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",
     "purescript-spec": "^2.0.0",
-    "purescript-debug": "^3.0.0"
+    "purescript-debug": "^3.0.0",
+    "purescript-simple-json": "^1.0.0",
+    "purescript-node-fs-aff": "^5.0.0"
   }
 }

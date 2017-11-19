@@ -6,16 +6,23 @@ services:
       dockerfile: ./docker/app/Dockerfile
     volumes:
       - ./dist:/usr/src/app/static/dist
+      - ./testrpc-data:/usr/src/app/.testrpc
+      - ./contracts:/usr/src/app/node_modules/signhash-contracts/build
+      - ./output:/usr/src/app/output
+    environment:
+      - RPC_URL=http://app:8545
     expose:
       - "8080"
-    command: npm run serve
+      - "8545"
+    command: npm-run-all -p testrpc:persist:run start:prod:serve
   e2e:
     build:
       context: ./tests/e2e/
-      dockerfile: docker/Dockerfile
+      dockerfile: docker/testcafe/Dockerfile
     links:
       - "app"
     volumes:
       - ./tests/e2e:/work
+      - ./tests/data:/data
     environment:
       - SIGNHASH_URL=http://app:8080
