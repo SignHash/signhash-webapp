@@ -15,7 +15,7 @@
     "@types/got": "^7.1.4",
     "@types/node": "^8.0.37",
     "got": "^7.1.0",
-    "testcafe": "^0.18.3",
+    "testcafe": "^0.18.4",
     "typescript": "^2.5.3"
   }
 }
