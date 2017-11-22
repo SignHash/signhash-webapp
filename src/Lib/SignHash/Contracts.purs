@@ -12,11 +12,10 @@ import Data.Either (Either(..))
 import Data.Foreign (toForeign)
 import Data.Foreign.Index ((!))
 import Data.Maybe (maybe)
-import Debug.Trace (spy, traceA, traceAnyM)
 import FFI.Util (property)
 import FFI.Util.Function (call1, callEff2)
 import Lib.SignHash.Types (Checksum, HashSigner(..))
-import Lib.Web3 (WEB3, Web3, bytesFromASCII)
+import Lib.Web3 (Bytes(..), WEB3, Web3)
 
 
 type Address = String
@@ -25,12 +24,22 @@ newtype ContractData t = ContractData t
 
 class Contract c
 
+newtype Result e = Result e
+
 
 address :: forall c. Contract c => c -> Address
 address = prop "address"
 
 prop :: forall a b. String -> a -> b
 prop = flip property
+
+
+getResult :: forall a. Result a -> a
+getResult = prop "result"
+
+
+checksumToBytes :: String -> Bytes
+checksumToBytes = Bytes <<< append "0x"
 
 
 getDeployed ::
@@ -66,7 +75,7 @@ signerContract = getDeployed signerContractData
 foreign import _sign ::
   forall eff.
   SignerContract ->
-  Checksum ->
+  Bytes ->
   Address ->
   Eff (web3 :: WEB3 | eff) (Promise Unit)
 
@@ -78,7 +87,17 @@ sign ::
   Address ->
   Aff (web3 :: WEB3 | eff) (Either Error Unit)
 sign contract checksum signer =
-  attempt $ toAffE $ _sign contract ("0x" <> checksum) signer
+  attempt $ toAffE $ _sign contract (checksumToBytes checksum) signer
+
+
+rawGetSigners ::
+  forall eff.
+  SignerContract ->
+  Bytes ->
+  Int ->
+  Aff (web3 :: WEB3 | eff) (Result (Array String))
+rawGetSigners contract bytes size =
+  toAffE $ callEff2 contract "getSigners" bytes size
 
 
 getSigners ::
@@ -87,16 +106,12 @@ getSigners ::
   Checksum ->
   Int ->
   Aff (web3 :: WEB3 | eff) (Array String)
-getSigners contract checksum size = do
-  value <- toAffE $ callEff2 contract "getSigners" ("0x" <> checksum) size
-  pure $ getResult value
+getSigners contract checksum size =
+  getResult <$> rawGetSigners contract (checksumToBytes checksum) size
+
 
 getSigner ::
   forall eff. SignerContract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
 getSigner contract checksum = do
   signers <- getSigners contract checksum 1
   pure $ maybe NoSigner HashSigner $ head signers
-
-
-getResult :: forall a b. a -> b
-getResult = prop "0"
