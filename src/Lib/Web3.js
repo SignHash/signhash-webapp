@@ -1,19 +1,17 @@
-var Web3 = require('web3');
-
-var web3Utils = new Web3();
+var Eth = require('ethjs');
 
 
-exports.bytesFromASCII = web3Utils.fromAscii;
+exports.bytesFromASCII = Eth.fromAscii;
 
 
 exports.buildWeb3 = function (config) {
-  return new Web3(new Web3.providers.HttpProvider(config));
+  return new Eth(new Eth.HttpProvider(config));
 };
 
 
 exports._getInjectedWeb3 = function() {
   if (typeof web3 !== 'undefined') {
-    return web3;
+    return new Eth(web3.currentProvider);
   } else {
     return undefined;
   }
