@@ -28,6 +28,11 @@ instance showProofMethod :: Show ProofMethod where
   show = genericShow
 
 
+canonicalName :: ProofMethod -> String
+canonicalName HTTP = "http"
+canonicalName GitHub = "github"
+
+
 data ProofVerification =
   Verified String |
   Unverified String |

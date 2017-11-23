@@ -12,7 +12,7 @@ import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.SignHash.Contracts (address)
-import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..))
+import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..), canonicalName)
 import Prelude (discard, show, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
@@ -132,9 +132,10 @@ viewProofs proofs =
       tr ! className cls $ do
         td $ text $ show method
         td $ renderIcon icon
-        td $ text $ msg
+        td ! dataQA tagname $ text $ msg
       where
         {icon, msg, cls} = proofDetails state
+        tagname = "proof-details-" <> canonicalName method
 
     proofDetails Signers.Pending =
       { icon: "fa-spinner", msg: "", cls: ""}
