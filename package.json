@@ -25,7 +25,8 @@
     "testrpc:persist:reset": "rimraf .testrpc/* && mkdir -p .testrpc && npm run testrpc:persist:run",
     "testrpc:data:setup": "npm-run-all contracts:migrate fixtures:load",
     "contracts:migrate": "npm explore signhash-contracts -- npm run migrate",
-    "fixtures:load": "pulp run -m Tests.Data.Setup -I src:tests/data"
+    "fixtures:load": "pulp run -m Tests.Data.Setup -I src:tests/data",
+    "fixtures:generate": "pulp run -m Tests.Data.Generator -I src:tests/data"
   },
   "repository": {
     "type": "git",
@@ -58,11 +59,13 @@
     "xhr2": "^0.1.3"
   },
   "devDependencies": {
+    "base-x": "^3.0.2",
     "css-loader": "^0.28.7",
     "ethereumjs-testrpc": "^6.0.3",
     "file-loader": "^1.1.5",
     "node-sass": "^4.5.3",
     "sass-loader": "^6.0.6",
+    "secp256k1": "^3.3.1",
     "signhash-contracts": "^0.2.1",
     "style-loader": "^0.19.0",
     "url-loader": "^0.6.2",
