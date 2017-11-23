@@ -10,15 +10,16 @@ import Control.Monad.Eff.Exception (EXCEPTION, Error)
 import Data.Array (filter, index)
 import Data.Either (Either(..), either)
 import Data.Maybe (fromJust)
-import Data.String (Pattern(..), contains)
+import Data.String (Pattern(..), contains, split)
 import Data.Traversable (for_, traverse)
 import Lib.SignHash.Contracts (sign, signerContract)
 import Lib.SignHash.Types (Checksum)
-import Lib.Web3 (WEB3, buildWeb3, getAccounts)
+import Lib.Web3 (WEB3, buildWeb3)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (FS, readTextFile, readdir)
 import Partial.Unsafe (unsafePartial)
 import Simple.JSON (readJSON)
+import Tests.Data.Generator as Generator
 
 
 liftError :: forall res eff. Either Error res -> Aff (eff) res
@@ -56,15 +57,19 @@ main ::
   , exception :: EXCEPTION
   ) Unit
 main = void $ runAff logShow do
-  filePaths <- buildPaths <$> readdir rootPath
-  accounts <- getAccounts web3
+  accounts <- readAccounts
+  filePaths <- buildPaths <$> readdir Generator.rootFilesPath
   files <- traverse loadFile filePaths
   void $ signFiles accounts files
   where
-    rootPath = "./tests/data/files/"
-    buildPaths = (map $ append rootPath)
-                 <<< filter (not contains (Pattern ".json"))
     web3 = buildWeb3 "http://localhost:8545"
+
+    buildPaths = (map $ append Generator.rootFilesPath)
+                 <<< filter (not contains (Pattern ".json"))
+
+    readAccounts = do
+      content <- readTextFile UTF8 Generator.accountsPath
+      pure $ split (Pattern "\n") content
 
     signFiles accounts files = do
       void $ traverse (signFile accounts) files
