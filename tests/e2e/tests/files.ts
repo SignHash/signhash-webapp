@@ -1,33 +1,14 @@
 import { Selector } from 'testcafe';
-import * as got from 'got';
-import { TestFile, buildTestFile, waitForPage, accounts } from './utils';
+import { rootFixture } from './utils';
+import { fileBuilder } from './fixtures';
 
 
-const maxAppWarmup = 45;
-const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
-
-
-const fileBuilder = buildTestFile(accounts);
 const signedFile = fileBuilder('signed.txt');
 const unsignedFile = fileBuilder('unsigned.txt')
 
 
-fixture`SignHash`
-  .page(rootURL)
-  .before(waitForPage(rootURL, maxAppWarmup));
-
-
-test('Site is available', async t => {
-  await t
-    .expect(Selector('body').textContent)
-    .contains('SignHash');
-});
-
-
-test('Contract is loaded', async t => {
-  await t
-    .expect(Selector('[data-qa=contract-address]').textContent).ok();
-})
+const f = fixture(`Files`)
+rootFixture(f);
 
 
 test('Verifying not signed file', async t => {
