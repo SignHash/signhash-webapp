@@ -7,7 +7,7 @@
     "test": "test"
   },
   "scripts": {
-    "test": "testcafe chrome tests/"
+    "test": "testcafe chrome"
   },
   "author": "",
   "license": "ISC",
