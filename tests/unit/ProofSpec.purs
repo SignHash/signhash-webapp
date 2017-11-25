@@ -1,4 +1,4 @@
-module App.Tests.ProofSpec where
+module Tests.Unit.ProofSpec where
 
 import Prelude
 

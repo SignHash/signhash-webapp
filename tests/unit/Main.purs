@@ -1,4 +1,4 @@
-module App.Tests.Main where
+module Tests.Unit.Main where
 
 import Prelude
 import Control.Monad.Eff (Eff)
