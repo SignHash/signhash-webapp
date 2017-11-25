@@ -1,3 +1,6 @@
+- name: unit testing
+  service: app
+  command: npm run test:unit
 - name: build contracts data
   service: app
   command: npm run testrpc:persist:build
