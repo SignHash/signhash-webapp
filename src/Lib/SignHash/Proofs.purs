@@ -7,7 +7,8 @@ import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Data.Either (Either(..))
-import Lib.SignHash.Types (Address, ProofMethod(..), ProofVerification(..))
+import Lib.SignHash.Proofs.Types (ProofVerification(..))
+import Lib.SignHash.Types (Address, ProofMethod(..))
 import Network.HTTP.Affjax (AJAX, get)
 
 
@@ -23,7 +24,7 @@ fetchProof address method = do
   let
     toProof r = case choice of
       1 -> Verified r.response
-      2 -> Unverified r.response
+      -- 2 -> Unverified r.response
       _ -> Unavailable
 
   result <- attempt $ get "http://setgetgo.com/randomword/get.php"

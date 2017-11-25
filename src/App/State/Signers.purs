@@ -3,7 +3,8 @@ module App.State.Signers where
 import Prelude
 
 import Lib.SignHash.Proofs (fetchProof)
-import Lib.SignHash.Types (Address, ProofMethod, ProofVerification, allProofMethods)
+import Lib.SignHash.Proofs.Types (ProofVerification)
+import Lib.SignHash.Types (Address, ProofMethod, allProofMethods)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Random (RANDOM)

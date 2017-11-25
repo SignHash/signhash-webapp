@@ -12,7 +12,8 @@ import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.SignHash.Contracts (address)
-import Lib.SignHash.Types (HashSigner(..), ProofMethod, ProofVerification(..), canonicalName)
+import Lib.SignHash.Proofs.Types (ProofVerification(..))
+import Lib.SignHash.Types (HashSigner(..), ProofMethod, canonicalName)
 import Prelude (discard, show, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
@@ -145,7 +146,7 @@ viewProofs proofs =
     proofDetails (Signers.Finished (Verified msg)) =
       { icon: "fa-check", msg, cls: "verified"}
     proofDetails (Signers.Finished (Unverified msg)) =
-      { icon: "fa-exclamation-circle", msg: "Failed: " <> msg, cls: "failed" }
+      { icon: "fa-exclamation-circle", msg: "Failed: " <> show msg, cls: "failed" }
     proofDetails (Signers.Finished Unavailable) =
       { icon: "fa-ban", msg: "No proof defined", cls: "not-defined"}
 

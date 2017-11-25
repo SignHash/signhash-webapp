@@ -33,11 +33,5 @@ canonicalName HTTP = "http"
 canonicalName GitHub = "github"
 
 
-data ProofVerification =
-  Verified String |
-  Unverified String |
-  Unavailable
-
-
 allProofMethods :: Array ProofMethod
 allProofMethods = [HTTP, GitHub]
