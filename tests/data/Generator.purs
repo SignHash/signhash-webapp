@@ -25,6 +25,10 @@ rootFilesPath :: String
 rootFilesPath = "./tests/data/files/"
 
 
+accountsProofsPath :: String
+accountsProofsPath = "./tests/data/proofs.json"
+
+
 main ::
   Eff
   (console :: CONSOLE

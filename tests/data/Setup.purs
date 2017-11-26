@@ -7,18 +7,20 @@ import Control.Monad.Aff.Console (log)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Console (CONSOLE, logShow)
 import Control.Monad.Eff.Exception (EXCEPTION, Error)
-import Data.Array (filter, index)
+import Data.Array (filter, index, mapWithIndex)
 import Data.Either (Either(..), either)
-import Data.Maybe (fromJust)
+import Data.Maybe (Maybe(..), fromJust)
+import Data.StrMap (StrMap, lookup)
 import Data.String (Pattern(..), contains, split)
 import Data.Traversable (for_, traverse)
-import Lib.SignHash.Contracts (sign, signerContract)
+import Data.Tuple (Tuple(..))
+import Lib.SignHash.Contracts (SignerContract, sign, signerContract, addProof)
 import Lib.SignHash.Types (Checksum)
 import Lib.Web3 (WEB3, buildWeb3)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (FS, readTextFile, readdir)
 import Partial.Unsafe (unsafePartial)
-import Simple.JSON (readJSON)
+import Simple.JSON (class ReadForeign, readJSON)
 import Tests.Data.Generator as Generator
 
 
@@ -37,6 +39,17 @@ type FileFixture =
   , meta :: FileFixtureMeta }
 
 
+type Proofs = Array { key :: String, value :: String }
+
+type AccountProofsMap = StrMap Proofs
+
+
+easyReadJSON :: forall a eff. ReadForeign a => String -> Aff (eff) a
+easyReadJSON raw = case readJSON raw of
+  Left err -> throwError $ error $ show $ err
+  Right value -> pure value
+
+
 loadFile ::
   forall eff.
   String ->
@@ -45,9 +58,30 @@ loadFile path = do
   log $ "Loading " <> path <> "..."
   content <- readTextFile UTF8 path
   rawMeta <- readTextFile UTF8 (path <> ".json")
-  case readJSON rawMeta of
-    Left err -> throwError $ error $ show $ err
-    Right meta -> pure { content, meta, path }
+  meta <- easyReadJSON rawMeta
+  pure { content, meta, path }
+
+
+setupProofs ::
+  forall eff
+  . SignerContract
+  -> Array String
+  -> Aff (fs :: FS, console:: CONSOLE, web3 :: WEB3 | eff) Unit
+setupProofs contract accounts = do
+  raw <- readTextFile UTF8 Generator.accountsProofsPath
+  proofsMap :: AccountProofsMap <- easyReadJSON raw
+  void $ traverse (addAccountProofs proofsMap) (mapWithIndex Tuple accounts)
+  where
+    addAccountProofs proofsMap (Tuple i acc) =
+      let index = show i
+      in case lookup index proofsMap of
+        Nothing -> pure unit
+        Just proofs -> void $ traverse (addAccountProof index acc) proofs
+
+    addAccountProof index acc { key, value } = do
+      log $ "Adding account " <> index <> " " <> acc
+        <> " proof " <> key <> ":" <> value
+      addProof contract key value acc
 
 main ::
   Eff
@@ -57,13 +91,16 @@ main ::
   , exception :: EXCEPTION
   ) Unit
 main = void $ runAff logShow do
+  let web3 = buildWeb3 "http://localhost:8545"
+  contract <- liftError =<< signerContract web3
   accounts <- readAccounts
   filePaths <- buildPaths <$> readdir Generator.rootFilesPath
   files <- traverse loadFile filePaths
-  void $ signFiles accounts files
-  where
-    web3 = buildWeb3 "http://localhost:8545"
 
+  signFiles contract accounts files
+  setupProofs contract accounts
+
+  where
     buildPaths = (map $ append Generator.rootFilesPath)
                  <<< filter (not contains (Pattern ".json"))
 
@@ -71,11 +108,10 @@ main = void $ runAff logShow do
       content <- readTextFile UTF8 Generator.accountsPath
       pure $ split (Pattern "\n") content
 
-    signFiles accounts files = do
-      void $ traverse (signFile accounts) files
+    signFiles contract accounts files = do
+      void $ traverse (signFile contract accounts) files
 
-    signFile accounts file = do
+    signFile contract accounts file = do
       for_ file.meta.signers \acc -> do
         let signerAcc = unsafePartial $ fromJust $ index accounts acc
-        contract <- liftError =<< signerContract web3
         sign contract file.meta.checksum signerAcc

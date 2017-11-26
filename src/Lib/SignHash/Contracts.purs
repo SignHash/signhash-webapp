@@ -115,3 +115,23 @@ getSigner ::
 getSigner contract checksum = do
   signers <- getSigners contract checksum 1
   pure $ maybe NoSigner HashSigner $ head signers
+
+
+foreign import _addProof ::
+  forall eff
+  . SignerContract
+  -> Bytes
+  -> Bytes
+  -> Address
+  -> Eff (web3 :: WEB3 | eff) (Promise Unit)
+
+
+addProof ::
+  forall eff
+  . SignerContract
+  -> String
+  -> String
+  -> Address
+  -> Aff (web3 :: WEB3 | eff) Unit
+addProof contract key value from = do
+  toAffE $ _addProof contract (Bytes key) (Bytes value) from
