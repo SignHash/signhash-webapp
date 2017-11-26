@@ -35,9 +35,7 @@ parseAddressList rawText =
 
 
 parseProof :: String -> Either ParsingError (Array String)
-parseProof proof =
-  parsePreambule proof
-  >>= parseAddressList
+parseProof = parsePreambule >=> parseAddressList
   where
     parsePreambule proof =
       case stripPrefix (Pattern validPreambule) proof of
