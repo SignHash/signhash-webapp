@@ -14,8 +14,8 @@ import Data.StrMap (StrMap, lookup)
 import Data.String (Pattern(..), contains, split)
 import Data.Traversable (for_, traverse)
 import Data.Tuple (Tuple(..))
-import Lib.SignHash.Contracts (SignerContract, sign, signerContract, addProof)
-import Lib.SignHash.Types (Checksum)
+import Lib.SignHash.Contracts (SignerContract, addProof, sign, signerContract)
+import Lib.SignHash.Types (Address(..), Checksum)
 import Lib.Web3 (WEB3, buildWeb3)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (FS, readTextFile, readdir)
@@ -65,7 +65,7 @@ loadFile path = do
 setupProofs ::
   forall eff
   . SignerContract
-  -> Array String
+  -> Array Address
   -> Aff (fs :: FS, console:: CONSOLE, web3 :: WEB3 | eff) Unit
 setupProofs contract accounts = do
   raw <- readTextFile UTF8 Generator.accountsProofsPath
@@ -79,7 +79,7 @@ setupProofs contract accounts = do
         Just proofs -> void $ traverse (addAccountProof index acc) proofs
 
     addAccountProof index acc { key, value } = do
-      log $ "Adding account " <> index <> " " <> acc
+      log $ "Adding account " <> index <> " " <> show acc
         <> " proof " <> key <> ":" <> value
       addProof contract key value acc
 
@@ -106,7 +106,7 @@ main = void $ runAff logShow do
 
     readAccounts = do
       content <- readTextFile UTF8 Generator.accountsPath
-      pure $ split (Pattern "\n") content
+      pure $ Address <$> split (Pattern "\n") content
 
     signFiles contract accounts files = do
       void $ traverse (signFile contract accounts) files

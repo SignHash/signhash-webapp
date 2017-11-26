@@ -4,10 +4,11 @@ import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Lib.SignHash.Types (Address)
 
 
 data ProofVerification =
-  Verified String |
+  Verified Address |
   Unverified VerificationError |
   Unavailable
 

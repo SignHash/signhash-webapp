@@ -8,7 +8,8 @@ import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Random (RANDOM, randomInt)
 import Data.Either (Either(..))
 import Lib.SignHash.Proofs.Types (ProofVerification(..))
-import Lib.SignHash.Types (Address, ProofMethod(..))
+import Lib.SignHash.Types (Address(..), ProofMethod(..))
+import Lib.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX, get)
 
 
@@ -23,7 +24,7 @@ fetchProof address method = do
 
   let
     toProof r = case choice of
-      1 -> Verified r.response
+      1 -> Verified $ Address (r.response :: String)
       -- 2 -> Unverified r.response
       _ -> Unavailable
 

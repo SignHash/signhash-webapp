@@ -11,7 +11,7 @@ import Data.Map (toUnfoldable)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
-import Lib.SignHash.Contracts (address)
+import Lib.SignHash.Contracts (getAddress)
 import Lib.SignHash.Proofs.Types (ProofVerification(..))
 import Lib.SignHash.Types (HashSigner(..), ProofMethod, canonicalName)
 import Prelude (discard, show, ($), (<>))
@@ -65,7 +65,8 @@ viewContracts Contracts.Loading =
   text $ "Loading contract..."
 viewContracts (Contracts.Loaded state) = do
   span $ text $ "Contract: "
-  span ! dataQA "contract-address" $ text $ address state.signerContract
+  span ! dataQA "contract-address"
+    $ text $ show $ getAddress state.signerContract
 viewContracts (Contracts.Error err) = do
   div
     ! A.title err
@@ -106,14 +107,14 @@ viewFile { meta, result, signer } = do
         th $ text label
         td $ text value
 
-    renderSigner (HashSigner address) = address
+    renderSigner (HashSigner address) = show address
     renderSigner NoSigner = "Not signed"
 
 
 viewSigner :: Signers.State -> HTML Signers.Event
 viewSigner { address, proofs } = do
   div $ do
-    h5 $ text $ "#" <> address
+    h5 $ text $ "#" <> show address
     viewProofs proofs
 
 
@@ -144,7 +145,7 @@ viewProofs proofs =
       { icon: "fa-exclamation-triangle"
       , msg: "Network error", cls: "network-error"}
     proofDetails (Signers.Finished (Verified msg)) =
-      { icon: "fa-check", msg, cls: "verified"}
+      { icon: "fa-check", msg: show msg, cls: "verified"}
     proofDetails (Signers.Finished (Unverified msg)) =
       { icon: "fa-exclamation-circle", msg: "Failed: " <> show msg, cls: "failed" }
     proofDetails (Signers.Finished Unavailable) =

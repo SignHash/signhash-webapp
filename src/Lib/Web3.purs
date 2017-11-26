@@ -11,7 +11,6 @@ import Data.Either (Either(..))
 import Data.Foreign (Foreign, readNullOrUndefined, unsafeFromForeign)
 import Data.Maybe (Maybe(..))
 import FFI.Util (property)
-import Lib.SignHash.Types (Address)
 
 
 foreign import data Web3 :: Type
@@ -21,6 +20,13 @@ type Web3Config = String
 type Web3Aff eff res = Aff (web3 :: WEB3 | eff) res
 
 newtype Bytes = Bytes String
+
+newtype Address = Address String
+
+derive instance eqAddress :: Eq Address
+instance showAddress :: Show Address where
+  show (Address a) = a
+
 
 foreign import bytesFromASCII :: String -> Bytes
 foreign import buildWeb3 :: Web3Config -> Web3

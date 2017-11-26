@@ -14,11 +14,9 @@ import Data.Foreign.Index ((!))
 import Data.Maybe (maybe)
 import FFI.Util (property)
 import FFI.Util.Function (call1, callEff2)
-import Lib.SignHash.Types (Checksum, HashSigner(..))
-import Lib.Web3 (Bytes(..), WEB3, Web3)
+import Lib.SignHash.Types (Checksum, HashSigner(..), ProofMethod)
+import Lib.Web3 (Address(..), Bytes(..), WEB3, Web3)
 
-
-type Address = String
 
 newtype ContractData t = ContractData t
 
@@ -27,8 +25,9 @@ class Contract c
 newtype Result e = Result e
 
 
-address :: forall c. Contract c => c -> Address
-address = prop "address"
+getAddress :: forall c. Contract c => c -> Address
+getAddress = prop "address"
+
 
 prop :: forall a b. String -> a -> b
 prop = flip property
@@ -114,7 +113,7 @@ getSigner ::
   forall eff. SignerContract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
 getSigner contract checksum = do
   signers <- getSigners contract checksum 1
-  pure $ maybe NoSigner HashSigner $ head signers
+  pure $ maybe NoSigner (HashSigner <<< Address) $ head signers
 
 
 foreign import _addProof ::
