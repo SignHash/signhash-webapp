@@ -15,6 +15,7 @@ services:
       - "8080"
       - "8545"
     command: npm-run-all -p testrpc:persist:run start:prod:serve
+    cached: true
   e2e:
     build:
       context: ./tests/e2e/
@@ -26,3 +27,4 @@ services:
       - ./tests/data:/data
     environment:
       - SIGNHASH_URL=http://app:8080
+    cached: true
