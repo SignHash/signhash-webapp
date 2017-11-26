@@ -27,7 +27,8 @@
     "contracts:migrate": "npm explore signhash-contracts -- npm run migrate",
     "fixtures:load": "pulp run -m Tests.Data.Setup -I src:tests/data",
     "fixtures:generate": "pulp run -m Tests.Data.Generator -I src:tests/data",
-    "test:unit": "pulp run -m Tests.Unit.Main -I src:tests/unit"
+    "test:unit": "pulp run -m Tests.Unit.Main -I src:tests/unit",
+    "build:purs": "pulp build -I src:tests"
   },
   "repository": {
     "type": "git",
