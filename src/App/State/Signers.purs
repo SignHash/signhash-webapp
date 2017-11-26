@@ -2,25 +2,26 @@ module App.State.Signers where
 
 import Prelude
 
-import Lib.SignHash.Proofs (fetchProof)
-import Lib.SignHash.Proofs.Types (ProofVerification)
-import Lib.SignHash.Types (Address, ProofMethod, allProofMethods)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Random (RANDOM)
-import Data.Either (either)
+import Data.Either (Either, either)
 import Data.Lens (Traversal', (%~))
 import Data.Lens.Record (prop)
 import Data.Map (Map, empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Lib.SignHash.Contracts (SignerContract)
+import Lib.SignHash.Proofs (fetchProof)
+import Lib.SignHash.Proofs.Types (ProofVerification)
+import Lib.SignHash.Types (Address, ProofMethod, allProofMethods)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event =
   Init |
-  FetchProof ProofMethod |
+  FetchProof Address ProofMethod |
   ProofFetched ProofMethod ProofVerification |
   ProofFetchingError ProofMethod Error
 
@@ -60,26 +61,15 @@ foldp ::
   Event -> State -> EffModel State Event (SignerEffects eff)
 foldp Init state =
   onlyEffects state $
-  pure <$> Just <$> FetchProof <$> allProofMethods
-foldp (FetchProof method) state =
-  { state: signerProofs %~ insertProof $ state
-  , effects: [fetchProofEffect]
-  }
+  pure <$> Just <$> FetchProof state.address <$> allProofMethods
+foldp (FetchProof address method) state =
+  noEffects $ signerProofs %~ insertProof $ state
   where
     insertProof = insert method Pending
-    fetchProofEffect = do
-      proof <- fetchProof state.address method
-      pure $ Just $
-        either
-        (ProofFetchingError method)
-        (ProofFetched method)
-        proof
-
 foldp (ProofFetched method proof) state =
   noEffects $ signerProofs %~ updateProof $ state
   where
     updateProof = insert method $ Finished proof
-
 foldp (ProofFetchingError method error) state =
   { state: signerProofs %~ setError $ state,
     effects: [ (log $ show error) *> pure Nothing ] }

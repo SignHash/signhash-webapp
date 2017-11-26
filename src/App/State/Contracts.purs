@@ -21,7 +21,10 @@ data Event =
 data State =
   Loading |
   Error String |
-  Loaded
+  Loaded LoadedState
+
+
+type LoadedState =
   { web3 :: Web3
   , signerContract :: SignerContract }
 

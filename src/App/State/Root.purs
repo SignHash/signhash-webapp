@@ -11,9 +11,11 @@ import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
+import Data.Either (either)
 import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts (getSigner)
+import Lib.SignHash.Proofs (fetchProof)
 import Lib.SignHash.Types (HashSigner(HashSigner))
 import Lib.SignHash.Worker (WORKER)
 import Lib.Web3 (WEB3)
@@ -37,6 +39,10 @@ type State =
        { network :: String }
   }
 
+
+type FoldpResult = EffModel State Event AppEffects
+
+
 init :: Env -> State
 init { rpcUrl } =
   { file: Nothing
@@ -57,10 +63,7 @@ type AppEffects =
   )
 
 
-foldp ::
-  Event ->
-  State ->
-  EffModel State Event AppEffects
+foldp :: Event -> State -> FoldpResult
 
 foldp Init state =
   onlyEffects state [
@@ -95,32 +98,50 @@ foldp (File event) baseState =
         # mapEffects File
         # mapState \s -> state { file = Just s }
 
-foldp (Signer event) state =
-  case state.signer of
-    Nothing -> noEffects $ state
-    Just signerState ->
-      Signers.foldp event signerState
-      # mapEffects Signer
-      # mapState \s -> state { signer = Just s }
+foldp (Signer event) baseState =
+  mergeEffModels signerEff (signerFoldp event) baseState
+  where
+    signerEff state = case state.signer of
+      Nothing -> noEffects $ state
+      Just signerState ->
+        Signers.foldp event signerState
+        # mapEffects Signer
+        # mapState \s -> state { signer = Just s }
 
 
-fileFoldp ::
-  Files.Event ->
-  State ->
-  EffModel State Event AppEffects
+fileFoldp :: Files.Event -> State -> FoldpResult
 
 fileFoldp (Files.HashCalculated { hash }) state =
-  case state of
-    { contracts: Contracts.Loaded c } -> onlyEffects state $ [
+  whenContractsLoaded state \c -> onlyEffects state $ [
     do
       signer <- getSigner c.signerContract hash
       pure $ Just $ File $ Files.SignerFetched signer
     ]
-    _ -> noEffects state
 
 fileFoldp (Files.SignerFetched (HashSigner address)) state =
   { state: state { signer = (Just $ Signers.init address) }
   , effects: [pure $ Just $ Signer $ Signers.Init]
   }
 
-fileFoldp _ state = noEffects $ state
+fileFoldp _ state = noEffects state
+
+
+signerFoldp :: Signers.Event -> State -> FoldpResult
+signerFoldp (Signers.FetchProof address method) state =
+  whenContractsLoaded state \c -> onlyEffects state $ [
+    do
+      proof <- fetchProof address method
+      pure $ Just $ Signer $ either
+        (Signers.ProofFetchingError method)
+        (Signers.ProofFetched method)
+        proof
+  ]
+signerFoldp _ state = noEffects state
+
+
+whenContractsLoaded ::
+  State
+  -> (Contracts.LoadedState -> FoldpResult)
+  -> FoldpResult
+whenContractsLoaded { contracts: Contracts.Loaded c } fun = fun c
+whenContractsLoaded state _ = noEffects state
