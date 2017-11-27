@@ -7,9 +7,12 @@ import Data.Generic.Rep.Show (genericShow)
 import Lib.SignHash.Types (Address)
 
 
+type ProofName = String
+
+
 data ProofVerification =
-  Verified Address |
-  Unverified VerificationError |
+  Verified ProofName |
+  Unverified ProofName VerificationError |
   Unavailable
 
 
@@ -22,7 +25,7 @@ instance showProofVerification :: Show ProofVerification where
 
 data VerificationError =
   ParsingFailed ParsingError |
-  UnconfirmedAddress String (Array String)
+  UnconfirmedAddress Address (Array Address)
 
 
 derive instance eqVerificationError :: Eq VerificationError

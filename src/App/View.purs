@@ -136,7 +136,7 @@ viewProofs proofs =
         td $ renderIcon icon
         td ! dataQA tagname $ text $ msg
       where
-        {icon, msg, cls} = proofDetails state
+        { icon, msg, cls } = proofDetails state
         tagname = "proof-details-" <> canonicalName method
 
     proofDetails Signers.Pending =
@@ -144,10 +144,13 @@ viewProofs proofs =
     proofDetails Signers.NetworkError =
       { icon: "fa-exclamation-triangle"
       , msg: "Network error", cls: "network-error"}
-    proofDetails (Signers.Finished (Verified msg)) =
-      { icon: "fa-check", msg: show msg, cls: "verified"}
-    proofDetails (Signers.Finished (Unverified msg)) =
-      { icon: "fa-exclamation-circle", msg: "Failed: " <> show msg, cls: "failed" }
+    proofDetails (Signers.Finished (Verified proofValue)) =
+      { icon: "fa-check", msg: "Verified: " <> proofValue, cls: "verified"}
+    proofDetails (Signers.Finished (Unverified proofValue error)) =
+      { icon: "fa-exclamation-circle"
+      , msg: "Verification failed for " <> proofValue <> ": " <> show error
+      , cls: "failed"
+      }
     proofDetails (Signers.Finished Unavailable) =
       { icon: "fa-ban", msg: "No proof defined", cls: "not-defined"}
 

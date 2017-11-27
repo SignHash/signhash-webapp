@@ -1,6 +1,10 @@
 {
   "1": [{
     "key": "github",
-    "value": "foobar"
+    "value": "invalid"
+  }],
+  "2": [{
+    "key": "github",
+    "value": "foobar32167"
   }]
 }

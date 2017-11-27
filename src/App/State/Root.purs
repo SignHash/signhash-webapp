@@ -130,7 +130,7 @@ signerFoldp :: Signers.Event -> State -> FoldpResult
 signerFoldp (Signers.FetchProof address method) state =
   whenContractsLoaded state \c -> onlyEffects state $ [
     do
-      proof <- fetchProof address method
+      proof <- fetchProof c.signerContract address method
       pure $ Just $ Signer $ either
         (Signers.ProofFetchingError method)
         (Signers.ProofFetched method)

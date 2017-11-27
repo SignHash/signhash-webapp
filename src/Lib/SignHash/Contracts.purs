@@ -11,10 +11,10 @@ import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Foreign (toForeign)
 import Data.Foreign.Index ((!))
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..), maybe)
 import FFI.Util (property)
 import FFI.Util.Function (call1, callEff2)
-import Lib.SignHash.Types (Checksum, HashSigner(..), ProofMethod)
+import Lib.SignHash.Types (Checksum, HashSigner(..), ProofMethod, canonicalName)
 import Lib.Web3 (Address(..), Bytes(..), WEB3, Web3)
 
 
@@ -23,6 +23,9 @@ newtype ContractData t = ContractData t
 class Contract c
 
 newtype Result e = Result e
+
+
+type ProofValue = String
 
 
 getAddress :: forall c. Contract c => c -> Address
@@ -34,7 +37,7 @@ prop = flip property
 
 
 getResult :: forall a. Result a -> a
-getResult = prop "result"
+getResult = prop "0"
 
 
 checksumToBytes :: String -> Bytes
@@ -134,3 +137,19 @@ addProof ::
   -> Aff (web3 :: WEB3 | eff) Unit
 addProof contract key value from = do
   toAffE $ _addProof contract (Bytes key) (Bytes value) from
+
+
+getProof ::
+  forall eff
+  . SignerContract
+  -> Address
+  -> ProofMethod
+  -> Aff (web3 :: WEB3 | eff) (Maybe ProofValue)
+getProof contract address method = do
+  proofValue <- getResult <$> rawGetProof
+  pure case proofValue of
+    "" -> Nothing
+    value -> Just value
+  where
+    rawGetProof =
+      toAffE $ callEff2 contract "getProof" address (canonicalName method)

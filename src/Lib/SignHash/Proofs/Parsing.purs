@@ -8,6 +8,7 @@ import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, stripPrefix, trim)
 import Data.Traversable (traverse)
 import Lib.SignHash.Proofs.Types (ParsingError(..), ProofVerification(..), VerificationError(..))
+import Lib.SignHash.Types (Address(..))
 
 
 validPreambule :: String
@@ -19,7 +20,7 @@ addressLength :: Int
 addressLength = (length "0x") + 40
 
 
-parseAddressList :: String -> Either ParsingError (Array String)
+parseAddressList :: String -> Either ParsingError (Array Address)
 parseAddressList rawText =
   case trim rawText of
     "" -> Right []
@@ -29,12 +30,12 @@ parseAddressList rawText =
   where
     toAddress a =
       if length a == addressLength then
-        Right a
+        Right $ Address a
       else
         Left $ InvalidAddress rawText
 
 
-parseProof :: String -> Either ParsingError (Array String)
+parseProof :: String -> Either ParsingError (Array Address)
 parseProof = parsePreambule >=> parseAddressList
   where
     parsePreambule proof =
@@ -43,11 +44,11 @@ parseProof = parsePreambule >=> parseAddressList
         Just suffix -> Right $ suffix
 
 
-validateProof :: String -> String -> ProofVerification
+validateProof :: Address -> String -> Either VerificationError Unit
 validateProof address =
-  either (Unverified <<< ParsingFailed) verifyAddress <<< parseProof
+  either (Left <<< ParsingFailed) verifyAddress <<< parseProof
   where
     verifyAddress addresses =
       case elemIndex address addresses of
-        Nothing -> Unverified $ UnconfirmedAddress address addresses
-        Just i -> Unverified $ UnconfirmedAddress address []
+        Nothing -> Left $ UnconfirmedAddress address addresses
+        Just i -> Right unit
