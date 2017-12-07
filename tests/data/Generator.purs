@@ -25,6 +25,10 @@ rootFilesPath :: String
 rootFilesPath = "./tests/data/files/"
 
 
+accountsProofsPath :: String
+accountsProofsPath = "./tests/data/proofs.json"
+
+
 main ::
   Eff
   (console :: CONSOLE
@@ -42,7 +46,8 @@ main = void $ runAff logShow do
     enumerate = mapWithIndex Tuple
 
     saveAccounts accounts =
-      writeTextFile UTF8 accountsPath (("\n" `joinWith` accounts) <> "\n")
+      writeTextFile UTF8 accountsPath
+      (("\n" `joinWith` (show <$> accounts)) <> "\n")
 
     generateSignedFile (Tuple i account) = do
       let

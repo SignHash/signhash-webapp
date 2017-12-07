@@ -11,14 +11,12 @@ import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Foreign (toForeign)
 import Data.Foreign.Index ((!))
-import Data.Maybe (maybe)
+import Data.Maybe (Maybe(..), maybe)
 import FFI.Util (property)
 import FFI.Util.Function (call1, callEff2)
-import Lib.SignHash.Types (Checksum, HashSigner(..))
-import Lib.Web3 (Bytes(..), WEB3, Web3)
+import Lib.SignHash.Types (Checksum, HashSigner(..), ProofMethod, canonicalName)
+import Lib.Web3 (Address(..), Bytes(..), WEB3, Web3)
 
-
-type Address = String
 
 newtype ContractData t = ContractData t
 
@@ -27,15 +25,19 @@ class Contract c
 newtype Result e = Result e
 
 
-address :: forall c. Contract c => c -> Address
-address = prop "address"
+type ProofValue = String
+
+
+getAddress :: forall c. Contract c => c -> Address
+getAddress = prop "address"
+
 
 prop :: forall a b. String -> a -> b
 prop = flip property
 
 
 getResult :: forall a. Result a -> a
-getResult = prop "result"
+getResult = prop "0"
 
 
 checksumToBytes :: String -> Bytes
@@ -114,4 +116,40 @@ getSigner ::
   forall eff. SignerContract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
 getSigner contract checksum = do
   signers <- getSigners contract checksum 1
-  pure $ maybe NoSigner HashSigner $ head signers
+  pure $ maybe NoSigner (HashSigner <<< Address) $ head signers
+
+
+foreign import _addProof ::
+  forall eff
+  . SignerContract
+  -> Bytes
+  -> Bytes
+  -> Address
+  -> Eff (web3 :: WEB3 | eff) (Promise Unit)
+
+
+addProof ::
+  forall eff
+  . SignerContract
+  -> String
+  -> String
+  -> Address
+  -> Aff (web3 :: WEB3 | eff) Unit
+addProof contract key value from = do
+  toAffE $ _addProof contract (Bytes key) (Bytes value) from
+
+
+getProof ::
+  forall eff
+  . SignerContract
+  -> Address
+  -> ProofMethod
+  -> Aff (web3 :: WEB3 | eff) (Maybe ProofValue)
+getProof contract address method = do
+  proofValue <- getResult <$> rawGetProof
+  pure case proofValue of
+    "" -> Nothing
+    value -> Just value
+  where
+    rawGetProof =
+      toAffE $ callEff2 contract "getProof" address (canonicalName method)

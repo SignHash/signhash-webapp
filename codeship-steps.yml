@@ -1,7 +1,13 @@
+- name: build purescript
+  service: app
+  command: npm run build:purs
+- name: unit testing
+  service: app
+  command: npm run test:unit
 - name: build contracts data
   service: app
   command: npm run testrpc:persist:build
-- name: build webapp
+- name: bundle webapp
   service: app
   command: npm run build
 - name: e2e

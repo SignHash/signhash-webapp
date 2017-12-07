@@ -1,13 +1,17 @@
-module Lib.SignHash.Types where
-
+module Lib.SignHash.Types (
+  module Lib.SignHash.Types,
+  module Lib.Web3
+) where
 
 import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Lib.Web3 (Address(..))
 
-type Address = String
+
 type Checksum = String
+
 
 data HashSigner = HashSigner Address | NoSigner
 
@@ -31,12 +35,6 @@ instance showProofMethod :: Show ProofMethod where
 canonicalName :: ProofMethod -> String
 canonicalName HTTP = "http"
 canonicalName GitHub = "github"
-
-
-data ProofVerification =
-  Verified String |
-  Unverified String |
-  Unavailable
 
 
 allProofMethods :: Array ProofMethod

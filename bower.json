@@ -27,6 +27,7 @@
     "purescript-debug": "^3.0.0",
     "purescript-simple-json": "^1.0.0",
     "purescript-node-fs-aff": "^5.0.0",
-    "purescript-simplecrypto": "^0.0.7"
+    "purescript-simplecrypto": "^0.0.7",
+    "purescript-spec-discovery": "^2.0.0"
   }
 }
