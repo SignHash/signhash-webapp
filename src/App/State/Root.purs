@@ -16,7 +16,7 @@ import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts (getSigner)
 import Lib.SignHash.Proofs (fetchProof)
-import Lib.SignHash.Types (HashSigner(HashSigner))
+import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Lib.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
@@ -28,7 +28,8 @@ data Event =
   Contract Contracts.Event |
   FileInput FileInputs.Event |
   File Files.Event |
-  Signer Signers.Event
+  Signer Signers.Event |
+  FileSignerFetched HashSigner
 
 
 type State =
@@ -88,15 +89,20 @@ foldp (FileInput event) state =
   # mapEffects FileInput
   # mapState (const state)
 
-foldp (File event) baseState =
-  mergeEffModels fileEff (fileFoldp event) baseState
-  where
-    fileEff state = case state.file of
-      Nothing -> noEffects $ state
-      Just fileState ->
-        Files.foldp event fileState
-        # mapEffects File
-        # mapState \s -> state { file = Just s }
+foldp (File (Files.Signal (Files.OnHashCalculated result))) state =
+  whenContractsLoaded state \c -> onlyEffects state $ [
+    do
+      signer <- getSigner c.signerContract result.hash
+      pure $ Just $ FileSignerFetched signer
+    ]
+
+foldp (File event) state =
+  case state.file of
+    Nothing -> noEffects $ state
+    Just fileState ->
+      Files.foldp event fileState
+      # mapEffects File
+      # mapState \s -> state { file = Just s }
 
 foldp (Signer event) baseState =
   mergeEffModels signerEff (signerFoldp event) baseState
@@ -108,22 +114,18 @@ foldp (Signer event) baseState =
         # mapEffects Signer
         # mapState \s -> state { signer = Just s }
 
-
-fileFoldp :: Files.Event -> State -> FoldpResult
-
-fileFoldp (Files.HashCalculated { hash }) state =
-  whenContractsLoaded state \c -> onlyEffects state $ [
-    do
-      signer <- getSigner c.signerContract hash
-      pure $ Just $ File $ Files.SignerFetched signer
-    ]
-
-fileFoldp (Files.SignerFetched (HashSigner address)) state =
-  { state: state { signer = (Just $ Signers.init address) }
-  , effects: [pure $ Just $ Signer $ Signers.Init]
-  }
-
-fileFoldp _ state = noEffects state
+foldp (FileSignerFetched signer) rootState =
+  mergeEffModels fileModel signerModel rootState
+  where
+    fileModel state =
+      onlyEffects state $
+      [ pure $ Just $ File $ Files.SignerFetched signer ]
+    signerModel state = case signer of
+      NoSigner -> noEffects state
+      HashSigner address ->
+        { state: state { signer = (Just $ Signers.init address) }
+        , effects: [ pure $ Just $ Signer $ Signers.Init ]
+        }
 
 
 signerFoldp :: Signers.Event -> State -> FoldpResult

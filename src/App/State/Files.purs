@@ -2,9 +2,6 @@ module App.State.Files where
 
 import Prelude
 
-import Lib.SignHash.Files (calculateFileHash)
-import Lib.SignHash.Types (HashSigner(..))
-import Lib.SignHash.Worker (WORKER)
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import DOM (DOM)
@@ -14,6 +11,9 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Time.Duration (Seconds)
 import Lib.Files (FileMeta)
+import Lib.SignHash.Files (HashCalculationResult, calculateFileHash)
+import Lib.SignHash.Types (HashSigner(..))
+import Lib.SignHash.Worker (WORKER)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
 
@@ -46,13 +46,15 @@ init file =
   }
 
 
+data Signal =
+  OnHashCalculated HashCalculationResult
+
+
 data Event =
   CalculateHash |
-  HashCalculated {
-    hash :: String,
-    elapsed :: Seconds
-    } |
-  SignerFetched HashSigner
+  HashCalculated HashCalculationResult |
+  SignerFetched HashSigner |
+  Signal Signal
 
 
 type FileEffects eff =
@@ -66,23 +68,20 @@ type FileEffects eff =
 
 
 foldp ::
-  forall eff.
-  Event -> State -> EffModel State Event (FileEffects eff)
-
+  forall eff. Event -> State -> EffModel State Event (FileEffects eff)
 foldp CalculateHash state =
   onlyEffects state $ [
     do
       result <- calculateFileHash state.meta
       pure $ Just $ HashCalculated result
   ]
-
 foldp (HashCalculated event) state =
-  noEffects $ (fileResult .~ Just event) state
-
+  { state: (fileResult .~ Just event) state
+  , effects: [ pure $ Just $ Signal $ OnHashCalculated event ] }
 foldp (SignerFetched NoSigner) state =
   noEffects $ fileSigner .~ Just NoSigner $ state
-
 foldp (SignerFetched (HashSigner address)) state =
   noEffects $ setFileSigner state
   where
     setFileSigner = (fileSigner .~ (Just $ HashSigner address))
+foldp (Signal _) state = noEffects $ state
