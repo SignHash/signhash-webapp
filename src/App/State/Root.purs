@@ -11,11 +11,9 @@ import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
-import Data.Either (either)
 import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts (getSigner)
-import Lib.SignHash.Proofs (fetchProof)
 import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Lib.Web3 (WEB3)
@@ -104,15 +102,13 @@ foldp (File event) state =
       # mapEffects File
       # mapState \s -> state { file = Just s }
 
-foldp (Signer event) baseState =
-  mergeEffModels signerEff (signerFoldp event) baseState
-  where
-    signerEff state = case state.signer of
-      Nothing -> noEffects $ state
-      Just signerState ->
-        Signers.foldp event signerState
-        # mapEffects Signer
-        # mapState \s -> state { signer = Just s }
+foldp (Signer event) state =
+  case state.signer of
+    Nothing -> noEffects $ state
+    Just signerState ->
+      Signers.foldp event signerState
+      # mapEffects Signer
+      # mapState \s -> state { signer = Just s }
 
 foldp (FileSignerFetched signer) rootState =
   mergeEffModels fileModel signerModel rootState
@@ -123,22 +119,11 @@ foldp (FileSignerFetched signer) rootState =
     signerModel state = case signer of
       NoSigner -> noEffects state
       HashSigner address ->
+        whenContractsLoaded state \c ->
         { state: state { signer = (Just $ Signers.init address) }
-        , effects: [ pure $ Just $ Signer $ Signers.Init ]
+        , effects:
+          [ pure $ Just $ Signer $ Signers.FetchAll $ c.signerContract ]
         }
-
-
-signerFoldp :: Signers.Event -> State -> FoldpResult
-signerFoldp (Signers.FetchProof address method) state =
-  whenContractsLoaded state \c -> onlyEffects state $ [
-    do
-      proof <- fetchProof c.signerContract address method
-      pure $ Just $ Signer $ either
-        (Signers.ProofFetchingError method)
-        (Signers.ProofFetched method)
-        proof
-  ]
-signerFoldp _ state = noEffects state
 
 
 whenContractsLoaded ::

@@ -5,20 +5,24 @@ import Prelude
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Random (RANDOM)
+import Data.Either (either)
 import Data.Lens (Traversal', (%~))
 import Data.Lens.Record (prop)
 import Data.Map (Map, empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Lib.SignHash.Contracts (SignerContract)
+import Lib.SignHash.Proofs (fetchProof)
 import Lib.SignHash.Proofs.Types (ProofVerification)
 import Lib.SignHash.Types (Address, ProofMethod, allProofMethods)
+import Lib.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event =
-  Init |
-  FetchProof Address ProofMethod |
+  FetchAll SignerContract |
+  ProofPending ProofMethod |
   ProofFetched ProofMethod ProofVerification |
   ProofFetchingError ProofMethod Error
 
@@ -43,6 +47,7 @@ signerProofs = prop (SProxy :: SProxy "proofs")
 
 type SignerEffects eff =
   ( console :: CONSOLE
+  , web3 :: WEB3
   , ajax :: AJAX
   , random :: RANDOM
     | eff
@@ -56,10 +61,18 @@ init address = { address, proofs: empty }
 foldp ::
   forall eff.
   Event -> State -> EffModel State Event (SignerEffects eff)
-foldp Init state =
+foldp (FetchAll contract) state =
   onlyEffects state $
-  pure <$> Just <$> FetchProof state.address <$> allProofMethods
-foldp (FetchProof address method) state =
+  (fetchProofEffect <$> allProofMethods) <>
+  (pure <$> Just <$> ProofPending <$> allProofMethods)
+  where
+    fetchProofEffect method = do
+      proof <- fetchProof contract state.address method
+      pure $ Just $ either
+        (ProofFetchingError method)
+        (ProofFetched method)
+        proof
+foldp (ProofPending method) state =
   noEffects $ signerProofs %~ insertProof $ state
   where
     insertProof = insert method Pending
