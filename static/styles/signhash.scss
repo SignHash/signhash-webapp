@@ -1,20 +1,49 @@
+@import 'fonts';
+
+
+$color-logo: #464646;
+$color-content: #1a1a1a;
+$color-shadow: #D4D4D4;
 $color-dimmed: grey;
 $color-success: green;
 $color-warning: yellow;
 $color-error: red;
 
 
+body {
+  font-family: 'Roboto', sans-serif;
+  color: $color-content;
+}
+
+hr {
+  border-width: 1px;
+}
+
 .header {
   img {
-    float: left;
-    margin-right: 1em;
+    vertical-align: bottom;
+    margin-right: 0.5em;
+    margin-left: 0.2em;
   }
-  h1 {
-    line-height: 80px;
+  hr {
+    margin-top: 0.3em;
+    margin-bottom: 1.5em;
   }
+  .title {
+    font-family: 'Roboto-medium', sans-serif;
+    font-size: 44px;
+    color: $color-logo;
+    text-shadow: $color-shadow 0px 0px 3px;
+  }
+  position: relative;
   margin: 15px;
 }
 
+.contracts-info {
+  float: right;
+  margin-top: 0.2em;
+  margin-bottom: 1em;
+}
 
 .content {
   max-width: 800px;
@@ -82,4 +111,9 @@ input#file-upload {
   .not-defined i {
     color: $color-dimmed;
   }
+}
+
+
+.clear {
+  clear: both;
 }
