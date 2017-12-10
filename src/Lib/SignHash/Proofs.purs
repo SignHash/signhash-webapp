@@ -22,10 +22,10 @@ validateGithubProof ::
   -> String
   -> Aff (ajax :: AJAX | eff) (Either VerificationError Unit)
 validateGithubProof address username = do
-  raw <- get $ proofURL username
+  raw <- get $ proofURL
   pure $ validateProof address raw.response
   where
-    proofURL username =
+    proofURL =
       "https://raw.githubusercontent.com/"
       <> username
       <> "/signhash-proof/master/proof.txt"

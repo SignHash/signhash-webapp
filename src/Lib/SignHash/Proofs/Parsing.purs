@@ -7,13 +7,13 @@ import Data.Either (Either(..), either)
 import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, stripPrefix, trim)
 import Data.Traversable (traverse)
-import Lib.SignHash.Proofs.Types (ParsingError(..), ProofVerification(..), VerificationError(..))
+import Lib.SignHash.Proofs.Types (ParsingError(..), VerificationError(..))
 import Lib.SignHash.Types (Address(..))
 
 
 validPreambule :: String
 validPreambule =
-  "I hearby declare that I am affiliated with the following list of addresses for the purposes of SignHash identification:\n"
+  "I hereby declare that I am affiliated with the following list of addresses for the purposes of SignHash identification:\n"
 
 
 addressLength :: Int
