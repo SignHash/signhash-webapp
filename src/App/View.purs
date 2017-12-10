@@ -29,23 +29,25 @@ foreign import images ::
 dataQA :: String -> Attribute
 dataQA = attribute "data-qa"
 
-
 view :: State -> HTML Event
 view { file, signer, contracts } =
   do
     div ! className "content" $ do
       div ! className "header" $ do
         img ! src images.logo
-        h1 $ text "SignHash"
-      hr
+        span ! className "title" $ text "SignHash"
+        hr
+
       child FileInput viewFileInput $ isJust file
       case file of
         Nothing -> empty
         Just loaded -> do
           viewFile loaded
           div $ signerStatus loaded.signer
-      hr
-      viewContracts contracts
+
+      div ! className "contracts-info" $ do
+        viewContracts contracts
+      clear
 
   where
     signerStatus = case _ of
@@ -165,3 +167,7 @@ loading = "Loading..."
 
 empty :: forall a. HTML a
 empty = text ""
+
+
+clear :: forall a. HTML a
+clear = div ! className "clear" $ empty

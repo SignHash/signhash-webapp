@@ -7,5 +7,5 @@ function requireImg (name) {
 
 
 exports.images = R.map(requireImg, {
-  logo: 'logo.png',
+  logo: 'logo.svg',
 });
