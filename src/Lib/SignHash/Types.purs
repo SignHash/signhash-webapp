@@ -20,22 +20,3 @@ derive instance genericHashSigner :: Generic HashSigner _
 
 instance showHashSigner :: Show HashSigner where
   show = genericShow
-
-
-data ProofMethod = HTTP | GitHub
-
-derive instance eqProofMethod :: Eq ProofMethod
-derive instance ordProofMethod :: Ord ProofMethod
-derive instance genericProofMethod :: Generic ProofMethod _
-
-instance showProofMethod :: Show ProofMethod where
-  show = genericShow
-
-
-canonicalName :: ProofMethod -> String
-canonicalName HTTP = "http"
-canonicalName GitHub = "github"
-
-
-allProofMethods :: Array ProofMethod
-allProofMethods = [HTTP, GitHub]

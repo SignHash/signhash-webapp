@@ -7,12 +7,13 @@ import Control.Monad.Eff.Exception (Error)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Lib.SignHash.Contracts (SignerContract, getProof)
-import Lib.SignHash.Proofs.Parsing (validateProofContent)
-import Lib.SignHash.Proofs.Types (ProofVerification(..), ProofVerificationFailed(..), VerificationError)
+import Lib.SignHash.Proofs.Parsing (validateProofAddress)
+import Lib.SignHash.Proofs.Types (ProofVerification(..), ProofVerificationFailed(..))
 import Lib.SignHash.Proofs.Values as ProofValue
-import Lib.SignHash.Types (Address, ProofMethod(GitHub))
+import Lib.SignHash.Proofs.Methods (ProofMethod, fetchProof)
+import Lib.SignHash.Types (Address)
 import Lib.Web3 (WEB3)
-import Network.HTTP.Affjax (AJAX, get)
+import Network.HTTP.Affjax (AJAX)
 
 
 getSignerProof ::
@@ -28,37 +29,22 @@ getSignerProof contract address method = do
     Just value ->
       case ProofValue.createProofValue value of
         Left err -> pure $ Right $ Unverified $ InvalidProofValue value err
-        Right proofValue -> validateProofContains proofValue address method
+        Right proofValue -> validateProofMethod proofValue address method
 
 
-validateProofContains ::
+validateProofMethod ::
   forall eff
   . ProofValue.ProofValue
   -> Address
   -> ProofMethod
   -> Aff (ajax :: AJAX, web3 :: WEB3 | eff) (Either Error ProofVerification)
-validateProofContains proofValue address GitHub = do
-  verification <- attempt $ verifyGithubProof address proofValue
-  pure $ toProof <$> verification
+validateProofMethod proofValue address method = do
+  proofContent <- attempt $ fetchProof method proofValue
+  pure $
+    toVerifcationResult
+    <$> (validateProofAddress address)
+    <$> proofContent
   where
-    toProof (Right _) = Verified proofValue
-    toProof (Left verificationError) =
+    toVerifcationResult (Right _) = Verified proofValue
+    toVerifcationResult (Left verificationError) =
       Unverified $ InvalidProofContent proofValue verificationError
-validateProofContains contract address method = do
-  pure $ Right $ Unavailable
-
-
-verifyGithubProof ::
-  forall eff
-  . Address
-  -> ProofValue.ProofValue
-  -> Aff (ajax :: AJAX | eff) (Either VerificationError Unit)
-verifyGithubProof address proofValue = do
-  raw <- get $ proofURL
-  pure $ validateProofContent address raw.response
-  where
-    username = ProofValue.extract proofValue
-    proofURL =
-      "https://raw.githubusercontent.com/"
-      <> username
-      <> "/signhash-proof/master/proof.txt"
