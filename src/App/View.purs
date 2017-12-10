@@ -116,9 +116,12 @@ viewFile { meta, result, signer } = do
 
 
 viewSigner :: Signers.State -> HTML Signers.Event
-viewSigner { address, proofs } = do
+viewSigner { address, proofs, blockie } = do
   div $ do
-    h5 $ text $ "#" <> show address
+    img
+      ! className "blockie"
+      ! src blockie
+    h5 $ text $ show address
     viewProofs proofs
 
 
