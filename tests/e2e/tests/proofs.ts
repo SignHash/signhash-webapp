@@ -22,7 +22,7 @@ test('Signer without github source', async t => {
 
 
 test('Signer with invalid github source', async t => {
-  const file = fixtures.signerFileWithInvalidGithub;
+  const file = fixtures.signerFileWithMissingGithubProof;
 
   await t
     .setFilesToUpload('#file-upload', file.path)
@@ -38,4 +38,16 @@ test('Signer with valid github source', async t => {
     .setFilesToUpload('#file-upload', file.path)
     .expect(githubProofResult())
     .contains('Verified: foobar32167');
+})
+
+
+test('Signer with illegal github username', async t => {
+  const file = fixtures.signerFileWithInvalidGithubProofValue;
+
+  await t
+    .setFilesToUpload('#file-upload', file.path)
+    .expect(githubProofResult())
+    .contains('Verification failed')
+    .expect(githubProofResult())
+    .contains('InvalidProofValue');
 })
