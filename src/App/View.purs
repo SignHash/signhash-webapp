@@ -12,8 +12,10 @@ import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.SignHash.Contracts (getAddress)
+import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
 import Lib.SignHash.Proofs.Types (ProofVerification(..))
-import Lib.SignHash.Types (HashSigner(..), ProofMethod, canonicalName)
+import Lib.SignHash.Proofs.Values as ProofValues
+import Lib.SignHash.Types (HashSigner(..))
 import Prelude (discard, show, ($), (<>))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
@@ -147,10 +149,13 @@ viewProofs proofs =
       { icon: "fa-exclamation-triangle"
       , msg: "Network error", cls: "network-error"}
     proofDetails (Signers.Finished (Verified proofValue)) =
-      { icon: "fa-check", msg: "Verified: " <> proofValue, cls: "verified"}
-    proofDetails (Signers.Finished (Unverified proofValue error)) =
+      { icon: "fa-check"
+      , msg: "Verified: " <> ProofValues.extract proofValue
+      , cls: "verified"
+      }
+    proofDetails (Signers.Finished (Unverified error)) =
       { icon: "fa-exclamation-circle"
-      , msg: "Verification failed for " <> proofValue <> ": " <> show error
+      , msg: "Verification failed: " <> show error
       , cls: "failed"
       }
     proofDetails (Signers.Finished Unavailable) =

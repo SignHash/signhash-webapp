@@ -12,9 +12,10 @@ import Data.Map (Map, empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Lib.SignHash.Contracts (SignerContract)
-import Lib.SignHash.Proofs (fetchProof)
+import Lib.SignHash.Proofs (getSignerProof)
 import Lib.SignHash.Proofs.Types (ProofVerification)
-import Lib.SignHash.Types (Address, ProofMethod, allProofMethods)
+import Lib.SignHash.Types (Address)
+import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
 import Lib.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
@@ -67,7 +68,7 @@ foldp (FetchAll contract) state =
   (pure <$> Just <$> ProofPending <$> allProofMethods)
   where
     fetchProofEffect method = do
-      proof <- fetchProof contract state.address method
+      proof <- getSignerProof contract state.address method
       pure $ Just $ either
         (ProofFetchingError method)
         (ProofFetched method)

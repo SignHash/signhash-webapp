@@ -44,8 +44,8 @@ parseProof = parsePreambule >=> parseAddressList
         Just suffix -> Right $ suffix
 
 
-validateProof :: Address -> String -> Either VerificationError Unit
-validateProof address =
+validateProofAddress :: Address -> String -> Either VerificationError Unit
+validateProofAddress address =
   either (Left <<< ParsingFailed) verifyAddress <<< parseProof
   where
     verifyAddress addresses =

@@ -1,10 +1,18 @@
 {
   "1": [{
     "key": "github",
-    "value": "invalid"
+    "value": "missing"
   }],
   "2": [{
     "key": "github",
     "value": "foobar32167"
+  }],
+  "3": [{
+    "key": "github",
+    "value": "foo/../bar"
+  }],
+  "4": [{
+    "key": "github",
+    "value": "<script>alert('f');</script>"
   }]
 }

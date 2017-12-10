@@ -22,7 +22,7 @@ test('Signer without github source', async t => {
 
 
 test('Signer with invalid github source', async t => {
-  const file = fixtures.signerFileWithInvalidGithub;
+  const file = fixtures.signerFileWithMissingGithubProof;
 
   await t
     .setFilesToUpload('#file-upload', file.path)
@@ -38,4 +38,29 @@ test('Signer with valid github source', async t => {
     .setFilesToUpload('#file-upload', file.path)
     .expect(githubProofResult())
     .contains('Verified: foobar32167');
+})
+
+
+test('Signer with illegal github username', async t => {
+  const file = fixtures.signerFileWithInvalidGithubProofValue;
+
+  await t
+    .setFilesToUpload('#file-upload', file.path)
+    .expect(githubProofResult())
+    .contains('Verification failed')
+    .expect(githubProofResult())
+    .contains('InvalidProofValue');
+})
+
+
+test.only('Signer with XSS proof value', async t => {
+  const file = fixtures.signerFileWithXSSGithubProofValue;
+
+  await t
+    .setFilesToUpload('#file-upload', file.path)
+    .expect(githubProofResult())
+    // Note: This tests the text content of the selector.
+    // If it is present, than it means that XSS attempt has been rendered
+    // just as a safe, encoded text.
+    .contains("<script>alert('f');</script>")
 })

@@ -3,54 +3,48 @@ module Lib.SignHash.Proofs where
 import Prelude
 
 import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Exception (Error)
-import Control.Monad.Eff.Random (RANDOM, randomInt)
-import Data.Either (Either(..), either)
+import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Lib.SignHash.Contracts (SignerContract, getProof)
-import Lib.SignHash.Proofs.Parsing (validateProof)
-import Lib.SignHash.Proofs.Types (ProofVerification(..), VerificationError(..))
-import Lib.SignHash.Types (Address, ProofMethod(GitHub))
+import Lib.SignHash.Proofs.Parsing (validateProofAddress)
+import Lib.SignHash.Proofs.Types (ProofVerification(..), ProofVerificationFailed(..))
+import Lib.SignHash.Proofs.Values as ProofValue
+import Lib.SignHash.Proofs.Methods (ProofMethod, fetchProof)
+import Lib.SignHash.Types (Address)
 import Lib.Web3 (WEB3)
-import Network.HTTP.Affjax (AJAX, get)
+import Network.HTTP.Affjax (AJAX)
 
 
-validateGithubProof ::
-  forall eff
-  . Address
-  -> String
-  -> Aff (ajax :: AJAX | eff) (Either VerificationError Unit)
-validateGithubProof address username = do
-  raw <- get $ proofURL
-  pure $ validateProof address raw.response
-  where
-    proofURL =
-      "https://raw.githubusercontent.com/"
-      <> username
-      <> "/signhash-proof/master/proof.txt"
-
-fetchProof ::
+getSignerProof ::
   forall eff
   . SignerContract
   -> Address
   -> ProofMethod
-  -> Aff (ajax :: AJAX, random :: RANDOM, web3 :: WEB3 | eff) (Either Error ProofVerification)
-fetchProof contract address GitHub = do
-  proofValue <- getProof contract address GitHub
-  case proofValue of
+  -> Aff (ajax :: AJAX, web3 :: WEB3 | eff) (Either Error ProofVerification)
+getSignerProof contract address method = do
+  value <- getProof contract address method
+  case value of
     Nothing -> pure $ Right Unavailable
-    Just value -> toProof value <$> validateGithubProof address value
+    Just value ->
+      case ProofValue.createProofValue value of
+        Left err -> pure $ Right $ Unverified $ InvalidProofValue value err
+        Right proofValue -> validateProofMethod proofValue address method
+
+
+validateProofMethod ::
+  forall eff
+  . ProofValue.ProofValue
+  -> Address
+  -> ProofMethod
+  -> Aff (ajax :: AJAX, web3 :: WEB3 | eff) (Either Error ProofVerification)
+validateProofMethod proofValue address method = do
+  proofContent <- attempt $ fetchProof method proofValue
+  pure $
+    toVerifcationResult
+    <$> (validateProofAddress address)
+    <$> proofContent
   where
-    toProof value = Right <<< either (Unverified value) (const $ Verified value)
-fetchProof contract address method = do
-  choice <- liftEff $ randomInt 1 3
-
-  let
-    toProof r = case choice of
-      1 -> Verified r.response
-      2 -> Unverified r.response (UnconfirmedAddress address [])
-      _ -> Unavailable
-
-  result <- attempt $ get "http://setgetgo.com/randomword/get.php"
-  pure $ toProof <$> result
+    toVerifcationResult (Right _) = Verified proofValue
+    toVerifcationResult (Left verificationError) =
+      Unverified $ InvalidProofContent proofValue verificationError
