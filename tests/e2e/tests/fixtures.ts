@@ -45,3 +45,4 @@ export const signerFileWithoutGithub = accountFile(0);
 export const signerFileWithMissingGithubProof = accountFile(1);
 export const signerFileWithValidGithub = accountFile(2);
 export const signerFileWithInvalidGithubProofValue = accountFile(3);
+export const signerFileWithXSSGithubProofValue = accountFile(4);

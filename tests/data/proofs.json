@@ -10,5 +10,9 @@
   "3": [{
     "key": "github",
     "value": "foo/../bar"
+  }],
+  "4": [{
+    "key": "github",
+    "value": "<script>alert('f');</script>"
   }]
 }
