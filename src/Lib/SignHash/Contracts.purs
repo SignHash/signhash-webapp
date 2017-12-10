@@ -14,6 +14,7 @@ import Data.Foreign.Index ((!))
 import Data.Maybe (Maybe(..), maybe)
 import FFI.Util (property)
 import FFI.Util.Function (call1, callEff2)
+import Lib.SignHash.Proofs.Values (ProofValue)
 import Lib.SignHash.Types (Checksum, HashSigner(..), ProofMethod, canonicalName)
 import Lib.Web3 (Address(..), Bytes(..), WEB3, Web3)
 
@@ -23,9 +24,6 @@ newtype ContractData t = ContractData t
 class Contract c
 
 newtype Result e = Result e
-
-
-type ProofValue = String
 
 
 getAddress :: forall c. Contract c => c -> Address

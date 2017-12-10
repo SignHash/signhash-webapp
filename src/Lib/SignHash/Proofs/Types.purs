@@ -4,15 +4,13 @@ import Prelude
 
 import Data.Generic.Rep (class Generic)
 import Data.Generic.Rep.Show (genericShow)
+import Lib.SignHash.Proofs.Values (ProofValue)
 import Lib.SignHash.Types (Address)
 
 
-type ProofName = String
-
-
 data ProofVerification =
-  Verified ProofName |
-  Unverified ProofName VerificationError |
+  Verified ProofValue |
+  Unverified ProofValue VerificationError |
   Unavailable
 
 
