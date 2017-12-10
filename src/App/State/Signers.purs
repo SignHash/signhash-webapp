@@ -11,6 +11,7 @@ import Data.Lens.Record (prop)
 import Data.Map (Map, empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
+import Lib.SignHash.Blockies (standardAddressBlockie)
 import Lib.SignHash.Contracts (SignerContract)
 import Lib.SignHash.Proofs (fetchProof)
 import Lib.SignHash.Proofs.Types (ProofVerification)
@@ -29,6 +30,7 @@ data Event =
 
 type State =
   { address :: Address
+  , blockie :: String
   , proofs :: SignerProofs }
 
 
@@ -55,7 +57,10 @@ type SignerEffects eff =
 
 
 init :: Address -> State
-init address = { address, proofs: empty }
+init address =
+  { address,
+    blockie: standardAddressBlockie address,
+    proofs: empty }
 
 
 foldp ::
