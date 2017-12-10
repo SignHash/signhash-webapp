@@ -25,10 +25,7 @@ spec =
     invalidUsernames =
       [ "foo/.."
       , "foo/../bar"
-      , "fo_oo"
-      , "-foo"
-      , "foo-"
-      , foldl (\b a -> b <> "x") "" (0 `range` 39)
+      , foldl (\b a -> b <> "x") "" (0 `range` 500)
       ]
   in
   describe "Proof value validation" do
