@@ -8,7 +8,6 @@ import Data.Maybe (Maybe(..))
 import Data.String (Pattern(..), length, split, stripPrefix, trim)
 import Data.Traversable (traverse)
 import Lib.SignHash.Proofs.Types (ParsingError(..), VerificationError(..))
-import Lib.SignHash.Proofs.Values (ProofValue)
 import Lib.SignHash.Types (Address(..))
 
 
@@ -45,8 +44,8 @@ parseProof = parsePreambule >=> parseAddressList
         Just suffix -> Right $ suffix
 
 
-validateProof :: Address -> ProofValue -> Either VerificationError Unit
-validateProof address =
+validateProofContent :: Address -> String -> Either VerificationError Unit
+validateProofContent address =
   either (Left <<< ParsingFailed) verifyAddress <<< parseProof
   where
     verifyAddress addresses =

@@ -3,7 +3,7 @@ module Tests.Unit.ProofSpec where
 import Prelude
 
 import Data.Either (Either(..))
-import Lib.SignHash.Proofs.Parsing (parseAddressList, validPreambule, validateProof)
+import Lib.SignHash.Proofs.Parsing (parseAddressList, validPreambule, validateProofContent)
 import Lib.SignHash.Proofs.Types (ParsingError(..), VerificationError(..))
 import Lib.SignHash.Types (Address(..))
 import Test.Spec (Spec, describe, it)
@@ -28,38 +28,38 @@ spec =
      describe "Proofs validation integration" do
        it "is invalid when empty" do
          let proof = ""
-         validateProof validAddress proof
+         validateProofContent validAddress proof
            `shouldEqual` (parsingFailed $ InvalidPreambule "")
 
        it "is invalid if preambule is gibberish" do
          let proof = "my hovercraft is full of eels"
-         validateProof validAddress proof
+         validateProofContent validAddress proof
            `shouldEqual` (parsingFailed $ InvalidPreambule proof)
 
        it "is unverified if addresses are gibberish" do
          let proof = validPreambule <> gibberish
 
-         validateProof validAddress proof
+         validateProofContent validAddress proof
            `shouldEqual` (parsingFailed $ InvalidAddress gibberish)
 
        it "is invalid if only preambule matches" do
          let proof = validPreambule
 
-         validateProof validAddress proof
+         validateProofContent validAddress proof
            `shouldEqual`
            (Left $ UnconfirmedAddress validAddress [])
 
        it "is unverified if address is not in list" do
          let proof = proofWithOtherAddress
 
-         validateProof validAddress proof
+         validateProofContent validAddress proof
            `shouldEqual`
            (Left $ UnconfirmedAddress validAddress [otherAddress])
 
        it "is verified if address is in the list" do
          let proof = proofWithValidAddress
 
-         validateProof validAddress proof
+         validateProofContent validAddress proof
            `shouldEqual` Right unit
 
      describe "Parsing address list" do

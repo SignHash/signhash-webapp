@@ -1,7 +1,8 @@
 module Lib.SignHash.Proofs.Values (
   createProofValue,
+  extract,
   ProofValueError(..),
-  ProofValue
+  ProofValue(..)
 ) where
 
 
@@ -14,7 +15,15 @@ import Data.String.Regex (Regex, parseFlags, regex, test)
 import Partial.Unsafe (unsafePartial)
 
 
-type ProofValue = String
+newtype ProofValue = UnsafeProofValue String
+
+
+derive instance eqProofValue :: Eq ProofValue
+derive instance genericProofValue :: Generic ProofValue _
+
+
+instance showProofValue :: Show ProofValue where
+  show = genericShow
 
 
 data ProofValueError = InvalidValue
@@ -35,8 +44,10 @@ githubUsernameRegex =
 
 
 createProofValue :: String -> Either ProofValueError ProofValue
-createProofValue value =
-  if test githubUsernameRegex value then
-    Right value
-  else
-    Left InvalidValue
+createProofValue value
+  | test githubUsernameRegex value = Right $ UnsafeProofValue value
+  | otherwise = Left InvalidValue
+
+
+extract :: ProofValue -> String
+extract (UnsafeProofValue value) = value
