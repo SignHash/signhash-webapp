@@ -26,9 +26,9 @@ getSignerProof contract address method = do
   value <- getProof contract address method
   case value of
     Nothing -> pure $ Right Unavailable
-    Just value ->
-      case ProofValue.createProofValue value of
-        Left err -> pure $ Right $ Unverified $ InvalidProofValue value err
+    Just entry ->
+      case ProofValue.createProofValue entry of
+        Left err -> pure $ Right $ Unverified $ InvalidProofValue entry err
         Right proofValue -> validateProofMethod proofValue address method
 
 
