@@ -8,6 +8,15 @@ import Lib.SignHash.Proofs.Values (ProofValue, ProofValueError)
 import Lib.SignHash.Types (Address)
 
 
+data ProofState
+  = Pending
+  | NetworkError
+  | Finished ProofVerification
+
+
+derive instance eqProofState :: Eq ProofState
+
+
 data ProofVerification
   = Verified ProofValue
   | Unverified ProofVerificationFailed

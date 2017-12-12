@@ -5,9 +5,10 @@ $color-logo: #464646;
 $color-content: #1a1a1a;
 $color-shadow: #D4D4D4;
 $color-dimmed: grey;
+$color-dimmed-light: #E1E1E1;
 $color-success: green;
-$color-warning: yellow;
-$color-error: red;
+$color-warning: #f1b51c;
+$color-error: #ce0000;
 
 
 body {
@@ -17,9 +18,15 @@ body {
 
 hr {
   border-width: 1px;
+  margin-bottom: 20px;
+  margin-top: 20px;
 }
 
-.header {
+h4 {
+  text-shadow: $color-shadow 0px 0px 1px;
+}
+
+.Header {
   img {
     vertical-align: bottom;
     margin-right: 0.5em;
@@ -27,7 +34,7 @@ hr {
   }
   hr {
     margin-top: 0.3em;
-    margin-bottom: 1.5em;
+    margin-bottom: 30px;
   }
   .title {
     font-family: 'Roboto-medium', sans-serif;
@@ -64,11 +71,12 @@ input#file-upload {
   padding: 1.5em;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 25px;
 
   font-size: $size-large;
   text-align: center;
   color: $color-dimmed;
-  border: dashed 1px $color-dimmed;
+  border: dashed 2px $color-dimmed-light;
   border-radius: 5px;
   cursor: pointer;
 
@@ -91,38 +99,113 @@ input#file-upload {
 }
 
 
-.file-info {
-  td {
-    word-break: break-all;
-  }
-}
-
-
-.signers {
-  .network-error i {
-    color: $color-warning;
-  }
-  .verified i {
-    color: $color-success;
-  }
-  .failed i {
-    color: $color-error;
-  }
-  .not-defined i {
-    color: $color-dimmed;
-  }
-}
-
-
 .clear {
   clear: both;
 }
 
 
-.blockie {
-  float: left;
-  margin: 3px;
-  margin-right: 10px;
-  box-shadow: 0px 0px 3px $color-shadow;
-  border-radius: 20%;
+.Section {
+  padding-bottom: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid $color-dimmed-light;
+}
+
+
+.Files {
+  font-size: 18px;
+  text-align: center;
+  .row {
+    margin-top: 5px;
+  }
+  .header {
+    width: 6em;
+    text-transform: capitalize;
+    font-weight: bold;
+    display: inline-block;
+  }
+  .value {
+    display: inline-block;
+    min-width: 8em;
+    word-break: break-all;
+  }
+}
+
+
+.Signer-header {
+  text-align: center;
+}
+
+
+.Signer {
+  $margin-vertical: 30px;
+  $blockie-size: 50px;
+
+  border-top: 1px solid $color-dimmed-light;
+  padding-left: 5px;
+  min-height: $blockie-size + $margin-vertical * 2;
+  .header {
+    text-align: center;
+    padding-top: $margin-vertical;
+    float: left;
+    width: 150px;
+    margin-left: 5%;
+    margin-right: 8%;
+  }
+  .status {
+    line-height: $blockie-size;
+    font-size: 42px;
+    width: $blockie-size;
+    i {
+      text-shadow: 0px 0px 5px $color-shadow;
+    }
+    .loading {
+      color: $color-dimmed;
+    }
+    .verified {
+      color: $color-dimmed-light;
+    }
+    .failed {
+      color: $color-error;
+    }
+    .network-error {
+      color: $color-warning;
+    }
+  }
+  .blockie {
+    box-shadow: 0px 0px 3px $color-shadow;
+    border-radius: 20%;
+    width: $blockie-size;
+  }
+  .proofs {
+    float: left;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    .proof {
+      margin-top: 5px;
+      word-break: break-all;
+      i, img {
+        margin-right: 5px;
+      }
+      &.failed {
+        color: $color-error;
+        font-weight: bold;
+        text-decoration: underline;
+      }
+    }
+  }
+}
+
+
+.Section-label {
+  margin: 5px;
+  margin-left: 50px;
+  font-size: 24px;
+  font-weight: 500;
+}
+
+
+.Icon {
+  height: 1.3333em;
+  width: 1.15em;
+  vertical-align: top;
 }
