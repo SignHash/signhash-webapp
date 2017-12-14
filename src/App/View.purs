@@ -39,7 +39,7 @@ dataQA = attribute "data-qa"
 view :: State -> HTML Event
 view { file, signer, contracts } =
   do
-    div ! className "content" $ do
+    div ! className "Content" $ do
       div ! className "Header" $ do
         img ! src images.logo
         span ! className "title" $ text "SignHash"
@@ -53,7 +53,7 @@ view { file, signer, contracts } =
           div $ signerStatus loaded.signer
 
       hr
-      div ! className "contracts-info" $ do
+      div ! className "Contracts-info" $ do
         viewContracts contracts
       clear
 
@@ -91,7 +91,7 @@ viewFileInput small =
   div do
     label
       ! for "file-upload"
-      ! className ("file-upload" <> if small then " small" else "")
+      ! className ("File-upload" <> if small then " small" else "")
       #! onDrop FileInputs.newFilesEvent
       #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
       $ do
@@ -238,7 +238,7 @@ empty = text ""
 
 
 clear :: forall a. HTML a
-clear = div ! className "clear" $ empty
+clear = div ! className "Clear" $ empty
 
 
 addressURL :: Address -> String
