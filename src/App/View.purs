@@ -190,7 +190,7 @@ viewProofs address proofs =
         ! dataQA ("proof-details-" <> canonicalName method)
         $ do
           methodIcon method
-          a ! A.href (methodHref method proof) $ text proof
+          a ! A.href (methodHref method proof) ! A.target "_blank" $ text proof
       where
         proof = ProofValues.extract proofValue
 
@@ -202,7 +202,7 @@ viewProofs address proofs =
     renderEthProof =
       div ! className "proof" $ do
         renderEthIcon
-        a ! A.href (addressURL address) $ text $ (show address)
+        a ! A.href (addressURL address) ! A.target "_blank" $ text $ (show address)
 
     methodIcon GitHub = renderIcon "fa-github"
     methodIcon HTTP = renderIcon "fa-world"
@@ -243,4 +243,4 @@ clear = div ! className "Clear" $ empty
 
 addressURL :: Address -> String
 addressURL (Address address) =
-  "https://etherscan.com/address/" <> address
+  "https://etherscan.io/address/" <> address
