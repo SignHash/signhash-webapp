@@ -18,4 +18,4 @@ buildAddressBlockie = runFn2 _buildAddressBlockie
 
 
 standardAddressBlockie :: Address -> String
-standardAddressBlockie = buildAddressBlockie { size: 8, scale: 4 }
+standardAddressBlockie = buildAddressBlockie { size: 8, scale: 6 }

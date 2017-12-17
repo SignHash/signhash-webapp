@@ -14,9 +14,9 @@ import Data.Symbol (SProxy(..))
 import Lib.SignHash.Blockies (standardAddressBlockie)
 import Lib.SignHash.Contracts (SignerContract)
 import Lib.SignHash.Proofs (getSignerProof)
-import Lib.SignHash.Proofs.Types (ProofVerification)
-import Lib.SignHash.Types (Address)
 import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
+import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification)
+import Lib.SignHash.Types (Address)
 import Lib.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
@@ -36,12 +36,6 @@ type State =
 
 
 type SignerProofs = Map ProofMethod ProofState
-
-
-data ProofState =
-  Pending |
-  NetworkError |
-  Finished ProofVerification
 
 
 signerProofs :: Traversal' State SignerProofs

@@ -7,17 +7,13 @@ const f = fixture(`Proofs`)
 rootFixture(f);
 
 
-const githubProofResult =
-  () => Selector('[data-qa=proof-details-github]').textContent;
-
-
 test('Signer without github source', async t => {
   const file = fixtures.signerFileWithoutGithub;
 
   await t
     .setFilesToUpload('#file-upload', file.path)
-    .expect(githubProofResult())
-    .contains('No proof defined');
+    .expect(githubProof().exists)
+    .notOk();
 });
 
 
@@ -26,8 +22,8 @@ test('Signer with invalid github source', async t => {
 
   await t
     .setFilesToUpload('#file-upload', file.path)
-    .expect(githubProofResult())
-    .contains('Verification failed');
+    .expect(githubProof().textContent)
+    .contains(githubVerificationFailedText);
 })
 
 
@@ -36,8 +32,8 @@ test('Signer with valid github source', async t => {
 
   await t
     .setFilesToUpload('#file-upload', file.path)
-    .expect(githubProofResult())
-    .contains('Verified: foobar32167');
+    .expect(githubProof().textContent)
+    .contains('foobar32167');
 })
 
 
@@ -46,21 +42,32 @@ test('Signer with illegal github username', async t => {
 
   await t
     .setFilesToUpload('#file-upload', file.path)
-    .expect(githubProofResult())
-    .contains('Verification failed')
-    .expect(githubProofResult())
+    .expect(githubProof().textContent)
+    .contains(githubVerificationFailedText)
+    .expect(githubProofError())
     .contains('InvalidProofValue');
 })
 
 
-test.only('Signer with XSS proof value', async t => {
+test('Signer with XSS proof value', async t => {
   const file = fixtures.signerFileWithXSSGithubProofValue;
 
   await t
     .setFilesToUpload('#file-upload', file.path)
-    .expect(githubProofResult())
+    .expect(githubProofError())
     // Note: This tests the text content of the selector.
     // If it is present, than it means that XSS attempt has been rendered
     // just as a safe, encoded text.
     .contains("<script>alert('f');</script>")
 })
+
+
+const githubVerificationFailedText = 'GitHub verification failed'
+
+
+const githubProof = () =>
+  Selector('[data-qa=proof-details-github]');
+
+
+const githubProofError = () =>
+  githubProof().find('[data-qa=error]').getAttribute('title');

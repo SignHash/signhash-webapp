@@ -13,23 +13,42 @@ rootFixture(f);
 
 test('Verifying not signed file', async t => {
   const file = unsignedFile;
-  const text = Selector('body').textContent;
 
+  await t.setFilesToUpload('#file-upload', file.path)
+  await assertChecksum(t, file.checksum);
   await t
-    .setFilesToUpload('#file-upload', file.path)
-    .expect(text).contains(file.name)
-    .expect(text).contains(file.checksum)
-    .expect(text).contains("No signers");
+    .expect(bodyTextSelector()).contains(file.name)
+    .expect(bodyTextSelector()).contains("No signers");
 });
 
 
 test('Verifying signed file', async t => {
   const file = signedFile;
-  const text = Selector('body').textContent;
 
+  await t.setFilesToUpload('#file-upload', file.path)
+  await assertChecksum(t, file.checksum);
   await t
-    .setFilesToUpload('#file-upload', file.path)
-    .expect(text).contains(file.name)
-    .expect(text).contains(file.checksum)
-    .expect(text).contains(file.signers[0]);
+    .expect(bodyTextSelector()).contains(file.name)
+    .expect(bodyTextSelector()).contains(file.signers[0]);
 });
+
+
+interface ChecksumSelector extends Selector {
+  fullChecksum: Promise<any>;
+}
+
+
+const bodyTextSelector = () => Selector('body').textContent;
+
+
+const checksumSelector = () =>
+  <ChecksumSelector>Selector('[data-qa=checksum]').addCustomDOMProperties({
+    fullChecksum: el => el.getAttribute('title'),
+  });
+
+
+function assertChecksum(t: TestController, checksum: string) {
+  return t
+    .expect(checksumSelector().textContent).contains(checksum.slice(0, 6))
+    .expect(checksumSelector().fullChecksum).contains(checksum)
+}

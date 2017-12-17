@@ -1,11 +1,9 @@
-R = require('ramda');
-
-
 function requireImg (name) {
   return require('../../static/images/' + name);
 }
 
 
-exports.images = R.map(requireImg, {
-  logo: 'logo.svg',
-});
+exports.images = {
+  logo: requireImg('logo.svg'),
+  ethIcon: requireImg('fa-icon-ethereum.svg'),
+};
