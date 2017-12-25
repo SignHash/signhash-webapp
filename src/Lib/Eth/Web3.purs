@@ -1,4 +1,4 @@
-module Lib.Web3 where
+module Lib.Eth.Web3 where
 
 import Prelude
 

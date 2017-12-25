@@ -16,7 +16,7 @@ import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts (getSigner)
 import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
-import Lib.Web3 (WEB3)
+import Lib.Eth.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 

@@ -12,7 +12,7 @@ import Lib.SignHash.Proofs.Types (ProofVerification(..), ProofVerificationFailed
 import Lib.SignHash.Proofs.Values as ProofValue
 import Lib.SignHash.Proofs.Methods (ProofMethod, fetchProof)
 import Lib.SignHash.Types (Address)
-import Lib.Web3 (WEB3)
+import Lib.Eth.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 
 

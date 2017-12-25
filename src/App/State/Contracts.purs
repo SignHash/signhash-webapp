@@ -8,7 +8,7 @@ import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Lib.SignHash.Contracts (SignerContract, signerContract)
-import Lib.Web3 (WEB3, Web3, getOrBuildWeb3)
+import Lib.Eth.Web3 (WEB3, Web3, getOrBuildWeb3)
 import Pux (EffModel, noEffects, onlyEffects)
 
 

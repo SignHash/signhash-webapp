@@ -17,7 +17,7 @@ import Lib.SignHash.Proofs (getSignerProof)
 import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification)
 import Lib.SignHash.Types (Address)
-import Lib.Web3 (WEB3)
+import Lib.Eth.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
 

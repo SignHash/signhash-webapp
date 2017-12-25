@@ -2,74 +2,35 @@ module Lib.SignHash.Contracts where
 
 import Prelude
 
-import Control.Monad.Aff (Aff, attempt, error)
+import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (Error)
-import Control.Monad.Except (runExcept)
 import Control.Promise (Promise, toAffE)
 import Data.Array (head)
-import Data.Either (Either(..))
-import Data.Foreign (toForeign)
-import Data.Foreign.Index ((!))
+import Data.Either (Either)
 import Data.Maybe (Maybe(..), maybe)
-import FFI.Util (property)
-import FFI.Util.Function (call1, callEff2)
-import Lib.SignHash.Types (Checksum, HashSigner(..))
+import FFI.Util.Function (callEff2)
+import Lib.Eth.Contracts (class Contract, ContractData, Result, getDeployed, getResult, requireContractData)
+import Lib.Eth.Web3 (Address(..), Bytes(..), WEB3, Web3)
 import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
-import Lib.Web3 (Address(..), Bytes(..), WEB3, Web3)
-
-
-newtype ContractData t = ContractData t
-
-class Contract c
-
-newtype Result e = Result e
-
-
-getAddress :: forall c. Contract c => c -> Address
-getAddress = prop "address"
-
-
-prop :: forall a b. String -> a -> b
-prop = flip property
-
-
-getResult :: forall a. Result a -> a
-getResult = prop "0"
-
-
-checksumToBytes :: String -> Bytes
-checksumToBytes = Bytes <<< append "0x"
-
-
-getDeployed ::
-  forall eff t.
-  ContractData t ->
-  Web3 ->
-  Aff (web3 :: WEB3 | eff) (Either Error t)
-getDeployed contractData web3 = do
-  networkId <- toAffE (web3 `property` "net_version")
-
-  let address =
-        runExcept $
-        (toForeign contractData) ! "networks" ! networkId ! "address"
-
-  pure case address of
-    Left err -> Left $ error $ "Contract is not deployed to network id:"
-                <> networkId
-    Right value -> do
-      let contract = call1 web3 "contract" (contractData `property` "abi")
-      Right $ call1 contract "at" value
+import Lib.SignHash.Types (Checksum, HashSigner(..))
 
 
 foreign import data SignerContract :: Type
 instance _signerContract :: Contract SignerContract
 
-foreign import signerContractData :: ContractData SignerContract
+
+signerContractData :: ContractData SignerContract
+signerContractData = requireContractData "SignHash"
+
 
 signerContract ::
   forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error SignerContract)
 signerContract = getDeployed signerContractData
+
+
+checksumToBytes :: String -> Bytes
+checksumToBytes = Bytes <<< append "0x"
 
 
 foreign import _sign ::
