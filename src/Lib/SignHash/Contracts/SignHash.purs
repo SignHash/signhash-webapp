@@ -1,4 +1,4 @@
-module Lib.SignHash.Contracts where
+module Lib.SignHash.Contracts.SignHash where
 
 import Prelude
 

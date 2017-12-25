@@ -6,7 +6,7 @@ import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff.Exception (Error)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Lib.SignHash.Contracts (SignerContract, getProof)
+import Lib.SignHash.Contracts.SignHash (SignerContract, getProof)
 import Lib.SignHash.Proofs.Parsing (validateProofAddress)
 import Lib.SignHash.Proofs.Types (ProofVerification(..), ProofVerificationFailed(..))
 import Lib.SignHash.Proofs.Values as ProofValue
