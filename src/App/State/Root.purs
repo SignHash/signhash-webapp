@@ -90,7 +90,7 @@ foldp (FileInput event) state =
 foldp (File (Files.Signal (Files.OnHashCalculated result))) state =
   whenContractsLoaded state \c -> onlyEffects state $ [
     do
-      signer <- getSigner c.signerContract result.hash
+      signer <- getSigner c.signHash result.hash
       pure $ Just $ FileSignerFetched signer
     ]
 
@@ -122,7 +122,7 @@ foldp (FileSignerFetched signer) rootState =
         whenContractsLoaded state \c ->
         { state: state { signer = (Just $ Signers.init address) }
         , effects:
-          [ pure $ Just $ Signer $ Signers.FetchAll $ c.signerContract ]
+          [ pure $ Just $ Signer $ Signers.FetchAll $ c.signProof ]
         }
 
 

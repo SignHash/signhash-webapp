@@ -6,7 +6,7 @@ import Control.Monad.Aff (Aff, attempt)
 import Control.Monad.Eff.Exception (Error)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Lib.SignHash.Contracts.SignHash (SignerContract, getProof)
+import Lib.SignHash.Contracts.SignProof as SignProof
 import Lib.SignHash.Proofs.Parsing (validateProofAddress)
 import Lib.SignHash.Proofs.Types (ProofVerification(..), ProofVerificationFailed(..))
 import Lib.SignHash.Proofs.Values as ProofValue
@@ -18,12 +18,12 @@ import Network.HTTP.Affjax (AJAX)
 
 getSignerProof ::
   forall eff
-  . SignerContract
+  . SignProof.SignProof
   -> Address
   -> ProofMethod
   -> Aff (ajax :: AJAX, web3 :: WEB3 | eff) (Either Error ProofVerification)
 getSignerProof contract address method = do
-  value <- getProof contract address method
+  value <- SignProof.get contract address method
   case value of
     Nothing -> pure $ Right Unavailable
     Just entry ->

@@ -7,15 +7,21 @@ import Control.Monad.Eff.Exception (Error)
 import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Lib.SignHash.Contracts.SignHash (SignerContract, signerContract)
 import Lib.Eth.Web3 (WEB3, Web3, getOrBuildWeb3)
+import Lib.SignHash.Contracts.SignHash (SignerContract, signerContract)
+import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event =
   Load String |
-  EthLoaded Web3 SignerContract |
+  EthLoaded Web3 Contracts |
   EthError Error
+
+
+type Contracts =
+  { signHash :: SignerContract
+    , signProof :: SignProof.SignProof }
 
 
 data State =
@@ -26,7 +32,8 @@ data State =
 
 type LoadedState =
   { web3 :: Web3
-  , signerContract :: SignerContract }
+  , signHash :: SignerContract
+  , signProof :: SignProof.SignProof }
 
 
 type Effects eff =
@@ -39,20 +46,27 @@ foldp ::
   Event ->
   State ->
   EffModel State Event (Effects eff)
-
 foldp (Load defaultNetwork) state =
   onlyEffects state $ [
     do
       web3 <- liftEff $ getOrBuildWeb3 defaultNetwork
-      deployed <- signerContract web3
-      case deployed of
-        Right contract ->
-          pure $ Just $ EthLoaded web3 contract
+      signHashResult <- signerContract web3
+      signProofResult <- SignProof.loadContract web3
+      let
+        loaded =
+          { signHash: _, signProof: _ }
+          <$> signHashResult
+          <*> signProofResult
+
+      case loaded of
+        Right contracts ->
+          pure $ Just $ EthLoaded web3 contracts
         Left err -> do
           pure $ Just $ EthError err
   ]
-
-foldp (EthLoaded web3 signerContract) state =
-  noEffects $ Loaded { web3, signerContract }
-
+foldp (EthLoaded web3 contracts) state =
+  noEffects $ Loaded $
+    { web3
+    , signHash: contracts.signHash
+    , signProof: contracts.signProof }
 foldp (EthError err) state = noEffects $ Error $ show $ err

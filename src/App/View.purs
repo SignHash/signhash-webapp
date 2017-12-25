@@ -77,9 +77,12 @@ viewContracts :: Contracts.State -> HTML Event
 viewContracts Contracts.Loading =
   text $ "Loading contract..."
 viewContracts (Contracts.Loaded state) = do
-  span $ text $ "Contract: "
-  span ! dataQA "contract-address"
-    $ text $ show $ getAddress state.signerContract
+  span $ text $ "SignHash: "
+  span ! dataQA "signhash-address"
+    $ text $ show $ getAddress state.signHash
+  span $ text $ "SignProof: "
+  span ! dataQA "signproof-address"
+    $ text $ show $ getAddress state.signProof
 viewContracts (Contracts.Error err) = do
   div
     ! A.title err

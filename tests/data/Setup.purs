@@ -14,7 +14,8 @@ import Data.StrMap (StrMap, lookup)
 import Data.String (Pattern(..), contains, split)
 import Data.Traversable (for_, traverse)
 import Data.Tuple (Tuple(..))
-import Lib.SignHash.Contracts.SignHash (SignerContract, addProof, sign, signerContract)
+import Lib.SignHash.Contracts.SignHash (sign, signerContract)
+import Lib.SignHash.Contracts.SignProof as SignProof
 import Lib.SignHash.Types (Address(..), Checksum)
 import Lib.Eth.Web3 (WEB3, buildWeb3)
 import Node.Encoding (Encoding(..))
@@ -64,7 +65,7 @@ loadFile path = do
 
 setupProofs ::
   forall eff
-  . SignerContract
+  . SignProof.SignProof
   -> Array Address
   -> Aff (fs :: FS, console:: CONSOLE, web3 :: WEB3 | eff) Unit
 setupProofs contract accounts = do
@@ -81,7 +82,7 @@ setupProofs contract accounts = do
     addAccountProof index acc { key, value } = do
       log $ "Adding account " <> index <> " " <> show acc
         <> " proof " <> key <> ":" <> value
-      addProof contract key value acc
+      SignProof.add contract key value acc
 
 main ::
   Eff
@@ -92,13 +93,14 @@ main ::
   ) Unit
 main = void $ runAff logShow do
   let web3 = buildWeb3 "http://localhost:8545"
-  contract <- liftError =<< signerContract web3
+  signHash <- liftError =<< signerContract web3
+  signProof <- liftError =<< SignProof.loadContract web3
   accounts <- readAccounts
   filePaths <- buildPaths <$> readdir Generator.rootFilesPath
   files <- traverse loadFile filePaths
 
-  signFiles contract accounts files
-  setupProofs contract accounts
+  signFiles signHash accounts files
+  setupProofs signProof accounts
 
   where
     buildPaths = (map $ append Generator.rootFilesPath)

@@ -13,7 +13,8 @@ test('Site is available', async t => {
 });
 
 
-test('Contract is loaded', async t => {
+test('Contracts are loaded', async t => {
   await t
-    .expect(Selector('[data-qa=contract-address]').textContent).ok();
+    .expect(Selector('[data-qa=signhash-address]').textContent).ok()
+    .expect(Selector('[data-qa=signproof-address]').textContent).ok();
 })
