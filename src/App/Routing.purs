@@ -29,5 +29,10 @@ sign :: Match Location
 sign = Sign <$ (homeSlash *> lit "sign" <* end)
 
 
+toURL :: Location -> String
+toURL Verify = "/"
+toURL Sign = "/sign"
+
+
 routing :: Match Location
 routing = sign <|> verify

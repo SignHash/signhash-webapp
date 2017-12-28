@@ -21,7 +21,7 @@ import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address(..), HashSigner(..))
 import Prelude (discard, show, ($), (<>), (-))
-import Pux.DOM.Events (onChange, onDragOver, onDrop)
+import Pux.DOM.Events (onChange, onClick, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child, mapEvent)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
@@ -45,6 +45,9 @@ view state =
         img ! src images.logo
         span ! className "title" $ text "SignHash"
         hr
+
+      a ! A.href "#" #! onClick (Navigate Sign) $ text "Sign"
+      a ! A.href "#" #! onClick (Navigate Verify) $ text "Verify"
 
       viewContent state
 

@@ -3,15 +3,22 @@ module App.State where
 import Prelude
 
 import App.Env (Env)
-import App.Routing (Location(..), LocationChange)
+import App.Routing (Location(..), LocationChange, toURL)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
+import DOM.Event.Event (preventDefault)
+import DOM.HTML (window)
+import DOM.HTML.History (DocumentTitle(..), URL(..), pushState)
+import DOM.HTML.Types (HISTORY)
+import DOM.HTML.Window (history)
+import Data.Foreign (toForeign)
 import Data.Maybe (Maybe(..))
 import Lib.Eth.Web3 (WEB3)
 import Lib.Pux (mergeEffModels)
@@ -20,11 +27,13 @@ import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
+import Pux.DOM.Events (DOMEvent)
 
 
 data Event =
   Init |
   Routing LocationChange |
+  Navigate Location DOMEvent |
   Contract Contracts.Event |
   FileInput FileInputs.Event |
   File Files.Event |
@@ -58,6 +67,7 @@ init { rpcUrl } =
 type AppEffects =
   ( console :: CONSOLE
   , dom :: DOM
+  , history :: HISTORY
   , now :: NOW
   , worker :: WORKER
   , ajax :: AJAX
@@ -131,6 +141,16 @@ foldp (FileSignerFetched signer) rootState =
 
 foldp (Routing { new, old }) state =
   noEffects $ state { location = new }
+
+foldp (Navigate location event) state =
+  onlyEffects state
+  [ liftEff do
+       let url = "#" <> toURL location
+       preventDefault event
+       h <- history =<< window
+       pushState (toForeign {}) (DocumentTitle "") (URL url) h
+       pure $ Just $ Routing { new: location, old: Just state.location }
+  ]
 
 whenContractsLoaded ::
   State
