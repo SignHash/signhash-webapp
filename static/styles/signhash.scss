@@ -11,6 +11,11 @@ $color-warning: #f1b51c;
 $color-error: #ce0000;
 
 
+@mixin monospace {
+  font-family: 'Roboto Mono', monospace;
+}
+
+
 body {
   font-family: 'Roboto', sans-serif;
   color: $color-content;
@@ -48,8 +53,13 @@ h4 {
 
 .Contracts-info {
   float: right;
+  text-align: right;
   margin-top: 0.2em;
   margin-bottom: 1em;
+  color: $color-dimmed;
+  a {
+    color: $color-dimmed;
+  }
 }
 
 .Content {
@@ -208,4 +218,9 @@ input#file-upload {
   height: 1.3333em;
   width: 1.15em;
   vertical-align: top;
+}
+
+
+.AddressURL {
+  @include monospace;
 }

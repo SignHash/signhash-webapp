@@ -10,10 +10,10 @@ import App.State.Signers as Signers
 import Data.Array (fromFoldable)
 import Data.Map (toUnfoldable, values)
 import Data.Maybe (Maybe(..), isJust, maybe)
-import Data.String (drop, length, take)
+import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
-import Lib.Eth.Contracts (getAddress)
+import Lib.Eth.Contracts (class EthContract, getAddress)
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
 import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
@@ -77,12 +77,16 @@ viewContracts :: Contracts.State -> HTML Event
 viewContracts Contracts.Loading =
   text $ "Loading contract..."
 viewContracts (Contracts.Loaded state) = do
-  span $ text $ "SignHash: "
-  span ! dataQA "signhash-address"
-    $ text $ show $ getAddress state.signHash
-  span $ text $ "SignProof: "
-  span ! dataQA "signproof-address"
-    $ text $ show $ getAddress state.signProof
+  contractLink "SignHash" state.signHash
+  br
+  contractLink "SignProof" state.signProof
+  where
+    contractLink :: forall c. EthContract c => String -> c -> HTML Event
+    contractLink name contract = do
+      span $ text $ name <> ": "
+      (addressLink $ getAddress contract)
+        ! dataQA ((toLower name) <> "-address")
+
 viewContracts (Contracts.Error err) = do
   div
     ! A.title err
@@ -205,7 +209,7 @@ viewProofs address proofs =
     renderEthProof =
       div ! className "proof" $ do
         renderEthIcon
-        a ! A.href (addressURL address) ! A.target "_blank" $ text $ (show address)
+        addressLink address
 
     methodIcon GitHub = renderIcon "fa-github"
     methodIcon HTTP = renderIcon "fa-world"
@@ -242,6 +246,15 @@ empty = text ""
 
 clear :: forall a. HTML a
 clear = div ! className "Clear" $ empty
+
+
+addressLink :: forall a. Address -> HTML a
+addressLink address = do
+  a
+  ! A.href (addressURL address)
+  ! className "AddressURL"
+  ! A.target "_blank"
+  $ text $ show address
 
 
 addressURL :: Address -> String
