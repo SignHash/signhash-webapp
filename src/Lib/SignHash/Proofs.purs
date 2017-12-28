@@ -18,7 +18,7 @@ import Network.HTTP.Affjax (AJAX)
 
 getSignerProof ::
   forall eff
-  . SignProof.SignProof
+  . SignProof.Contract
   -> Address
   -> ProofMethod
   -> Aff (ajax :: AJAX, web3 :: WEB3 | eff) (Either Error ProofVerification)

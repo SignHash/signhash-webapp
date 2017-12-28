@@ -9,27 +9,27 @@ import Control.Promise (Promise, toAffE)
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import FFI.Util.Function (callEff2)
-import Lib.Eth.Contracts (class Contract, ContractData, getDeployed, getResult, requireContractData)
+import Lib.Eth.Contracts (class EthContract, EthContractData, getDeployed, getResult, requireContractData)
 import Lib.Eth.Web3 (Address, Bytes(..), WEB3, Web3)
 import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
 
 
-foreign import data SignProof :: Type
-instance _signerContract :: Contract SignProof
+foreign import data Contract :: Type
+instance _signerContract :: EthContract Contract
 
 
-contractData :: ContractData SignProof
+contractData :: EthContractData Contract
 contractData = requireContractData "SignProof"
 
 
 loadContract ::
-  forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error SignProof)
+  forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error Contract)
 loadContract = getDeployed contractData
 
 
 foreign import _addProof ::
   forall eff
-  . SignProof
+  . Contract
   -> Bytes
   -> Bytes
   -> Address
@@ -38,7 +38,7 @@ foreign import _addProof ::
 
 add ::
   forall eff
-  . SignProof
+  . Contract
   -> String
   -> String
   -> Address
@@ -49,7 +49,7 @@ add contract key value from = do
 
 get ::
   forall eff
-  . SignProof
+  . Contract
   -> Address
   -> ProofMethod
   -> Aff (web3 :: WEB3 | eff) (Maybe String)

@@ -23,7 +23,7 @@ import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event =
-  FetchAll SignProof.SignProof |
+  FetchAll SignProof.Contract |
   ProofPending ProofMethod |
   ProofFetched ProofMethod ProofVerification |
   ProofFetchingError ProofMethod Error

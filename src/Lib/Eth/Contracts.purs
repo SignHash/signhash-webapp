@@ -14,17 +14,17 @@ import FFI.Util.Function (call1)
 import Lib.Eth.Web3 (Address, WEB3, Web3)
 
 
-newtype ContractData t = ContractData t
+newtype EthContractData t = EthContractData t
 
-class Contract c
+class EthContract c
 
 newtype Result e = Result e
 
 
-foreign import requireContractData :: forall a. String -> ContractData a
+foreign import requireContractData :: forall a. String -> EthContractData a
 
 
-getAddress :: forall c. Contract c => c -> Address
+getAddress :: forall c. EthContract c => c -> Address
 getAddress = prop "address"
 
 
@@ -34,7 +34,7 @@ getResult = prop "0"
 
 getDeployed ::
   forall eff t.
-  ContractData t ->
+  EthContractData t ->
   Web3 ->
   Aff (web3 :: WEB3 | eff) (Either Error t)
 getDeployed contractData web3 = do

@@ -10,22 +10,22 @@ import Data.Array (head)
 import Data.Either (Either)
 import Data.Maybe (maybe)
 import FFI.Util.Function (callEff2)
-import Lib.Eth.Contracts (class Contract, ContractData, Result, getDeployed, getResult, requireContractData)
+import Lib.Eth.Contracts (class EthContract, EthContractData, Result, getDeployed, getResult, requireContractData)
 import Lib.Eth.Web3 (Address(..), Bytes(..), WEB3, Web3)
 import Lib.SignHash.Types (Checksum, HashSigner(..))
 
 
-foreign import data SignerContract :: Type
-instance _signerContract :: Contract SignerContract
+foreign import data Contract :: Type
+instance _signerContract :: EthContract Contract
 
 
-signerContractData :: ContractData SignerContract
-signerContractData = requireContractData "SignHash"
+contractData :: EthContractData Contract
+contractData = requireContractData "SignHash"
 
 
-signerContract ::
-  forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error SignerContract)
-signerContract = getDeployed signerContractData
+loadContract ::
+  forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error Contract)
+loadContract = getDeployed contractData
 
 
 checksumToBytes :: String -> Bytes
@@ -34,7 +34,7 @@ checksumToBytes = Bytes <<< append "0x"
 
 foreign import _sign ::
   forall eff.
-  SignerContract ->
+  Contract ->
   Bytes ->
   Address ->
   Eff (web3 :: WEB3 | eff) (Promise Unit)
@@ -42,7 +42,7 @@ foreign import _sign ::
 
 sign ::
   forall eff.
-  SignerContract ->
+  Contract ->
   Checksum ->
   Address ->
   Aff (web3 :: WEB3 | eff) (Either Error Unit)
@@ -52,7 +52,7 @@ sign contract checksum signer =
 
 rawGetSigners ::
   forall eff.
-  SignerContract ->
+  Contract ->
   Bytes ->
   Int ->
   Aff (web3 :: WEB3 | eff) (Result (Array String))
@@ -62,7 +62,7 @@ rawGetSigners contract bytes size =
 
 getSigners ::
   forall eff.
-  SignerContract ->
+  Contract ->
   Checksum ->
   Int ->
   Aff (web3 :: WEB3 | eff) (Array String)
@@ -71,7 +71,7 @@ getSigners contract checksum size =
 
 
 getSigner ::
-  forall eff. SignerContract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
+  forall eff. Contract -> Checksum -> Aff (web3 :: WEB3 | eff) HashSigner
 getSigner contract checksum = do
   signers <- getSigners contract checksum 1
   pure $ maybe NoSigner (HashSigner <<< Address) $ head signers

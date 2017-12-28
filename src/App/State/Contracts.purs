@@ -8,7 +8,7 @@ import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
 import Lib.Eth.Web3 (WEB3, Web3, getOrBuildWeb3)
-import Lib.SignHash.Contracts.SignHash (SignerContract, signerContract)
+import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)
 
@@ -20,8 +20,8 @@ data Event =
 
 
 type Contracts =
-  { signHash :: SignerContract
-    , signProof :: SignProof.SignProof }
+  { signHash :: SignHash.Contract
+    , signProof :: SignProof.Contract }
 
 
 data State =
@@ -32,8 +32,8 @@ data State =
 
 type LoadedState =
   { web3 :: Web3
-  , signHash :: SignerContract
-  , signProof :: SignProof.SignProof }
+  , signHash :: SignHash.Contract
+  , signProof :: SignProof.Contract }
 
 
 type Effects eff =
@@ -50,7 +50,7 @@ foldp (Load defaultNetwork) state =
   onlyEffects state $ [
     do
       web3 <- liftEff $ getOrBuildWeb3 defaultNetwork
-      signHashResult <- signerContract web3
+      signHashResult <- SignHash.loadContract web3
       signProofResult <- SignProof.loadContract web3
       let
         loaded =
