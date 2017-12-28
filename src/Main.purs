@@ -5,9 +5,9 @@ import Prelude
 import App.Env (env)
 import App.Routing (Location(Verify), routing)
 import App.State (AppEffects, Event(..), State, foldp, init)
+import App.State.Locations as Locations
 import App.View (view)
 import Control.Monad.Eff (Eff)
-import Data.Maybe (Maybe(..))
 import Pux (App, CoreEffects, start)
 import Pux.DOM.Events (DOMEvent)
 import Pux.Renderer.React (renderToDOM)
@@ -30,9 +30,11 @@ initApp = constant Init
 -- | Start and render the app
 main :: String -> State -> AllEffects WebApp
 main url state = do
-  routingChannel <- channel { new: Verify, old: Nothing }
+  routingChannel <- channel Verify
 
-  let routingSignal = (subscribe routingChannel) ~> Routing
+  let routingSignal =
+        (subscribe routingChannel)
+        ~> (Routing <<< Locations.ViewLocation)
 
   app <- start
     { initialState: state
@@ -43,7 +45,7 @@ main url state = do
 
   renderToDOM "#app" app.markup app.input
 
-  matches routing \old new -> send routingChannel { old, new }
+  matches routing \old new -> send routingChannel new
 
   pure app
 

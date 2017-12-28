@@ -7,6 +7,7 @@ import App.State (Event(..), State)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
+import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Data.Array (fromFoldable)
 import Data.Map (toUnfoldable, values)
@@ -20,8 +21,8 @@ import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address(..), HashSigner(..))
-import Prelude (discard, show, ($), (<>), (-))
-import Pux.DOM.Events (onChange, onClick, onDragOver, onDrop)
+import Prelude (discard, show, ($), (<>), (-), (<<<))
+import Pux.DOM.Events (DOMEvent, onChange, onClick, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child, mapEvent)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
@@ -46,8 +47,8 @@ view state =
         span ! className "title" $ text "SignHash"
         hr
 
-      a ! A.href "#" #! onClick (Navigate Sign) $ text "Sign"
-      a ! A.href "#" #! onClick (Navigate Verify) $ text "Verify"
+      a ! A.href "#" #! onClick (navigate Sign) $ text "Sign"
+      a ! A.href "#" #! onClick (navigate Verify) $ text "Verify"
 
       viewContent state
 
@@ -77,7 +78,6 @@ viewContent { location: Verify, file, signer } = do
             hr
           Just value -> div do
             child Signer viewSigner $ value
-
 viewContent { location: Sign, file } = do
   mapEvent FileInput $ viewFileInput "Sign" (isJust file)
   case file of
@@ -280,3 +280,7 @@ addressLink address = do
 addressURL :: Address -> String
 addressURL (Address address) =
   "https://etherscan.io/address/" <> address
+
+
+navigate :: Location -> DOMEvent -> Event
+navigate location = Routing <<< Locations.Navigate location
