@@ -3,9 +3,8 @@ module Lib.SignHash.Contracts.SignHash where
 import Prelude
 
 import Control.Monad.Aff (Aff, attempt)
-import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Exception (Error)
-import Control.Promise (Promise, toAffE)
+import Control.Promise (toAffE)
 import Data.Array (head)
 import Data.Either (Either)
 import Data.Maybe (maybe)
@@ -32,14 +31,6 @@ checksumToBytes :: String -> Bytes
 checksumToBytes = Bytes <<< append "0x"
 
 
-foreign import _sign ::
-  forall eff.
-  Contract ->
-  Bytes ->
-  Address ->
-  Eff (web3 :: WEB3 | eff) (Promise Unit)
-
-
 sign ::
   forall eff.
   Contract ->
@@ -47,17 +38,7 @@ sign ::
   Address ->
   Aff (web3 :: WEB3 | eff) (Either Error Unit)
 sign contract checksum signer =
-  attempt $ toAffE $ _sign contract (checksumToBytes checksum) signer
-
-
-rawGetSigners ::
-  forall eff.
-  Contract ->
-  Bytes ->
-  Int ->
-  Aff (web3 :: WEB3 | eff) (Result (Array String))
-rawGetSigners contract bytes size =
-  toAffE $ callEff2 contract "list" bytes size
+  attempt $ rawSign contract (checksumToBytes checksum) signer
 
 
 getSigners ::
@@ -75,3 +56,23 @@ getSigner ::
 getSigner contract checksum = do
   signers <- getSigners contract checksum 1
   pure $ maybe NoSigner (HashSigner <<< Address) $ head signers
+
+
+rawSign ::
+  forall eff.
+  Contract ->
+  Bytes ->
+  Address ->
+  Aff (web3 :: WEB3 | eff) Unit
+rawSign contract checksum from =
+  toAffE $ callEff2 contract "sign" checksum { from }
+
+
+rawGetSigners ::
+  forall eff.
+  Contract ->
+  Bytes ->
+  Int ->
+  Aff (web3 :: WEB3 | eff) (Result (Array String))
+rawGetSigners contract bytes size =
+  toAffE $ callEff2 contract "list" bytes size

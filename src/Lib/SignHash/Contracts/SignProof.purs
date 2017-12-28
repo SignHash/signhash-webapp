@@ -8,7 +8,7 @@ import Control.Monad.Eff.Exception (Error)
 import Control.Promise (Promise, toAffE)
 import Data.Either (Either)
 import Data.Maybe (Maybe(..))
-import FFI.Util.Function (callEff2)
+import FFI.Util.Function (callEff2, callEff3)
 import Lib.Eth.Contracts (class EthContract, EthContractData, getDeployed, getResult, requireContractData)
 import Lib.Eth.Web3 (Address, Bytes(..), WEB3, Web3)
 import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
@@ -27,15 +27,6 @@ loadContract ::
 loadContract = getDeployed contractData
 
 
-foreign import _addProof ::
-  forall eff
-  . Contract
-  -> Bytes
-  -> Bytes
-  -> Address
-  -> Eff (web3 :: WEB3 | eff) (Promise Unit)
-
-
 add ::
   forall eff
   . Contract
@@ -44,7 +35,7 @@ add ::
   -> Address
   -> Aff (web3 :: WEB3 | eff) Unit
 add contract key value from = do
-  toAffE $ _addProof contract (Bytes key) (Bytes value) from
+  toAffE $ callEff3 contract "add" key value { from }
 
 
 get ::
