@@ -21,9 +21,6 @@ class EthContract c
 newtype Result e = Result e
 
 
-foreign import requireContractData :: forall a. String -> EthContractData a
-
-
 getAddress :: forall c. EthContract c => c -> Address
 getAddress = prop "address"
 
