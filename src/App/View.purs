@@ -2,6 +2,7 @@ module App.View where
 
 import Text.Smolder.HTML hiding (address)
 
+import App.Routing (Location(..))
 import App.State (Event(..), State)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
@@ -21,7 +22,7 @@ import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address(..), HashSigner(..))
 import Prelude (discard, show, ($), (<>), (-))
 import Pux.DOM.Events (onChange, onDragOver, onDrop)
-import Pux.DOM.HTML (HTML, child)
+import Pux.DOM.HTML (HTML, child, mapEvent)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
 import Text.Smolder.Markup (Attribute, attribute, text, (!), (#!))
@@ -37,7 +38,7 @@ dataQA = attribute "data-qa"
 
 
 view :: State -> HTML Event
-view { file, signer, contracts } =
+view state =
   do
     div ! className "Content" $ do
       div ! className "Header" $ do
@@ -45,24 +46,28 @@ view { file, signer, contracts } =
         span ! className "title" $ text "SignHash"
         hr
 
-      child FileInput viewFileInput $ isJust file
-      case file of
-        Nothing -> empty
-        Just loaded -> do
-          viewFile loaded
-          div $ signerStatus loaded.signer
+      viewContent state
 
       hr
       div ! className "Contracts-info" $ do
-        viewContracts contracts
+        viewContracts state.contracts
       clear
 
+
+viewContent :: State -> HTML Event
+viewContent { location: Verify, file, signer } = do
+  mapEvent FileInput $ viewFileInput "Verify" (isJust file)
+  case file of
+    Nothing -> empty
+    Just loaded -> do
+      viewFile loaded
+      div $ signerStatus loaded.signer
   where
     signerStatus = case _ of
-      Nothing -> signerHeader "Loading signer..."
-      Just (NoSigner) -> signerHeader "No signers"
+      Nothing -> sectionHeader "Loading signer..."
+      Just (NoSigner) -> sectionHeader "No signers"
       Just (HashSigner s) -> do
-        signerHeader "Signers"
+        sectionHeader "Signers"
         case signer of
           Nothing -> div do
             text loading
@@ -70,8 +75,14 @@ view { file, signer, contracts } =
           Just value -> div do
             child Signer viewSigner $ value
 
-    signerHeader msg =
-      h4 ! className "Signer-header" $ text msg
+viewContent { location: Sign, file } = do
+  mapEvent FileInput $ viewFileInput "Sign" (isJust file)
+  case file of
+    Nothing -> empty
+    Just loaded -> do
+      viewFile loaded
+      sectionHeader "Your account"
+
 
 viewContracts :: Contracts.State -> HTML Event
 viewContracts Contracts.Loading =
@@ -93,8 +104,8 @@ viewContracts (Contracts.Error err) = do
     $ text "Error while loading contract"
 
 
-viewFileInput :: Boolean -> HTML FileInputs.Event
-viewFileInput small =
+viewFileInput :: String -> Boolean -> HTML FileInputs.Event
+viewFileInput verb small =
   div do
     label
       ! for "file-upload"
@@ -103,7 +114,7 @@ viewFileInput small =
       #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
       $ do
         renderIcon "fa-file-o"
-        text "Verify a file"
+        text (verb <> " a file")
         if small then empty else
           div ! className "hint"
           $ text "Click or drag and drop on the page"
@@ -218,6 +229,12 @@ viewProofs address proofs =
       "https://github.com/" <> username
     methodHref HTTP domain =
       "http://" <> domain
+
+
+
+sectionHeader :: forall a. String -> HTML a
+sectionHeader msg =
+  h4 ! className "Section-header" $ text msg
 
 
 renderIcon :: forall a. String -> HTML a
