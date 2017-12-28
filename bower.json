@@ -19,7 +19,8 @@
     "purescript-profunctor-lenses": "^3.7.0",
     "purescript-random": "^3.0.0",
     "purescript-aff-promise": "^1.0.0",
-    "purescript-ffi-utils": "^4.0.0"
+    "purescript-ffi-utils": "^4.0.0",
+    "purescript-routing": "^6.1.2"
   },
   "devDependencies": {
     "purescript-psci-support": "^3.0.0",

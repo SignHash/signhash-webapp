@@ -3,6 +3,7 @@ module App.State where
 import Prelude
 
 import App.Env (Env)
+import App.Routing (Location(..), LocationChange)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
@@ -12,17 +13,18 @@ import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
 import Data.Maybe (Maybe(..))
+import Lib.Eth.Web3 (WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash (getSigner)
 import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
-import Lib.Eth.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
 
 data Event =
   Init |
+  Routing LocationChange |
   Contract Contracts.Event |
   FileInput FileInputs.Event |
   File Files.Event |
@@ -36,6 +38,7 @@ type State =
   , contracts :: Contracts.State
   , defaults ::
        { network :: String }
+  , location :: Location
   }
 
 
@@ -48,6 +51,7 @@ init { rpcUrl } =
   , signer: Nothing
   , contracts: Contracts.Loading
   , defaults: { network: rpcUrl }
+  , location: Verify
   }
 
 
@@ -125,6 +129,8 @@ foldp (FileSignerFetched signer) rootState =
           [ pure $ Just $ Signer $ Signers.FetchAll $ c.signProof ]
         }
 
+foldp (Routing { new, old }) state =
+  noEffects $ state { location = new }
 
 whenContractsLoaded ::
   State
