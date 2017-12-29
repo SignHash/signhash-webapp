@@ -5,9 +5,9 @@ const maxAppWarmup = 45;
 export const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
 
 
-export function rootFixture(fixture: FixtureFn) {
+export function rootFixture(fixture: FixtureFn, endpoint?: string) {
   return fixture
-    .page(rootURL)
+    .page(rootURL + (endpoint ? '#' + endpoint : ''))
     .before(waitForPage(rootURL, maxAppWarmup));
 }
 
