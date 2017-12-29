@@ -1,4 +1,4 @@
-const appConfig = require('./src/App/Env.js').env;
+const appConfig = require('./src/App/Env.js').appEnvConfig;
 const path = require('path');
 const webpack = require('webpack');
 const isProd = process.env.NODE_ENV === 'production';

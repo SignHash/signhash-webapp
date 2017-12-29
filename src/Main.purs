@@ -2,7 +2,7 @@ module Main where
 
 import Prelude
 
-import App.Env (env)
+import App.Env (appEnvConfig)
 import App.Routing (Location(Verify), routing)
 import App.State (AppEffects, Event(..), State, foldp, init)
 import App.State.Locations as Locations
@@ -51,4 +51,4 @@ main url state = do
 
 
 initialState :: State
-initialState = init env
+initialState = init appEnvConfig
