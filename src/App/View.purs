@@ -45,10 +45,11 @@ view state =
       div ! className "Header" $ do
         img ! src images.logo
         span ! className "title" $ text "SignHash"
-        hr
 
-      a ! A.href "#" #! onClick (navigate Sign) $ text "Sign"
-      a ! A.href "#" #! onClick (navigate Verify) $ text "Verify"
+      nav ! className "Navbar" $ do
+        ul do
+          li $ a ! A.href "#" #! onClick (navigate Sign) $ text "Sign"
+          li $ a ! A.href "#" #! onClick (navigate Verify) $ text "Verify"
 
       viewContent state
 

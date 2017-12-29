@@ -7,6 +7,7 @@ $color-shadow: #D4D4D4;
 $color-dimmed: grey;
 $color-dimmed-light: #E1E1E1;
 $color-success: green;
+$color-highlight: #1EAEDB;
 $color-warning: #f1b51c;
 $color-error: #ce0000;
 
@@ -32,6 +33,10 @@ h4 {
 }
 
 .Header {
+  position: relative;
+  margin: 15px;
+  margin-bottom: 5px;
+
   img {
     vertical-align: bottom;
     margin-right: 0.5em;
@@ -47,9 +52,49 @@ h4 {
     color: $color-logo;
     text-shadow: $color-shadow 0px 0px 3px;
   }
-  position: relative;
-  margin: 15px;
 }
+
+
+.Navbar {
+  /* Alternative WIP: Aligning it on the header level: */
+  /* position: absolute; */
+  /* float: right; */
+  /* bottom: 0px; */
+  /* right: 0px; */
+
+  display: block;
+  position: relative;
+  height: 3em;
+  line-height: 3em;
+  font-size: 1.7rem;
+  z-index: 99;
+  border-top: 1px solid $color-dimmed-light;
+  border-bottom: 1px solid $color-dimmed-light;
+  margin-bottom: 25px;
+
+  a {
+    color: $color-content;
+    text-decoration: none;
+    &:hover {
+      color: $color-highlight;
+    }
+  }
+
+  ul {
+    list-style: none;
+    margin-bottom: 0px;
+    padding-right: 1em;
+    padding-left: 1em;
+  }
+  li {
+    position: relative;
+    float: right;
+    margin-bottom: 0px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+}
+
 
 .Contracts-info {
   float: right;
