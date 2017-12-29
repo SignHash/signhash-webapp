@@ -12,6 +12,6 @@ test('My account details are visible', async t => {
 
   await t
     .setFilesToUpload('#file-upload', file.path)
-    .expect(Selector('[data-qa=my-eth-address]').textContent)
+    .expect(Selector('[data-qa=my-id] [data-qa=proof-details-eth]').textContent)
     .contains(fixtures.myAccount);
 });

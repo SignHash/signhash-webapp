@@ -4,7 +4,8 @@ import Prelude
 
 import App.Env (appEnvConfig)
 import App.Routing (Location(Verify), routing)
-import App.State (AppEffects, Event(..), State, foldp, init)
+import App.State (AppEffects, Event(..), State, InitEnv, foldp, init)
+import App.State.Contracts (buildAccountsChannel, buildAccountsSignal)
 import App.State.Locations as Locations
 import App.View (view)
 import Control.Monad.Eff (Eff)
@@ -23,24 +24,32 @@ type AllEffects = Eff (CoreEffects AppEffects)
 foreign import load :: Unit
 
 
-initApp :: Signal Event
-initApp = constant Init
+initApp :: InitEnv -> Signal Event
+initApp env = constant $ Init env
 
 
 -- | Start and render the app
 main :: String -> State -> AllEffects WebApp
 main url state = do
   routingChannel <- channel Verify
+  ethAccountChannel <- buildAccountsChannel
 
-  let routingSignal =
-        (subscribe routingChannel)
-        ~> (Routing <<< Locations.ViewLocation)
+  let
+    routingSignal =
+      (subscribe routingChannel)
+      ~> (Routing <<< Locations.ViewLocation)
+    initSignal = initApp { ethAccountChannel }
+    ethAccountsSignal = Contract <$> (buildAccountsSignal ethAccountChannel)
 
   app <- start
     { initialState: state
     , view
     , foldp
-    , inputs: [initApp, routingSignal]
+    , inputs:
+      [ initSignal
+      , routingSignal
+      , ethAccountsSignal
+      ]
     }
 
   renderToDOM "#app" app.markup app.input

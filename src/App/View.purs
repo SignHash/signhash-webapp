@@ -79,13 +79,19 @@ viewContent { location: Verify, file, signer } = do
             hr
           Just value -> div do
             child Signer viewSigner $ value
-viewContent { location: Sign, file } = do
+viewContent { location: Sign, file, myAccount } = do
   mapEvent FileInput $ viewFileInput "Sign" (isJust file)
   case file of
     Nothing -> empty
     Just loaded -> do
       viewFile loaded
       sectionHeader "Your account"
+      case myAccount of
+        Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
+        Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
+        Contracts.Available details ->
+          div ! dataQA "my-id" $
+            child Signer viewSigner $ details
 
 
 viewContracts :: Contracts.State -> HTML Event
@@ -224,7 +230,7 @@ viewProofs address proofs =
     renderEthProof =
       div ! className "proof" $ do
         renderEthIcon
-        addressLink address
+        (addressLink address) ! dataQA "proof-details-eth"
 
     methodIcon GitHub = renderIcon "fa-github"
     methodIcon HTTP = renderIcon "fa-world"

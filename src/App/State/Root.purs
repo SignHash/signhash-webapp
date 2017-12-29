@@ -2,8 +2,9 @@ module App.State where
 
 import Prelude
 
-import App.Env (Env)
+import App.Env (AppEnvConfig)
 import App.Routing (Location(..))
+import App.State.Contracts (ETHAccountChannel)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
@@ -12,6 +13,7 @@ import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
+import Control.Monad.Eff.Timer (TIMER)
 import DOM (DOM)
 import DOM.HTML.Types (HISTORY)
 import Data.Lens ((^.), (.~))
@@ -28,7 +30,7 @@ import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
 
 data Event =
-  Init |
+  Init InitEnv |
   Routing Locations.Event |
   Contract Contracts.Event |
   FileInput FileInputs.Event |
@@ -39,6 +41,7 @@ data Event =
 
 type State =
   { file :: Maybe Files.State
+  , myAccount :: Contracts.ETHAccountState Signers.State
   , signer :: Maybe Signers.State
   , contracts :: Contracts.State
   , defaults ::
@@ -47,12 +50,17 @@ type State =
   }
 
 
+type InitEnv =
+  { ethAccountChannel :: ETHAccountChannel }
+
+
 type FoldpResult = EffModel State Event AppEffects
 
 
-init :: Env -> State
+init :: AppEnvConfig -> State
 init { rpcUrl } =
   { file: Nothing
+  , myAccount: Contracts.Unavailable
   , signer: Nothing
   , contracts: Contracts.Loading
   , defaults: { network: rpcUrl }
@@ -64,6 +72,7 @@ type AppEffects =
   ( console :: CONSOLE
   , dom :: DOM
   , history :: HISTORY
+  , timer :: TIMER
   , now :: NOW
   , worker :: WORKER
   , ajax :: AJAX
@@ -74,10 +83,14 @@ type AppEffects =
 
 foldp :: Event -> State -> FoldpResult
 
-foldp Init state =
-  onlyEffects state [
-    pure $ Just $ Contract $ Contracts.Load state.defaults.network
+foldp (Init env) state =
+  onlyEffects state
+  [ pure $ Just $ Contract
+    $ Contracts.Load state.defaults.network env.ethAccountChannel
   ]
+
+foldp (Contract (Contracts.OnAccountChanged account)) state =
+  noEffects $ state { myAccount = Signers.init <$> account }
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts

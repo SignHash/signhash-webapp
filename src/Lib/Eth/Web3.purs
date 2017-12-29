@@ -7,10 +7,11 @@ import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Except (runExcept)
 import Control.Promise (toAffE)
 import DOM (DOM)
+import Data.Array (head)
 import Data.Either (Either(..))
 import Data.Foreign (Foreign, readNullOrUndefined, unsafeFromForeign)
 import Data.Maybe (Maybe(..))
-import FFI.Util (property)
+import FFI.Util (property, propertyPath)
 
 
 foreign import data Web3 :: Type
@@ -53,3 +54,12 @@ getOrBuildWeb3 config = do
 
 getAccounts :: forall eff. Web3 -> Web3Aff eff (Array Address)
 getAccounts web3 = toAffE (web3 `property` "accounts")
+
+
+getDefaultAccount :: forall eff. Web3 -> Web3Aff eff (Maybe Address)
+getDefaultAccount web3 = head <$> getAccounts web3
+
+
+isMetaMask :: Web3 -> Boolean
+isMetaMask web3 =
+  (web3 `propertyPath` ["currentProvider", "isMetaMask"]) == true
