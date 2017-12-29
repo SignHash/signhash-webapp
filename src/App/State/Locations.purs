@@ -14,6 +14,8 @@ import Data.Foreign (toForeign)
 import Data.Maybe (Maybe(..))
 import Pux (EffModel, noEffects, onlyEffects)
 import Pux.DOM.Events (DOMEvent)
+import Signal (Signal, (~>))
+import Signal.Channel (Channel, subscribe)
 
 
 data Event
@@ -43,3 +45,7 @@ foldp (Navigate location event) state =
        pushState (toForeign {}) (DocumentTitle "") (URL url) h
        pure $ Just $ ViewLocation location
   ]
+
+
+buildRoutingSignal :: Channel Location -> Signal Event
+buildRoutingSignal channel = subscribe channel ~> ViewLocation

@@ -6,15 +6,15 @@ import App.Env (appEnvConfig)
 import App.Routing (Location(Verify), routing)
 import App.State (AppEffects, Event(..), State, InitEnv, foldp, init)
 import App.State.Contracts (buildAccountsChannel, buildAccountsSignal)
-import App.State.Locations as Locations
+import App.State.Locations (buildRoutingSignal)
 import App.View (view)
 import Control.Monad.Eff (Eff)
 import Pux (App, CoreEffects, start)
 import Pux.DOM.Events (DOMEvent)
 import Pux.Renderer.React (renderToDOM)
 import Routing (matches)
-import Signal (Signal, constant, (~>))
-import Signal.Channel (channel, send, subscribe)
+import Signal (Signal, constant)
+import Signal.Channel (channel, send)
 
 
 type WebApp = App (DOMEvent -> Event) Event State
@@ -35,11 +35,9 @@ main url state = do
   ethAccountChannel <- buildAccountsChannel
 
   let
-    routingSignal =
-      (subscribe routingChannel)
-      ~> (Routing <<< Locations.ViewLocation)
     initSignal = initApp { ethAccountChannel }
-    ethAccountsSignal = Contract <$> (buildAccountsSignal ethAccountChannel)
+    routingSignal = Routing <$> buildRoutingSignal routingChannel
+    ethAccountsSignal = Contract <$> buildAccountsSignal ethAccountChannel
 
   app <- start
     { initialState: state
