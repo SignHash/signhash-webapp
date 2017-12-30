@@ -134,20 +134,25 @@ foldp (Signer address event) state =
       # mapEffects (Signer address)
       # mapState \s -> state { signers = Map.insert address s state.signers }
 
-foldp (FileSignerFetched signer) rootState =
-  mergeEffModels fileModel signerModel rootState
+foldp (FileSignerFetched signer) state =
+  case signer of
+    NoSigner -> fileModel state
+    HashSigner address ->
+      case Map.lookup address state.signers of
+        Just value -> fileModel state
+        Nothing -> mergeEffModels fileModel (loadSigner address) state
   where
     fileModel state =
-      onlyEffects state $
-      [ pure $ Just $ File $ Files.SignerFetched signer ]
-    signerModel state = case signer of
-      NoSigner -> noEffects state
-      HashSigner address ->
-        whenContractsLoaded state \c ->
-        { state: state { signers = Map.insert address (Signers.init address) state.signers }
-        , effects:
-          [ pure $ Just $ Signer address $ Signers.FetchAll $ c.signProof ]
-        }
+      { state, effects: [ pure $ Just $ File $ Files.SignerFetched signer ] }
+    loadSigner address state =
+      whenContractsLoaded state \c ->
+      let
+        initSigner = Map.insert address (Signers.init address)
+      in
+       { state: state { signers = initSigner state.signers }
+       , effects:
+         [ pure $ Just $ Signer address $ Signers.FetchAll $ c.signProof ]
+       }
 
 foldp (Routing event) state =
   Locations.foldp event (state ^. lens)
