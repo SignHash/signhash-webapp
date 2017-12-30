@@ -42,7 +42,7 @@ data Event =
 
 type State =
   { file :: Maybe Files.State
-  , myAccount :: Contracts.ETHAccountState Signers.State
+  , myAccount :: Contracts.ETHAccountState Address
   , signers :: Map.Map Address Signers.State
   , contracts :: Contracts.State
   , defaults ::
@@ -91,7 +91,12 @@ foldp (Init env) state =
   ]
 
 foldp (Contract (Contracts.OnAccountChanged account)) state =
-  noEffects $ state { myAccount = Signers.init <$> account }
+  case account of
+    Contracts.Available address ->
+      mergeEffModels updateMyAccount (loadSignerEffModel address) state
+    otherwise -> updateMyAccount state
+  where
+    updateMyAccount s = noEffects $ s { myAccount = account }
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts
@@ -138,13 +143,24 @@ foldp (FileSignerFetched signer) state =
   case signer of
     NoSigner -> fileModel state
     HashSigner address ->
-      case Map.lookup address state.signers of
-        Just value -> fileModel state
-        Nothing -> mergeEffModels fileModel (loadSigner address) state
+      mergeEffModels fileModel (loadSignerEffModel address) state
   where
-    fileModel state =
-      { state, effects: [ pure $ Just $ File $ Files.SignerFetched signer ] }
-    loadSigner address state =
+    fileModel s =
+      onlyEffects s $ [ pure $ Just $ File $ Files.SignerFetched signer ]
+
+foldp (Routing event) state =
+  Locations.foldp event (state ^. lens)
+  # mapEffects Routing
+  # mapState \s -> (lens .~ s $ state)
+  where
+    lens = prop (SProxy :: SProxy "location")
+
+
+loadSignerEffModel :: Address -> State -> FoldpResult
+loadSignerEffModel address state =
+  case Map.lookup address state.signers of
+    Just value -> noEffects state
+    Nothing ->
       whenContractsLoaded state \c ->
       let
         initSigner = Map.insert address (Signers.init address)
@@ -153,13 +169,6 @@ foldp (FileSignerFetched signer) state =
        , effects:
          [ pure $ Just $ Signer address $ Signers.FetchAll $ c.signProof ]
        }
-
-foldp (Routing event) state =
-  Locations.foldp event (state ^. lens)
-  # mapEffects Routing
-  # mapState \s -> (lens .~ s $ state)
-  where
-    lens = prop (SProxy :: SProxy "location")
 
 
 whenContractsLoaded ::

@@ -79,7 +79,7 @@ viewContent { location: Verify, file, signers } = do
             hr
           Just value -> div do
             child (Signer address) viewSigner $ value
-viewContent { location: Sign, file, myAccount } = do
+viewContent { location: Sign, file, myAccount, signers } = do
   mapEvent FileInput $ viewFileInput "Sign" (isJust file)
   case file of
     Nothing -> empty
@@ -89,9 +89,11 @@ viewContent { location: Sign, file, myAccount } = do
       case myAccount of
         Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
         Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
-        Contracts.Available details ->
+        Contracts.Available address ->
           div ! dataQA "my-id" $
-            child (Signer details.address) viewSigner $ details
+            case lookup address signers of
+              Nothing -> empty
+              Just details -> child (Signer address) viewSigner details
 
 
 viewContracts :: Contracts.State -> HTML Event
