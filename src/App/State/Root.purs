@@ -18,9 +18,10 @@ import DOM (DOM)
 import DOM.HTML.Types (HISTORY)
 import Data.Lens ((^.), (.~))
 import Data.Lens.Record (prop)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Lib.Eth.Web3 (WEB3)
+import Lib.Eth.Web3 (Address, WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash (getSigner)
 import Lib.SignHash.Types (HashSigner(..))
@@ -35,14 +36,14 @@ data Event =
   Contract Contracts.Event |
   FileInput FileInputs.Event |
   File Files.Event |
-  Signer Signers.Event |
+  Signer Address Signers.Event |
   FileSignerFetched HashSigner
 
 
 type State =
   { file :: Maybe Files.State
   , myAccount :: Contracts.ETHAccountState Signers.State
-  , signer :: Maybe Signers.State
+  , signers :: Map.Map Address Signers.State
   , contracts :: Contracts.State
   , defaults ::
        { network :: String }
@@ -61,7 +62,7 @@ init :: AppEnvConfig -> State
 init { rpcUrl } =
   { file: Nothing
   , myAccount: Contracts.Unavailable
-  , signer: Nothing
+  , signers: Map.empty
   , contracts: Contracts.Loading
   , defaults: { network: rpcUrl }
   , location: Verify
@@ -98,7 +99,7 @@ foldp (Contract event) state =
   # mapState \s -> state { contracts  = s}
 
 foldp (FileInput (FileInputs.NewFile file)) state =
-  { state: state { file = Just $ Files.init file, signer = Nothing }
+  { state: state { file = Just $ Files.init file }
   , effects: [ pure $ Just $ File $ Files.CalculateHash ]
   }
 
@@ -125,13 +126,13 @@ foldp (File event) state =
       # mapEffects File
       # mapState \s -> state { file = Just s }
 
-foldp (Signer event) state =
-  case state.signer of
+foldp (Signer address event) state =
+  case Map.lookup address state.signers of
     Nothing -> noEffects $ state
     Just signerState ->
       Signers.foldp event signerState
-      # mapEffects Signer
-      # mapState \s -> state { signer = Just s }
+      # mapEffects (Signer address)
+      # mapState \s -> state { signers = Map.insert address s state.signers }
 
 foldp (FileSignerFetched signer) rootState =
   mergeEffModels fileModel signerModel rootState
@@ -143,9 +144,9 @@ foldp (FileSignerFetched signer) rootState =
       NoSigner -> noEffects state
       HashSigner address ->
         whenContractsLoaded state \c ->
-        { state: state { signer = (Just $ Signers.init address) }
+        { state: state { signers = Map.insert address (Signers.init address) state.signers }
         , effects:
-          [ pure $ Just $ Signer $ Signers.FetchAll $ c.signProof ]
+          [ pure $ Just $ Signer address $ Signers.FetchAll $ c.signProof ]
         }
 
 foldp (Routing event) state =

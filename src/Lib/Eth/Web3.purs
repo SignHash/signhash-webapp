@@ -29,6 +29,9 @@ instance showAddress :: Show Address where
   show (Address a) = a
 
 
+derive instance ordAddress :: Ord Address
+
+
 foreign import bytesFromASCII :: String -> Bytes
 foreign import buildWeb3 :: Web3Config -> Web3
 foreign import _getInjectedWeb3 :: forall eff. Eff (dom :: DOM | eff) Foreign

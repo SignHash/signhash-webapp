@@ -10,7 +10,7 @@ import App.State.Files as Files
 import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Data.Array (fromFoldable)
-import Data.Map (toUnfoldable, values)
+import Data.Map (lookup, toUnfoldable, values)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
@@ -60,7 +60,7 @@ view state =
 
 
 viewContent :: State -> HTML Event
-viewContent { location: Verify, file, signer } = do
+viewContent { location: Verify, file, signers } = do
   mapEvent FileInput $ viewFileInput "Verify" (isJust file)
   case file of
     Nothing -> empty
@@ -71,14 +71,14 @@ viewContent { location: Verify, file, signer } = do
     signerStatus = case _ of
       Nothing -> sectionHeader "Loading signer..."
       Just (NoSigner) -> sectionHeader "No signers"
-      Just (HashSigner s) -> do
+      Just (HashSigner address) -> do
         sectionHeader "Signers"
-        case signer of
+        case lookup address signers of
           Nothing -> div do
             text loading
             hr
           Just value -> div do
-            child Signer viewSigner $ value
+            child (Signer address) viewSigner $ value
 viewContent { location: Sign, file, myAccount } = do
   mapEvent FileInput $ viewFileInput "Sign" (isJust file)
   case file of
@@ -91,7 +91,7 @@ viewContent { location: Sign, file, myAccount } = do
         Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
         Contracts.Available details ->
           div ! dataQA "my-id" $
-            child Signer viewSigner $ details
+            child (Signer details.address) viewSigner $ details
 
 
 viewContracts :: Contracts.State -> HTML Event
