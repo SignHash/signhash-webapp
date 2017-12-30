@@ -16,7 +16,8 @@ import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER)
 import DOM (DOM)
 import DOM.HTML.Types (HISTORY)
-import Data.Lens ((^.), (.~))
+import Data.Lens (Lens', (.~), (^.))
+import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -132,12 +133,14 @@ foldp (File event) state =
       # mapState \s -> state { file = Just s }
 
 foldp (Signer address event) state =
-  case Map.lookup address state.signers of
+  case state ^. lens of
     Nothing -> noEffects $ state
     Just signerState ->
       Signers.foldp event signerState
       # mapEffects (Signer address)
-      # mapState \s -> state { signers = Map.insert address s state.signers }
+      # mapState \s -> (lens .~ (Just s) $ state)
+  where
+    lens = signerLens address
 
 foldp (FileSignerFetched signer) state =
   case signer of
@@ -151,24 +154,23 @@ foldp (FileSignerFetched signer) state =
 foldp (Routing event) state =
   Locations.foldp event (state ^. lens)
   # mapEffects Routing
-  # mapState \s -> (lens .~ s $ state)
+  # mapState \s -> lens .~ s $ state
   where
     lens = prop (SProxy :: SProxy "location")
 
 
 loadSignerEffModel :: Address -> State -> FoldpResult
 loadSignerEffModel address state =
-  case Map.lookup address state.signers of
+  case state ^. lens of
     Just value -> noEffects state
     Nothing ->
       whenContractsLoaded state \c ->
-      let
-        initSigner = Map.insert address (Signers.init address)
-      in
-       { state: state { signers = initSigner state.signers }
+       { state: lens .~ (Just $ Signers.init address) $ state
        , effects:
          [ pure $ Just $ Signer address $ Signers.FetchAll $ c.signProof ]
        }
+  where
+    lens = signerLens address
 
 
 whenContractsLoaded ::
@@ -177,3 +179,7 @@ whenContractsLoaded ::
   -> FoldpResult
 whenContractsLoaded { contracts: Contracts.Loaded c } fun = fun c
 whenContractsLoaded state _ = noEffects state
+
+
+signerLens :: Address -> Lens' State (Maybe Signers.State)
+signerLens address = prop (SProxy :: SProxy "signers") <<< at address

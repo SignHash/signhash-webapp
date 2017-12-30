@@ -3,14 +3,15 @@ module App.View where
 import Text.Smolder.HTML hiding (address)
 
 import App.Routing (Location(..))
-import App.State (Event(..), State)
+import App.State (Event(..), State, signerLens)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Data.Array (fromFoldable)
-import Data.Map (lookup, toUnfoldable, values)
+import Data.Lens ((^.))
+import Data.Map (toUnfoldable, values)
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
@@ -60,7 +61,7 @@ view state =
 
 
 viewContent :: State -> HTML Event
-viewContent { location: Verify, file, signers } = do
+viewContent state@{ location: Verify, file } = do
   mapEvent FileInput $ viewFileInput "Verify" (isJust file)
   case file of
     Nothing -> empty
@@ -73,13 +74,13 @@ viewContent { location: Verify, file, signers } = do
       Just (NoSigner) -> sectionHeader "No signers"
       Just (HashSigner address) -> do
         sectionHeader "Signers"
-        case lookup address signers of
+        case state ^. signerLens address of
           Nothing -> div do
             text loading
             hr
           Just value -> div do
             child (Signer address) viewSigner $ value
-viewContent { location: Sign, file, myAccount, signers } = do
+viewContent state@{ location: Sign, file, myAccount } = do
   mapEvent FileInput $ viewFileInput "Sign" (isJust file)
   case file of
     Nothing -> empty
@@ -90,8 +91,8 @@ viewContent { location: Sign, file, myAccount, signers } = do
         Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
         Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
         Contracts.Available address ->
-          div ! dataQA "my-id" $
-            case lookup address signers of
+          div ! dataQA "my-id" $ do
+            case state ^. signerLens address of
               Nothing -> empty
               Just details -> child (Signer address) viewSigner details
 
