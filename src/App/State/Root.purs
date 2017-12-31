@@ -31,14 +31,14 @@ import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
 
-data Event =
-  Init InitEnv |
-  Routing Locations.Event |
-  Contract Contracts.Event |
-  FileInput FileInputs.Event |
-  File Files.Event |
-  Signer Address Signers.Event |
-  FileSignerFetched HashSigner
+data Event
+  = Init InitEnv
+  | Routing Locations.Event
+  | Contract Contracts.Event
+  | FileInput FileInputs.Event
+  | File Files.Event
+  | Signer Address Signers.Event
+  | FileSignerFetched HashSigner
 
 
 type State =
@@ -56,7 +56,7 @@ type InitEnv =
   { ethAccountChannel :: ETHAccountChannel }
 
 
-type FoldpResult = EffModel State Event AppEffects
+type Update = EffModel State Event AppEffects
 
 
 init :: AppEnvConfig -> State
@@ -83,7 +83,7 @@ type AppEffects =
   )
 
 
-foldp :: Event -> State -> FoldpResult
+foldp :: Event -> State -> Update
 
 foldp (Init env) state =
   onlyEffects state
@@ -159,7 +159,7 @@ foldp (Routing event) state =
     lens = prop (SProxy :: SProxy "location")
 
 
-loadSignerEffModel :: Address -> State -> FoldpResult
+loadSignerEffModel :: Address -> State -> Update
 loadSignerEffModel address state =
   case state ^. lens of
     Just value -> noEffects state
@@ -175,8 +175,8 @@ loadSignerEffModel address state =
 
 whenContractsLoaded ::
   State
-  -> (Contracts.LoadedState -> FoldpResult)
-  -> FoldpResult
+  -> (Contracts.LoadedState -> Update)
+  -> Update
 whenContractsLoaded { contracts: Contracts.Loaded c } fun = fun c
 whenContractsLoaded state _ = noEffects state
 
