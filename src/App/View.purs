@@ -22,9 +22,9 @@ import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address(..), HashSigner(..))
-import Prelude (discard, show, ($), (<>), (-), (<<<))
+import Prelude (discard, show, ($), (-), (<<<), (<>))
 import Pux.DOM.Events (DOMEvent, onChange, onClick, onDragOver, onDrop)
-import Pux.DOM.HTML (HTML, child, mapEvent)
+import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
 import Text.Smolder.Markup (Attribute, attribute, text, (!), (#!))
@@ -62,7 +62,7 @@ view state =
 
 viewContent :: State -> HTML Event
 viewContent state@{ location: Verify, file } = do
-  mapEvent FileInput $ viewFileInput "Verify" (isJust file)
+  viewFileInput "Verify" (isJust file)
   case file of
     Nothing -> empty
     Just loaded -> do
@@ -81,7 +81,7 @@ viewContent state@{ location: Verify, file } = do
           Just value -> div do
             child (Signer address) viewSigner $ value
 viewContent state@{ location: Sign, file, myAccount } = do
-  mapEvent FileInput $ viewFileInput "Sign" (isJust file)
+  viewFileInput "Sign" (isJust file)
   case file of
     Nothing -> empty
     Just loaded -> do
@@ -95,6 +95,14 @@ viewContent state@{ location: Sign, file, myAccount } = do
             case state ^. signerLens address of
               Nothing -> empty
               Just details -> child (Signer address) viewSigner details
+            case loaded.result of
+              Just details ->
+                a
+                  ! A.href "#"
+                  #! onClick (preventingDefault $ SignFile details.hash)
+                  $ do
+                    text "Sign it"
+              Nothing -> empty
 
 
 viewContracts :: Contracts.State -> HTML Event
@@ -117,25 +125,27 @@ viewContracts (Contracts.Error err) = do
     $ text "Error while loading contract"
 
 
-viewFileInput :: String -> Boolean -> HTML FileInputs.Event
+viewFileInput :: String -> Boolean -> HTML Event
 viewFileInput verb small =
   div do
     label
       ! for "file-upload"
       ! className ("File-upload" <> if small then " small" else "")
-      #! onDrop FileInputs.newFilesEvent
-      #! onDragOver (FileInputs.PreventDefault FileInputs.NoOp)
+      #! onDrop handleNewFiles
+      #! onDragOver ignoreEvent
       $ do
         renderIcon "fa-file-o"
         text (verb <> " a file")
         if small then empty else
           div ! className "hint"
           $ text "Click or drag and drop on the page"
-
     input
       ! id "file-upload"
       ! type' "file"
-      #! onChange FileInputs.newFilesEvent
+      #! onChange handleNewFiles
+  where
+    handleNewFiles ev =
+      preventingDefault (FileInput $ FileInputs.newFilesEvent ev) ev
 
 
 viewFile :: Files.State -> HTML Event
@@ -294,3 +304,11 @@ addressURL (Address address) =
 
 navigate :: Location -> DOMEvent -> Event
 navigate location = Routing <<< Locations.Navigate location
+
+
+ignoreEvent :: DOMEvent -> Event
+ignoreEvent = PreventDefault Nothing
+
+
+preventingDefault :: Event -> DOMEvent -> Event
+preventingDefault next = PreventDefault $ Just next

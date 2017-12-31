@@ -11,10 +11,12 @@ import App.State.Files as Files
 import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
+import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Eff.Now (NOW)
 import Control.Monad.Eff.Random (RANDOM)
 import Control.Monad.Eff.Timer (TIMER)
 import DOM (DOM)
+import DOM.Event.Event as DOMEvent
 import DOM.HTML.Types (HISTORY)
 import Data.Lens (Lens', (.~), (^.))
 import Data.Lens.At (at)
@@ -24,8 +26,8 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Lib.Eth.Web3 (Address, WEB3)
 import Lib.Pux (mergeEffModels)
-import Lib.SignHash.Contracts.SignHash (getSigner)
-import Lib.SignHash.Types (HashSigner(..))
+import Lib.SignHash.Contracts.SignHash as SignHash
+import Lib.SignHash.Types (HashSigner(..), Checksum)
 import Lib.SignHash.Worker (WORKER)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
@@ -39,6 +41,8 @@ data Event
   | File Files.Event
   | Signer Address Signers.Event
   | FileSignerFetched HashSigner
+  | SignFile Checksum
+  | PreventDefault (Maybe Event) DOMEvent.Event
 
 
 type State =
@@ -120,7 +124,7 @@ foldp (FileInput event) state =
 foldp (File (Files.Signal (Files.OnHashCalculated result))) state =
   whenContractsLoaded state \c -> onlyEffects state $ [
     do
-      signer <- getSigner c.signHash result.hash
+      signer <- SignHash.getSigner c.signHash result.hash
       pure $ Just $ FileSignerFetched signer
     ]
 
@@ -158,6 +162,21 @@ foldp (Routing event) state =
   where
     lens = prop (SProxy :: SProxy "location")
 
+foldp (SignFile checksum) state =
+  whenAccountLoaded state \address c ->
+    onlyEffects state $
+    [ do
+         callResult <- SignHash.sign c.signHash checksum address
+         pure Nothing
+    ]
+
+foldp (PreventDefault next domEvent) state =
+  onlyEffects state $
+  [ do
+       liftEff $ DOMEvent.preventDefault domEvent
+       pure next
+  ]
+
 
 loadSignerEffModel :: Address -> State -> Update
 loadSignerEffModel address state =
@@ -179,6 +198,17 @@ whenContractsLoaded ::
   -> Update
 whenContractsLoaded { contracts: Contracts.Loaded c } fun = fun c
 whenContractsLoaded state _ = noEffects state
+
+
+whenAccountLoaded ::
+  State
+  -> (Address -> Contracts.LoadedState -> Update)
+  -> Update
+whenAccountLoaded state fun =
+  whenContractsLoaded state \c ->
+    case state.myAccount of
+      Contracts.Available address -> fun address c
+      otherwise -> noEffects state
 
 
 signerLens :: Address -> Lens' State (Maybe Signers.State)
