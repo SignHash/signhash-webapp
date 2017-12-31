@@ -3,7 +3,7 @@ module Main where
 import Prelude
 
 import App.Env (appEnvConfig)
-import App.Routing (Location(Verify), routing)
+import App.Routing (routing)
 import App.State (AppEffects, Event(..), State, InitEnv, foldp, init)
 import App.State.Contracts (buildAccountsChannel, buildAccountsSignal)
 import App.State.Locations (buildRoutingSignal)
@@ -31,7 +31,7 @@ initApp env = constant $ Init env
 -- | Start and render the app
 main :: String -> State -> AllEffects WebApp
 main url state = do
-  routingChannel <- channel Verify
+  routingChannel <- channel state.location
   ethAccountChannel <- buildAccountsChannel
 
   let
