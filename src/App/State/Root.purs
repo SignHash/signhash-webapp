@@ -4,7 +4,6 @@ import Prelude
 
 import App.Env (AppEnvConfig)
 import App.Routing (Location(..))
-import App.State.Contracts (ETHAccountChannel)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
@@ -24,7 +23,7 @@ import Data.Lens.Record (prop)
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Lib.Eth.Web3 (Address, WEB3)
+import Lib.Eth.Web3 (Address, TxResult, WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Types (HashSigner(..), Checksum)
@@ -42,6 +41,7 @@ data Event
   | Signer Address Signers.Event
   | FileSignerFetched HashSigner
   | SignFile Checksum
+  | SignFileTx TxResult
   | PreventDefault (Maybe Event) DOMEvent.Event
 
 
@@ -49,6 +49,7 @@ type State =
   { file :: Maybe Files.State
   , myAccount :: Contracts.ETHAccountState Address
   , signers :: Map.Map Address Signers.State
+  , signingTx :: Maybe TxResult
   , contracts :: Contracts.State
   , defaults ::
        { network :: String }
@@ -57,7 +58,7 @@ type State =
 
 
 type InitEnv =
-  { ethAccountChannel :: ETHAccountChannel }
+  { ethAccountChannel :: Contracts.ETHAccountChannel }
 
 
 type Update = EffModel State Event AppEffects
@@ -68,6 +69,7 @@ init { rpcUrl } =
   { file: Nothing
   , myAccount: Contracts.Unavailable
   , signers: Map.empty
+  , signingTx: Nothing
   , contracts: Contracts.Loading
   , defaults: { network: rpcUrl }
   , location: Verify
@@ -109,7 +111,8 @@ foldp (Contract event) state =
   # mapState \s -> state { contracts  = s}
 
 foldp (FileInput (FileInputs.NewFile file)) state =
-  { state: state { file = Just $ Files.init file }
+  { state: state { file = Just $ Files.init file
+                 , signingTx = Nothing }
   , effects: [ pure $ Just $ File $ Files.CalculateHash ]
   }
 
@@ -165,10 +168,11 @@ foldp (Routing event) state =
 foldp (SignFile checksum) state =
   whenAccountLoaded state \address c ->
     onlyEffects state $
-    [ do
-         callResult <- SignHash.sign c.signHash checksum address
-         pure Nothing
+    [ Just <$> SignFileTx <$> SignHash.sign c.signHash checksum address
     ]
+
+foldp (SignFileTx result) state =
+  noEffects $ state { signingTx = Just result }
 
 foldp (PreventDefault next domEvent) state =
   onlyEffects state $

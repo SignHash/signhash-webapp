@@ -2,7 +2,7 @@ module Lib.Eth.Web3 where
 
 import Prelude
 
-import Control.Monad.Aff (Aff)
+import Control.Monad.Aff (Aff, Error)
 import Control.Monad.Eff (Eff, kind Effect)
 import Control.Monad.Except (runExcept)
 import Control.Promise (toAffE)
@@ -21,6 +21,15 @@ type Web3Config = String
 type Web3Aff eff res = Aff (web3 :: WEB3 | eff) res
 
 newtype Bytes = Bytes String
+
+newtype TxHash = TxHash String
+
+instance showTxHash :: Show TxHash where
+  show (TxHash hash) = hash
+
+type TxResult = Either Error TxHash
+
+type TxAff eff = Aff (web3 :: WEB3 | eff) TxResult
 
 newtype Address = Address String
 

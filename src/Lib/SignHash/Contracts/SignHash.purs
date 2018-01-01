@@ -10,7 +10,7 @@ import Data.Either (Either)
 import Data.Maybe (maybe)
 import FFI.Util.Function (callEff2)
 import Lib.Eth.Contracts (class EthContract, EthContractData, Result, getDeployed, getResult)
-import Lib.Eth.Web3 (Address(..), Bytes(..), WEB3, Web3)
+import Lib.Eth.Web3 (Address(..), Bytes(..), WEB3, Web3, TxAff)
 import Lib.SignHash.Types (Checksum, HashSigner(..))
 
 
@@ -30,14 +30,9 @@ checksumToBytes :: String -> Bytes
 checksumToBytes = Bytes <<< append "0x"
 
 
-sign ::
-  forall eff.
-  Contract ->
-  Checksum ->
-  Address ->
-  Aff (web3 :: WEB3 | eff) (Either Error Unit)
+sign :: forall eff. Contract -> Checksum -> Address -> TxAff eff
 sign contract checksum signer =
-  attempt $ rawSign contract (checksumToBytes checksum) signer
+  rawSign contract (checksumToBytes checksum) signer
 
 
 getSigners ::
@@ -57,14 +52,9 @@ getSigner contract checksum = do
   pure $ maybe NoSigner (HashSigner <<< Address) $ head signers
 
 
-rawSign ::
-  forall eff.
-  Contract ->
-  Bytes ->
-  Address ->
-  Aff (web3 :: WEB3 | eff) Unit
+rawSign :: forall eff. Contract -> Bytes -> Address -> TxAff eff
 rawSign contract checksum from =
-  toAffE $ callEff2 contract "sign" checksum { from }
+  attempt $ toAffE $ callEff2 contract "sign" checksum { from }
 
 
 rawGetSigners ::

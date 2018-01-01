@@ -10,6 +10,7 @@ import App.State.Files as Files
 import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Data.Array (fromFoldable)
+import Data.Either (Either(..))
 import Data.Lens ((^.))
 import Data.Map (toUnfoldable, values)
 import Data.Maybe (Maybe(..), isJust, maybe)
@@ -17,6 +18,7 @@ import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.Eth.Contracts (class EthContract, getAddress)
+import Lib.Eth.Web3 (TxHash(..))
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
 import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
@@ -27,7 +29,7 @@ import Pux.DOM.Events (DOMEvent, onChange, onClick, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
-import Text.Smolder.Markup (Attribute, attribute, text, (!), (#!))
+import Text.Smolder.Markup (Attribute, EventHandlers, attribute, text, (!), (#!))
 
 
 foreign import images ::
@@ -80,7 +82,7 @@ viewContent state@{ location: Verify, file } = do
             hr
           Just value -> div do
             child (Signer address) viewSigner $ value
-viewContent state@{ location: Sign, file, myAccount } = do
+viewContent state@{ location: Sign, file, signingTx, myAccount } = do
   viewFileInput "Sign" (isJust file)
   case file of
     Nothing -> empty
@@ -97,11 +99,18 @@ viewContent state@{ location: Sign, file, myAccount } = do
               Just details -> child (Signer address) viewSigner details
             case loaded.result of
               Just details ->
-                a
-                  ! A.href "#"
-                  #! onClick (preventingDefault $ SignFile details.hash)
-                  $ do
-                    text "Sign it"
+                case signingTx of
+                  Nothing ->
+                    a
+                      ! A.href "#"
+                      #! onClickAction (SignFile details.hash)
+                      $ do
+                        text "Sign it"
+                  Just (Left err) ->
+                    text $ "Error while issuing transaction"
+                  Just (Right hash) -> do
+                    text $ "Issued tx "
+                    txLink hash
               Nothing -> empty
 
 
@@ -297,9 +306,23 @@ addressLink address = do
   $ text $ show address
 
 
+txLink :: forall a. TxHash -> HTML a
+txLink hash = do
+  a
+  ! A.href (txURL hash)
+  ! className "AddressURL"
+  ! A.target "_blank"
+  $ text $ show hash
+
+
 addressURL :: Address -> String
 addressURL (Address address) =
   "https://etherscan.io/address/" <> address
+
+
+txURL :: TxHash -> String
+txURL (TxHash hash) =
+  "https://etherscan.io/tx/" <> hash
 
 
 navigate :: Location -> DOMEvent -> Event
@@ -312,3 +335,7 @@ ignoreEvent = PreventDefault Nothing
 
 preventingDefault :: Event -> DOMEvent -> Event
 preventingDefault next = PreventDefault $ Just next
+
+
+onClickAction :: Event -> EventHandlers (DOMEvent -> Event)
+onClickAction next = onClick $ preventingDefault next
