@@ -11,7 +11,8 @@ import Control.Monad.Eff.Timer (TIMER, setInterval)
 import DOM (DOM)
 import Data.Either (Either(..))
 import Data.Maybe (Maybe(..))
-import Lib.Eth.Web3 (Address, WEB3, Web3, getDefaultAccount, getOrBuildWeb3, isMetaMask)
+import Data.Symbol (SProxy(..))
+import Lib.Eth.Web3 (Address, TxHash(..), TxStatus(..), WEB3, Web3, getDefaultAccount, getOrBuildWeb3, isMetaMask, storeGlobalWeb3)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)
@@ -72,6 +73,10 @@ type Effects eff =
   , dom :: DOM | eff)
 
 
+accUpdateInterval :: Int
+accUpdateInterval = 1000
+
+
 foldp ::
   forall eff.
   Event ->
@@ -100,10 +105,11 @@ foldp (EthLoaded web3 contracts channel) state =
   { state: Loaded $
     { web3
     , signHash: contracts.signHash
-    , signProof: contracts.signProof }
+    , signProof: contracts.signProof
+    , transactions: Map.empty }
   , effects:
     [ do
-         liftEff $ void $ setInterval 1000 $ void $ launchAff do
+         liftEff $ void $ setInterval accUpdateInterval $ void $ launchAff do
            let externalProvider = isMetaMask web3
            result <- attempt $ getDefaultAccount web3
            case result of

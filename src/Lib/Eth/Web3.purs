@@ -27,6 +27,9 @@ newtype TxHash = TxHash String
 instance showTxHash :: Show TxHash where
   show (TxHash hash) = hash
 
+derive instance eqTxHash :: Eq TxHash
+derive instance ordTxHash :: Ord TxHash
+
 type TxResult = Either Error TxHash
 
 type TxAff eff = Aff (web3 :: WEB3 | eff) TxResult

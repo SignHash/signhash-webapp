@@ -103,6 +103,7 @@ viewContent state@{ location: Sign, file, signingTx, myAccount } = do
                   Nothing ->
                     a
                       ! A.href "#"
+                      ! dataQA "sign"
                       #! onClickAction (SignFile details.hash)
                       $ do
                         text "Sign it"

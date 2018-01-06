@@ -1,5 +1,5 @@
 import { Selector } from 'testcafe';
-import { rootFixture } from './utils';
+import { rootFixture, pages } from './utils';
 import * as fixtures from './fixtures';
 
 
@@ -15,3 +15,18 @@ test('My account details are visible', async t => {
     .expect(Selector('[data-qa=my-id] [data-qa=proof-details-eth]').textContent)
     .contains(fixtures.myAccount);
 });
+
+
+test('File becomes signed after page is reloaded', async t => {
+  const file = fixtures.unsignedFile;
+
+  await t
+    .setFilesToUpload('#file-upload', file.path)
+    .click('[data-qa=sign]')
+    .navigateTo(pages.verify)
+    .expect(signersSelector())
+    .contains(fixtures.myAccount);
+});
+
+
+const signersSelector = () => Selector('body').textContent;

@@ -70,3 +70,8 @@ function sleep(ms: number) {
     setTimeout(resolve, ms)
   })
 }
+
+
+export const pages = {
+  verify: '#/',
+}
