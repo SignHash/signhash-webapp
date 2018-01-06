@@ -81,6 +81,7 @@ foldp (Load defaultNetwork channel) state =
   onlyEffects state $ [
     do
       web3 <- liftEff $ getOrBuildWeb3 defaultNetwork
+      liftEff $ storeGlobalWeb3 web3
       signHashResult <- SignHash.loadContract web3
       signProofResult <- SignProof.loadContract web3
       let

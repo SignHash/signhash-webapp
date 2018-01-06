@@ -16,3 +16,10 @@ exports._getInjectedWeb3 = function() {
     return undefined;
   }
 };
+
+
+exports.storeGlobalWeb3 = function(web3) {
+  return function () {
+    window.web3 = web3;
+  };
+};

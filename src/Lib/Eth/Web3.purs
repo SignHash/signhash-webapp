@@ -64,6 +64,10 @@ getOrBuildWeb3 config = do
     Nothing -> buildWeb3 config
 
 
+foreign import storeGlobalWeb3 ::
+  forall eff. Web3 -> Eff (dom :: DOM | eff) Unit
+
+
 getAccounts :: forall eff. Web3 -> Web3Aff eff (Array Address)
 getAccounts web3 = toAffE (web3 `property` "accounts")
 
