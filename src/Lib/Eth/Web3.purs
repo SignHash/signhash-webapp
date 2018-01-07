@@ -9,9 +9,10 @@ import Control.Promise (toAffE)
 import DOM (DOM)
 import Data.Array (head)
 import Data.Either (Either(..))
-import Data.Foreign (Foreign, readNullOrUndefined, unsafeFromForeign)
+import Data.Foreign (Foreign, isNull, readNullOrUndefined, unsafeFromForeign)
 import Data.Maybe (Maybe(..))
 import FFI.Util (property, propertyPath)
+import FFI.Util.Function (callEff1)
 
 
 foreign import data Web3 :: Type
@@ -31,6 +32,8 @@ derive instance eqTxHash :: Eq TxHash
 derive instance ordTxHash :: Ord TxHash
 
 type TxResult = Either Error TxHash
+
+data TxStatus = TxPending | TxOk | TxFailed
 
 type TxAff eff = Aff (web3 :: WEB3 | eff) TxResult
 
@@ -82,3 +85,11 @@ getDefaultAccount web3 = head <$> getAccounts web3
 isMetaMask :: Web3 -> Boolean
 isMetaMask web3 =
   (web3 `propertyPath` ["currentProvider", "isMetaMask"]) == true
+
+
+getTxResult :: forall eff. Web3 -> TxHash ->  Web3Aff eff (Maybe Boolean)
+getTxResult web3 hash = do
+  result <- toAffE $ callEff1 web3 "getTransactionReceipt" hash
+  pure if isNull result
+    then Nothing
+    else Just (result `property` "status")

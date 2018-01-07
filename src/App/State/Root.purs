@@ -17,6 +17,7 @@ import Control.Monad.Eff.Timer (TIMER)
 import DOM (DOM)
 import DOM.Event.Event as DOMEvent
 import DOM.HTML.Types (HISTORY)
+import Data.Either (hush)
 import Data.Lens (Lens', (.~), (^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
@@ -172,7 +173,10 @@ foldp (SignFile checksum) state =
     ]
 
 foldp (SignFileTx result) state =
-  noEffects $ state { signingTx = Just result }
+  { state: state { signingTx = Just result }
+  , effects:
+    [ pure $ Contract <$> Contracts.PoolTx <$> hush result ]
+  }
 
 foldp (PreventDefault next domEvent) state =
   onlyEffects state $

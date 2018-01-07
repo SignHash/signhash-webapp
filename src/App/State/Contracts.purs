@@ -2,7 +2,7 @@ module App.State.Contracts where
 
 import Prelude
 
-import Control.Monad.Aff (attempt, launchAff)
+import Control.Monad.Aff (attempt, delay, launchAff)
 import Control.Monad.Aff.Console (CONSOLE, error)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
@@ -10,9 +10,14 @@ import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Timer (TIMER, setInterval)
 import DOM (DOM)
 import Data.Either (Either(..))
+import Data.Lens (Lens', Prism', Traversal', _Just, prism', (.~), (^?))
+import Data.Lens.At (at)
+import Data.Lens.Record (prop)
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
-import Lib.Eth.Web3 (Address, TxHash(..), TxStatus(..), WEB3, Web3, getDefaultAccount, getOrBuildWeb3, isMetaMask, storeGlobalWeb3)
+import Data.Time.Duration (Milliseconds(..))
+import Lib.Eth.Web3 (Address, TxHash, TxStatus(..), WEB3, Web3, getDefaultAccount, getOrBuildWeb3, getTxResult, isMetaMask, storeGlobalWeb3)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)
@@ -24,8 +29,32 @@ data Event
   = Load String ETHAccountChannel
   | EthLoaded Web3 Contracts ETHAccountChannel
   | EthError Error
+  | PoolTx TxHash
+  | PoolTxTry TxHash
+  | PoolTxResult TxHash TxStatus
   | AccountChanged ProviderDetails
   | OnAccountChanged (ETHAccountState Address)
+
+
+data State =
+  Loading |
+  Error String |
+  Loaded LoadedState
+
+
+type Contracts =
+  { signHash :: SignHash.Contract
+  , signProof :: SignProof.Contract }
+
+
+type Transactions = Map.Map TxHash TxStatus
+
+
+type LoadedState =
+  { web3 :: Web3
+  , signHash :: SignHash.Contract
+  , signProof :: SignProof.Contract
+  , transactions :: Transactions }
 
 
 data ETHAccountState a
@@ -49,23 +78,6 @@ derive instance eqProviderDetails :: Eq ProviderDetails
 type ETHAccountChannel = Channel ProviderDetails
 
 
-type Contracts =
-  { signHash :: SignHash.Contract
-    , signProof :: SignProof.Contract }
-
-
-data State =
-  Loading |
-  Error String |
-  Loaded LoadedState
-
-
-type LoadedState =
-  { web3 :: Web3
-  , signHash :: SignHash.Contract
-  , signProof :: SignProof.Contract }
-
-
 type Effects eff =
   ( web3 :: WEB3
   , console :: CONSOLE
@@ -75,6 +87,10 @@ type Effects eff =
 
 accUpdateInterval :: Int
 accUpdateInterval = 1000
+
+
+txPoolInterval :: Milliseconds
+txPoolInterval = Milliseconds 2000.0
 
 
 foldp ::
@@ -137,8 +153,28 @@ foldp
             Unavailable
         Just loaded -> Available loaded
     ]
-foldp (AccountChanged _) state = noEffects state
+foldp (PoolTx hash) state =
+  { state: setTxResult hash TxPending state
+  , effects: [ pure $ Just $ PoolTxTry hash ]
+  }
+foldp (PoolTxTry hash) (Loaded state) =
+  onlyEffects (Loaded state) $
+  [ do
+       delay txPoolInterval
+       result <- getTxResult state.web3 hash
+       pure $ Just $ case result of
+         Nothing -> PoolTxTry hash
+         Just status ->
+           let
+             result = if status then TxOk else TxFailed
+           in
+             PoolTxResult hash result
+  ]
+foldp (PoolTxResult hash status) state =
+  noEffects $ setTxResult hash status state
 foldp (OnAccountChanged _) state = noEffects state
+foldp _ Loading = noEffects Loading
+foldp _ state@(Error _) = noEffects state
 
 
 buildAccountsChannel ::
@@ -149,3 +185,27 @@ buildAccountsChannel =
 buildAccountsSignal :: ETHAccountChannel -> Signal Event
 buildAccountsSignal channel =
   (channel # subscribe # dropRepeats) ~> AccountChanged
+
+
+viewTxResult :: TxHash -> State -> Maybe TxStatus
+viewTxResult hash state =
+  state ^? (txLens hash <<< _Just)
+
+
+setTxResult :: TxHash -> TxStatus -> State -> State
+setTxResult hash status = (txLens hash .~ Just status)
+
+
+txLens :: TxHash -> Traversal' State (Maybe TxStatus)
+txLens hash =
+  loaded <<< transactions <<< at hash
+  where
+    transactions :: Lens' LoadedState Transactions
+    transactions = prop (SProxy :: SProxy "transactions")
+
+    loaded :: Prism' State LoadedState
+    loaded = prism' Loaded fromState
+      where
+        fromState (Error _) = Nothing
+        fromState (Loading) = Nothing
+        fromState (Loaded s) = Just s

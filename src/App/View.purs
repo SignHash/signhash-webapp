@@ -13,17 +13,18 @@ import Data.Array (fromFoldable)
 import Data.Either (Either(..))
 import Data.Lens ((^.))
 import Data.Map (toUnfoldable, values)
-import Data.Maybe (Maybe(..), isJust, maybe)
+import Data.Maybe (Maybe(..), fromJust, isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.Eth.Contracts (class EthContract, getAddress)
-import Lib.Eth.Web3 (TxHash(..))
+import Lib.Eth.Web3 (TxHash(..), TxStatus(..))
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
 import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address(..), HashSigner(..))
+import Partial.Unsafe (unsafePartial)
 import Prelude (discard, show, ($), (-), (<<<), (<>))
 import Pux.DOM.Events (DOMEvent, onChange, onClick, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
@@ -82,36 +83,36 @@ viewContent state@{ location: Verify, file } = do
             hr
           Just value -> div do
             child (Signer address) viewSigner $ value
-viewContent state@{ location: Sign, file, signingTx, myAccount } = do
-  viewFileInput "Sign" (isJust file)
-  case file of
+viewContent state@{ location: Sign, signingTx, myAccount } = do
+  viewFileInput "Sign" (isJust state.file)
+  case state.file of
     Nothing -> empty
-    Just loaded -> do
-      viewFile loaded
+    Just file -> do
+      viewFile file
       sectionHeader "Your account"
       case myAccount of
         Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
         Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
         Contracts.Available address ->
           div ! dataQA "my-id" $ do
-            case state ^. signerLens address of
-              Nothing -> empty
-              Just details -> child (Signer address) viewSigner details
-            case loaded.result of
-              Just details ->
+            let myDetails = expectResult $ state ^. signerLens address
+            child (Signer address) viewSigner myDetails
+            case file.result of
+              Just fileDetails ->
                 case signingTx of
                   Nothing ->
                     a
                       ! A.href "#"
                       ! dataQA "sign"
-                      #! onClickAction (SignFile details.hash)
+                      #! onClickAction (SignFile fileDetails.hash)
                       $ do
                         text "Sign it"
                   Just (Left err) ->
                     text $ "Error while issuing transaction"
                   Just (Right hash) -> do
                     text $ "Issued tx "
-                    txLink hash
+                    let txStatus = Contracts.viewTxResult hash state.contracts
+                    txLink hash txStatus
               Nothing -> empty
 
 
@@ -307,13 +308,19 @@ addressLink address = do
   $ text $ show address
 
 
-txLink :: forall a. TxHash -> HTML a
-txLink hash = do
+txLink :: forall a. TxHash -> Maybe TxStatus -> HTML a
+txLink hash status = do
   a
-  ! A.href (txURL hash)
-  ! className "AddressURL"
-  ! A.target "_blank"
-  $ text $ show hash
+    ! A.href (txURL hash)
+    ! className "AddressURL"
+    ! A.target "_blank"
+    $ text $ (take 8 $ show hash ) <> "..."
+  div $ text case status of
+    Nothing -> ""
+    Just result -> case result of
+      TxPending -> "Pending..."
+      TxFailed -> "Failed"
+      TxOk -> "Successful"
 
 
 addressURL :: Address -> String
@@ -340,3 +347,9 @@ preventingDefault next = PreventDefault $ Just next
 
 onClickAction :: Event -> EventHandlers (DOMEvent -> Event)
 onClickAction next = onClick $ preventingDefault next
+
+
+-- | Use where result is expected to be always `Just` due to the app logic,
+-- | eg. in internal store lookups
+expectResult :: forall a. Maybe a -> a
+expectResult a = unsafePartial $ fromJust $ a
