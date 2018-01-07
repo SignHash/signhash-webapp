@@ -3,10 +3,8 @@ module App.State.FileInputs where
 import Prelude
 
 import Control.Monad.Aff.Console (CONSOLE, log)
-import Control.Monad.Eff.Class (liftEff)
 import Control.Monad.Except (runExcept)
 import DOM (DOM)
-import DOM.Event.Event (preventDefault)
 import Data.Array (fromFoldable, head)
 import Data.Either (Either(..))
 import Data.Foreign (renderForeignError)
