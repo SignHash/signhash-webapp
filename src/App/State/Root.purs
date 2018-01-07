@@ -13,10 +13,10 @@ import Control.Monad.Eff.Random (RANDOM)
 import DOM (DOM)
 import Data.Maybe (Maybe(..))
 import Lib.Pux (mergeEffModels)
-import Lib.SignHash.Contracts (getSigner)
+import Lib.SignHash.Contracts.SignHash (getSigner)
 import Lib.SignHash.Types (HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
-import Lib.Web3 (WEB3)
+import Lib.Eth.Web3 (WEB3)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 
@@ -90,7 +90,7 @@ foldp (FileInput event) state =
 foldp (File (Files.Signal (Files.OnHashCalculated result))) state =
   whenContractsLoaded state \c -> onlyEffects state $ [
     do
-      signer <- getSigner c.signerContract result.hash
+      signer <- getSigner c.signHash result.hash
       pure $ Just $ FileSignerFetched signer
     ]
 
@@ -122,7 +122,7 @@ foldp (FileSignerFetched signer) rootState =
         whenContractsLoaded state \c ->
         { state: state { signer = (Just $ Signers.init address) }
         , effects:
-          [ pure $ Just $ Signer $ Signers.FetchAll $ c.signerContract ]
+          [ pure $ Just $ Signer $ Signers.FetchAll $ c.signProof ]
         }
 
 
