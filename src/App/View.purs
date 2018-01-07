@@ -64,13 +64,26 @@ view state =
 
 
 viewContent :: State -> HTML Event
-viewContent state@{ location: Verify, file } = do
-  viewFileInput "Verify" (isJust file)
-  case file of
+viewContent state@{ location: Verify } = do
+  viewFileInput "Verify" (isJust state.file)
+  case state.file of
     Nothing -> empty
-    Just loaded -> do
-      viewFile loaded
-      div $ signerStatus loaded.signer
+    Just file -> do
+      viewFile file
+      viewFileSigners state file
+viewContent state@{ location: Sign } = do
+  viewFileInput "Sign" (isJust state.file)
+  case state.file of
+    Nothing -> empty
+    Just file -> do
+      viewFile file
+      sectionHeader "Your account"
+      guardAccountUnlocked state.myAccount $ viewSigningDetails state file
+
+
+viewFileSigners :: State -> Files.State -> HTML Event
+viewFileSigners state file = do
+  div $ signerStatus file.signer
   where
     signerStatus = case _ of
       Nothing -> sectionHeader "Loading signer..."
@@ -83,37 +96,29 @@ viewContent state@{ location: Verify, file } = do
             hr
           Just value -> div do
             child (Signer address) viewSigner $ value
-viewContent state@{ location: Sign, signingTx, myAccount } = do
-  viewFileInput "Sign" (isJust state.file)
-  case state.file of
-    Nothing -> empty
-    Just file -> do
-      viewFile file
-      sectionHeader "Your account"
-      case myAccount of
-        Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
-        Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
-        Contracts.Available address ->
-          div ! dataQA "my-id" $ do
-            let myDetails = expectResult $ state ^. signerLens address
-            child (Signer address) viewSigner myDetails
-            case file.result of
-              Just fileDetails ->
-                case signingTx of
-                  Nothing ->
-                    a
-                      ! A.href "#"
-                      ! dataQA "sign"
-                      #! onClickAction (SignFile fileDetails.hash)
-                      $ do
-                        text "Sign it"
-                  Just (Left err) ->
-                    text $ "Error while issuing transaction"
-                  Just (Right hash) -> do
-                    text $ "Issued tx "
-                    let txStatus = Contracts.viewTxResult hash state.contracts
-                    txLink hash txStatus
-              Nothing -> empty
+
+
+viewSigningDetails :: State -> Files.State -> Address -> HTML Event
+viewSigningDetails state file address = do
+  div ! dataQA "my-id" $ do
+    let myDetails = expectResult $ state ^. signerLens address
+    child (Signer address) viewSigner myDetails
+    case file.result of
+      Nothing -> empty
+      Just fileDetails ->
+        case state.signingTx of
+          Nothing ->
+            a
+              ! A.href "#"
+              ! dataQA "sign"
+              #! onClickAction (SignFile fileDetails.hash)
+              $ text "Sign it"
+          Just (Left err) ->
+            text $ "Error while issuing transaction"
+          Just (Right hash) -> do
+            text $ "Issued tx "
+            let txStatus = Contracts.viewTxResult hash state.contracts
+            txLink hash txStatus
 
 
 viewContracts :: Contracts.State -> HTML Event
@@ -264,6 +269,15 @@ viewProofs address proofs =
     methodHref HTTP domain =
       "http://" <> domain
 
+
+
+guardAccountUnlocked ::
+  Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
+guardAccountUnlocked state view = do
+  case state of
+    Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
+    Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
+    Contracts.Available address -> view address
 
 
 sectionHeader :: forall a. String -> HTML a
