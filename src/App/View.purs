@@ -65,20 +65,25 @@ view state =
 
 viewContent :: State -> HTML Event
 viewContent state@{ location: Verify } = do
-  viewFileInput "Verify" (isJust state.file)
-  case state.file of
-    Nothing -> empty
-    Just file -> do
-      viewFile file
-      viewFileSigners state file
+  withFileDetails state.file $ \file -> do
+    viewFileSigners state file
 viewContent state@{ location: Sign } = do
-  viewFileInput "Sign" (isJust state.file)
-  case state.file of
+  withFileDetails state.file $ \file -> do
+    sectionHeader "Your account"
+    guardAccountUnlocked state.myAccount $ viewSigningDetails state file
+
+
+withFileDetails ::
+  Maybe Files.State
+  -> (Files.State -> HTML Event)
+  -> HTML Event
+withFileDetails file viewDetails = do
+  viewFileInput (isJust file)
+  case file of
     Nothing -> empty
     Just file -> do
       viewFile file
-      sectionHeader "Your account"
-      guardAccountUnlocked state.myAccount $ viewSigningDetails state file
+      viewDetails file
 
 
 viewFileSigners :: State -> Files.State -> HTML Event
@@ -141,8 +146,8 @@ viewContracts (Contracts.Error err) = do
     $ text "Error while loading contract"
 
 
-viewFileInput :: String -> Boolean -> HTML Event
-viewFileInput verb small =
+viewFileInput :: Boolean -> HTML Event
+viewFileInput small =
   div do
     label
       ! for "file-upload"
@@ -151,7 +156,7 @@ viewFileInput verb small =
       #! onDragOver ignoreEvent
       $ do
         renderIcon "fa-file-o"
-        text (verb <> " a file")
+        text "Upload file"
         if small then empty else
           div ! className "hint"
           $ text "Click or drag and drop on the page"
