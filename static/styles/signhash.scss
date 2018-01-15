@@ -11,6 +11,9 @@ $color-highlight: #1EAEDB;
 $color-warning: #f1b51c;
 $color-error: #ce0000;
 
+$size-large: 1.8rem;
+$size-larger: 2.3rem;
+
 
 @mixin monospace {
   font-family: 'Roboto Mono', monospace;
@@ -70,15 +73,7 @@ h4 {
   z-index: 99;
   border-top: 1px solid $color-dimmed-light;
   border-bottom: 1px solid $color-dimmed-light;
-  margin-bottom: 25px;
-
-  a {
-    color: $color-content;
-    text-decoration: none;
-    &:hover {
-      color: $color-highlight;
-    }
-  }
+  margin-bottom: 15px;
 
   ul {
     list-style: none;
@@ -89,9 +84,15 @@ h4 {
   li {
     position: relative;
     float: right;
-    margin-bottom: 0px;
-    margin-left: 10px;
-    margin-right: 10px;
+  }
+
+  a {
+    padding: 15px;
+    color: $color-content;
+    text-decoration: none;
+    &:hover {
+      color: $color-highlight;
+    }
   }
 }
 
@@ -166,6 +167,19 @@ input#file-upload {
 }
 
 
+
+
+.Account-guard {
+  text-align: center;
+  font-size: $size-larger;
+  .guard-symbol {
+    font-size: 1.5em;
+    text-shadow: 0px 0px 0px;
+    margin-bottom: 5px;
+  }
+}
+
+
 .Files {
   font-size: 18px;
   text-align: center;
@@ -188,6 +202,7 @@ input#file-upload {
 
 .Section-header {
   text-align: center;
+  margin-bottom: 25px;
 }
 
 

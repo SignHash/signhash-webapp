@@ -280,8 +280,16 @@ guardAccountUnlocked ::
   Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
 guardAccountUnlocked state view = do
   case state of
-    Contracts.Unavailable -> h4 $ text $ "Please install MetaMask extension"
-    Contracts.Locked -> h4 $ text $ "Please unlock MetaMask"
+    Contracts.Unavailable -> do
+      div ! className "Account-guard" $ do
+        div ! className "guard-symbol" $ do
+          renderIcon "fa-wrench"
+        text $ "Please install MetaMask extension"
+    Contracts.Locked ->
+      div ! className "Account-guard" $ do
+        div ! className "guard-symbol" $ do
+          renderIcon "fa-unlock-alt"
+        text $ "Please unlock MetaMask"
     Contracts.Available address -> view address
 
 
