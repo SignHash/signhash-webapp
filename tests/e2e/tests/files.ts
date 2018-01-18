@@ -18,7 +18,7 @@ test('Verifying not signed file', async t => {
   await assertChecksum(t, file.checksum);
   await t
     .expect(bodyTextSelector()).contains(file.name)
-    .expect(bodyTextSelector()).contains("No signers");
+    .expect(bodyTextSelector()).contains("has not been signed.");
 });
 
 

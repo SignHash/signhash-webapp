@@ -1,15 +1,19 @@
 @import 'fonts';
 
 
-$color-logo: #464646;
 $color-content: #1a1a1a;
 $color-shadow: #D4D4D4;
 $color-dimmed: grey;
 $color-dimmed-light: #E1E1E1;
+$color-dimmed-dark: #464646;
 $color-success: green;
 $color-highlight: #1EAEDB;
 $color-warning: #f1b51c;
 $color-error: #ce0000;
+
+$color-bg-warning: #fff4b9;
+$color-bg-grey: #fbfbfb;
+$color-bg-highlight: #f7fdff;
 
 $size-large: 1.8rem;
 $size-larger: 2.3rem;
@@ -23,6 +27,7 @@ $size-larger: 2.3rem;
 body {
   font-family: 'Roboto', sans-serif;
   color: $color-content;
+  font-size: 1.6rem;
 }
 
 hr {
@@ -52,7 +57,7 @@ h4 {
   .title {
     font-family: 'Roboto-medium', sans-serif;
     font-size: 44px;
-    color: $color-logo;
+    color: $color-dimmed-dark;
     text-shadow: $color-shadow 0px 0px 3px;
   }
 }
@@ -161,12 +166,33 @@ input#file-upload {
 
 
 .Section {
-  padding-bottom: 10px;
-  margin-bottom: 20px;
-  border-bottom: 1px solid $color-dimmed-light;
+  margin-bottom: 30px;
+  border-radius: 10px;
+  text-align: center;
+  padding-top: 1em;
+  padding-bottom: 1em;
+
+  &.highlighted {
+    background-color: $color-bg-highlight;
+  }
+
+  &.warning {
+    background-color: $color-bg-warning;
+  }
+
+  .status {
+    text-align: center;
+    font-size: $size-larger;
+    margin-bottom: 0.5em;
+  }
+  .status-icon {
+    text-align: center;
+    font-size: $size-larger * 1.5;
+    text-shadow: 0px 0px 1px;
+    margin-top: 0.1em;
+    margin-bottom: 0.1em;
+  }
 }
-
-
 
 
 .Account-guard {
@@ -181,6 +207,7 @@ input#file-upload {
 
 
 .Files {
+  background-color: $color-bg-grey;
   font-size: 18px;
   text-align: center;
   .row {
@@ -201,8 +228,22 @@ input#file-upload {
 
 
 .Section-header {
-  text-align: center;
-  margin-bottom: 25px;
+  color: $color-dimmed-dark;
+  text-align: left;
+  margin-bottom: 15px;
+  margin-left: 50px;
+  font-size: $size-larger;
+}
+
+
+.List {
+  text-align: left;
+  .row {
+    border-radius: 10px;
+  }
+  .row-odd {
+    background-color: $color-bg-highlight;
+  }
 }
 
 
@@ -210,7 +251,9 @@ input#file-upload {
   $margin-vertical: 30px;
   $blockie-size: 50px;
 
-  border-top: 1px solid $color-dimmed-light;
+  margin-left: 20px;
+  margin-right: 20px;
+
   padding-left: 5px;
   min-height: $blockie-size + $margin-vertical * 2;
   .header {
@@ -276,4 +319,46 @@ input#file-upload {
 .AddressURL {
   @include monospace;
   font-size: 0.95em;
+}
+
+
+.Button {
+  color: $color-dimmed-dark;
+  text-align: center;
+  letter-spacing: .1rem;
+  text-decoration: none;
+  white-space: nowrap;
+  border-radius: 4px;
+  border: 1px solid #bbb;
+  cursor: pointer;
+  box-sizing: border-box;
+  padding: 0.3em 2em;
+  font-size: 1.1em;
+
+  &.inline {
+
+  }
+
+  &.block {
+    padding: 0px;
+    display: block;
+    $height: $size-large * 2.5;
+    height: $height;
+    line-height: $height;
+    font-size: $size-large;
+    width: 90%;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  &.disabled {
+    cursor: default;
+  }
+}
+
+
+.Link-icon {
+  display: inline-block;
+  font-size: 1.1em;
+  margin-left: 0.5em;
 }
