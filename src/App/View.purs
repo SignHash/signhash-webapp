@@ -337,17 +337,18 @@ addressLink address = do
 
 txLink :: forall a. TxHash -> Maybe TxStatus -> HTML a
 txLink hash status = do
-  a
-    ! A.href (txURL hash)
-    ! className "AddressURL"
-    ! A.target "_blank"
-    $ text $ (take 8 $ show hash ) <> "..."
-  div $ text case status of
-    Nothing -> ""
-    Just result -> case result of
-      TxPending -> "Pending..."
-      TxFailed -> "Failed"
-      TxOk -> "Successful"
+  div ! dataQA "tx-status" $ do
+    a
+      ! A.href (txURL hash)
+      ! className "AddressURL"
+      ! A.target "_blank"
+      $ text $ (take 8 $ show hash ) <> "..."
+    div $ text case status of
+      Nothing -> ""
+      Just result -> case result of
+        TxPending -> "Pending..."
+        TxFailed -> "Failed"
+        TxOk -> "Successful"
 
 
 addressURL :: Address -> String

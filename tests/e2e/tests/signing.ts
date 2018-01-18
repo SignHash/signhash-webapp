@@ -23,7 +23,15 @@ test('File becomes signed after page is reloaded', async t => {
   await t
     .setFilesToUpload('#file-upload', file.path)
     .click('[data-qa=sign]')
+    .expect(Selector('[data-qa=tx-status]').textContent)
+    .contains('Successful');
+
+  await t
     .navigateTo(pages.verify)
+    .eval(() => location.reload(true));
+
+  await t
+    .setFilesToUpload('#file-upload', file.path)
     .expect(signersSelector())
     .contains(fixtures.myAccount);
 });
