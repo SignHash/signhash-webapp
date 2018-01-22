@@ -34,6 +34,7 @@ data Event
   | PoolTxResult TxHash TxStatus
   | AccountChanged ProviderDetails
   | OnAccountChanged (ETHAccountState Address)
+  | OnTxResult TxHash TxStatus
 
 
 data State =
@@ -171,7 +172,9 @@ foldp (PoolTxTry hash) (Loaded state) =
              PoolTxResult hash result
   ]
 foldp (PoolTxResult hash status) state =
-  noEffects $ setTxResult hash status state
+  { state: setTxResult hash status state
+  , effects: [ pure $ Just $ OnTxResult hash status ] }
+foldp (OnTxResult hash status) state = noEffects state
 foldp (OnAccountChanged _) state = noEffects state
 foldp _ Loading = noEffects Loading
 foldp _ state@(Error _) = noEffects state

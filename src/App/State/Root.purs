@@ -17,17 +17,17 @@ import Control.Monad.Eff.Timer (TIMER)
 import DOM (DOM)
 import DOM.Event.Event as DOMEvent
 import DOM.HTML.Types (HISTORY)
-import Data.Either (hush)
-import Data.Lens (Lens', (.~), (^.))
+import Data.Either (Either(Right), hush)
+import Data.Lens (Lens', _Just, (.~), (^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map as Map
-import Data.Maybe (Maybe(..))
+import Data.Maybe (Maybe(Just, Nothing))
 import Data.Symbol (SProxy(..))
-import Lib.Eth.Web3 (Address, TxResult, WEB3)
+import Lib.Eth.Web3 (Address, TxResult, TxStatus(..), WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash as SignHash
-import Lib.SignHash.Types (HashSigner(..), Checksum)
+import Lib.SignHash.Types (Checksum, HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
@@ -105,6 +105,23 @@ foldp (Contract (Contracts.OnAccountChanged account)) state =
     otherwise -> updateMyAccount state
   where
     updateMyAccount s = noEffects $ s { myAccount = account }
+
+foldp
+  (Contract (Contracts.OnTxResult txHash TxOk))
+  state
+  @{ signingTx: Just (Right signingTxHash)
+   , file: Just loadedFile@{ signer: Just NoSigner }
+   , myAccount: Contracts.Available address
+   } =
+    if txHash == signingTxHash then
+      noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
+    else
+      noEffects state
+  where
+    fileSignerLens =
+      prop (SProxy :: SProxy  "file")
+      <<< _Just
+      <<< prop (SProxy :: SProxy  "signer")
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts

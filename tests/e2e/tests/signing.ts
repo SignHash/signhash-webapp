@@ -37,4 +37,19 @@ test('File becomes signed after page is reloaded', async t => {
 });
 
 
+test('File becomes signed without page reload', async t => {
+  const file = fixtures.unsignedFile;
+  await t
+    .setFilesToUpload('#file-upload', file.path)
+    .click('[data-qa=sign]')
+    .expect(Selector('[data-qa=tx-status]').textContent)
+    .contains('Successful');
+
+  await t
+    .navigateTo(pages.verify)
+    .expect(signersSelector())
+    .contains(fixtures.myAccount);
+});
+
+
 const signersSelector = () => Selector('body').textContent;
