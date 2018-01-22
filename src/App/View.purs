@@ -25,7 +25,7 @@ import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address(..), HashSigner(..))
 import Partial.Unsafe (unsafePartial)
-import Prelude (discard, mod, show, ($), (-), (<<<), (<>), (==))
+import Prelude (discard, mod, not, show, ($), (-), (<<<), (<>), (==))
 import Pux.DOM.Events (DOMEvent, onChange, onClick, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
@@ -104,22 +104,32 @@ viewFileSigners state file = do
             $ text "Sign it"
 
       Just (HashSigner address) -> do
+        let selfSigned = case state.myAccount of
+              Contracts.Available myAccount -> myAccount == address
+              _ -> false
         sectionHeader "Signers"
-        case state ^. signerLens address of
-          Nothing -> div do
-            text loading
-            hr
-          Just value -> do
-            renderSection do
+        renderSection do
+          if selfSigned then
+            sectionStatus (renderIcon "fa-check-circle-o") do
+            text "You have signed this file."
+            else empty
+
+          case state ^. signerLens address of
+            Nothing -> div do
+              text loading
+              hr
+            Just value -> do
               renderList
                 [ child (Signer address) viewSigner $ value
                 , child (Signer address) viewSigner $ value
                 , child (Signer address) viewSigner $ value
                 ]
-            a
-              ! A.className "Button block"
-              #! onClick (navigate Sign)
-              $ text "Add your signature"
+        if not selfSigned then
+          a
+            ! A.className "Button block"
+            #! onClick (navigate Sign)
+            $ text "Add your signature"
+          else empty
 
 
 viewSigningDetails :: State -> Files.State -> Address -> HTML Event

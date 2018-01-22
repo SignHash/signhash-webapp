@@ -18,7 +18,7 @@ import DOM (DOM)
 import DOM.Event.Event as DOMEvent
 import DOM.HTML.Types (HISTORY)
 import Data.Either (Either(Right), hush)
-import Data.Lens (Lens', _Just, (.~), (^.))
+import Data.Lens (Lens', Traversal', _Just, (.~), (^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map as Map
@@ -117,11 +117,6 @@ foldp
       noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
     else
       noEffects state
-  where
-    fileSignerLens =
-      prop (SProxy :: SProxy  "file")
-      <<< _Just
-      <<< prop (SProxy :: SProxy  "signer")
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts
@@ -238,3 +233,10 @@ whenAccountLoaded state fun =
 
 signerLens :: Address -> Lens' State (Maybe Signers.State)
 signerLens address = prop (SProxy :: SProxy "signers") <<< at address
+
+
+fileSignerLens :: Traversal' State (Maybe HashSigner)
+fileSignerLens =
+  prop (SProxy :: SProxy  "file")
+  <<< _Just
+  <<< prop (SProxy :: SProxy  "signer")
