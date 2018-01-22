@@ -7,13 +7,19 @@ export const rootURL = process.env.SIGNHASH_URL || 'http://localhost:8080';
 
 
 function sendRpc(web3: any, method: string, params?: any) {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     web3.currentProvider.sendAsync({
       jsonrpc: '2.0',
       method,
       params: params || [],
       id: new Date().getTime(),
-    }, (err: any, res: any) => { resolve(res); });
+    }, (err: any, res: any) => {
+      if (err) {
+        reject(err);
+      } else {
+        resolve(res);
+      }
+    });
   });
 };
 
@@ -24,29 +30,29 @@ const snapshot = ClientFunction(() => {
 }, { dependencies: { sendRpc } })
 
 
-const restore = ClientFunction(() => {
+const revert = ClientFunction((id: string) => {
   const web3: any = (window as any).web3;
-  return sendRpc(web3, 'evm_restore');
+  return sendRpc(web3, 'evm_revert', [id]);
 }, { dependencies: { sendRpc } })
 
 
-const boundToTest = (func: ClientFunction) => (t: TestController) =>
-  func.with({ boundTestRun: t })()
+const boundToTest =
+  (func: ClientFunction, ...args: any[]) =>
+    (t: TestController) =>
+      func.with({ boundTestRun: t })(...args)
 
 
 export function rootFixture(fixture: FixtureFn, endpoint?: string) {
-  var snapshotInitialized = false;
+  let lastSnapshotId: string;
 
   return fixture
     .page(rootURL + (endpoint ? '#' + endpoint : ''))
     .before(waitForPage(rootURL, maxAppWarmup))
     .beforeEach(async t => {
-      if (!snapshotInitialized) {
-        await boundToTest(snapshot)(t);
-        snapshotInitialized = true;
-      }
+      const response = await boundToTest(snapshot)(t);
+      lastSnapshotId = response.result;
     })
-    .afterEach(boundToTest(restore));
+    .afterEach((t) => boundToTest(revert, lastSnapshotId)(t));
 }
 
 
