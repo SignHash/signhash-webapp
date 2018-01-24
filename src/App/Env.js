@@ -1,4 +1,4 @@
-exports.env = {
+exports.appEnvConfig = {
   rpcUrl: process.env.RPC_URL || 'http://localhost:8545',
   publicPath:
     process.env.NODE_ENV === 'production'

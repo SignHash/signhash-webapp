@@ -1,8 +1,8 @@
 module App.Env where
 
-type Env =
+type AppEnvConfig =
   { rpcUrl :: String,
     publicPath :: String
   }
 
-foreign import env :: Env
+foreign import appEnvConfig :: AppEnvConfig

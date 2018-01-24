@@ -41,8 +41,12 @@ export const fileBuilder = buildTestFile(accounts);
 const accountFile = (i: number) => fileBuilder(`acc${i}.txt`);
 
 
+export const myAccount = accounts[0];
+
+export const someFile = accountFile(9);
 export const signerFileWithoutGithub = accountFile(0);
 export const signerFileWithMissingGithubProof = accountFile(1);
 export const signerFileWithValidGithub = accountFile(2);
 export const signerFileWithInvalidGithubProofValue = accountFile(3);
 export const signerFileWithXSSGithubProofValue = accountFile(4);
+export const unsignedFile = fileBuilder('unsigned.txt');

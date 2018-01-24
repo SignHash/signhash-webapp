@@ -18,7 +18,7 @@
     "start:prod": "npm run build && npm run start:prod:serve",
     "start:prod:serve": "serve -s static -p 8080",
     "testrpc": "npm-run-all --parallel testrpc:run testrpc:data:setup",
-    "testrpc:run": "testrpc -d -m 'evil yellow twin'",
+    "testrpc:run": "testrpc -d -m 'pony inch update again goddess urge scheme ritual material silly expect choose'",
     "testrpc:persist:build": "npm-run-all --parallel --race testrpc:persist:reset testrpc:data:setup",
     "testrpc:persist:run": "npm run testrpc:run -- --db ./.testrpc --networkId 32167",
     "testrpc:persist:reset": "rimraf .testrpc/* && mkdir -p .testrpc && npm run testrpc:persist:run",
