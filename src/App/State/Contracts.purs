@@ -162,14 +162,14 @@ foldp (PoolTxTry hash) (Loaded state) =
   onlyEffects (Loaded state) $
   [ do
        delay txPoolInterval
-       result <- getTxResult state.web3 hash
-       pure $ Just $ case result of
+       fetchingResult <- getTxResult state.web3 hash
+       pure $ Just $ case fetchingResult of
          Nothing -> PoolTxTry hash
          Just status ->
            let
-             result = if status then TxOk else TxFailed
+             txResult = if status then TxOk else TxFailed
            in
-             PoolTxResult hash result
+             PoolTxResult hash txResult
   ]
 foldp (PoolTxResult hash status) state =
   { state: setTxResult hash status state
