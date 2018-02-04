@@ -59,7 +59,8 @@ type LoadedState =
 
 
 data ETHAccountState a
-  = Unavailable
+  = Fetching
+  | Unavailable
   | Locked
   | Available a
 
@@ -67,6 +68,7 @@ data ETHAccountState a
 instance functorETHAccountState :: Functor ETHAccountState where
   map _ Unavailable = Unavailable
   map _ Locked = Locked
+  map _ Fetching = Fetching
   map f (Available a) = Available (f a)
 
 
