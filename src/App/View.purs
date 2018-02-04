@@ -85,9 +85,9 @@ withFileDetails ::
   Maybe Files.State
   -> (Files.State -> HTML Event)
   -> HTML Event
-withFileDetails file viewDetails = do
-  viewFileInput (isJust file)
-  case file of
+withFileDetails fileState viewDetails = do
+  viewFileInput (isJust fileState)
+  case fileState of
     Nothing -> empty
     Just file -> do
       viewFile file
@@ -322,7 +322,7 @@ viewProofs address proofs =
 
 guardAccountUnlocked ::
   Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
-guardAccountUnlocked state view = do
+guardAccountUnlocked state guardedView = do
   case state of
     Contracts.Unavailable -> do
       renderSectionWarning do
@@ -332,7 +332,7 @@ guardAccountUnlocked state view = do
       renderSectionWarning do
         sectionStatus (renderIcon "fa-unlock-alt") do
           text "Please unlock MetaMask extension"
-    Contracts.Available address -> view address
+    Contracts.Available address -> guardedView address
 
 
 sectionHeader :: forall a. String -> HTML a
