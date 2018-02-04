@@ -2,13 +2,14 @@ module App.View where
 
 import Text.Smolder.HTML hiding (address)
 
-import App.Routing (Location(..))
+import App.Routing as Routing
 import App.State (Event(..), State, signerLens)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
 import App.View.Common (addressLink, clear, dataQA, empty, expectResult, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
+import App.View.Identity (viewIdentity)
 import Data.Array (fromFoldable)
 import Data.Either (Either(..))
 import Data.Lens ((^.))
@@ -41,9 +42,9 @@ view state =
 
       nav ! className "Navbar" $ do
         ul do
-          li $ a ! A.href "#" $ text "Account"
-          li $ a ! A.href "#" #! onClick (navigate Sign) $ text "Sign"
-          li $ a ! A.href "#" #! onClick (navigate Verify) $ text "Verify"
+          li $ a ! A.href "#" #! onClick (navigate Routing.Identity) $ text "Account"
+          li $ a ! A.href "#" #! onClick (navigate Routing.Sign) $ text "Sign"
+          li $ a ! A.href "#" #! onClick (navigate Routing.Verify) $ text "Verify"
 
       viewContent state
 
@@ -60,14 +61,16 @@ viewContent state@{ contracts: Contracts.Error error } = do
       NotDeployedToNetwork networkId ->
         sectionStatus (renderIcon "fa-repeat") do
           text "Please switch to Main Ethereum network"
-viewContent state@{ location: Verify } = do
+viewContent state@{ location: Routing.Verify } = do
   withFileDetails state.file $ \file -> do
     viewFileSigners state file
-viewContent state@{ location: Sign } = do
+viewContent state@{ location: Routing.Sign } = do
   withFileDetails state.file $ \file -> do
     sectionHeader "Signing address"
     guardAccountUnlocked state.myAccount $
       viewSigningDetails state file
+viewContent state@{ location: Routing.Identity } = do
+  viewIdentity state
 
 
 withFileDetails ::
@@ -95,7 +98,7 @@ viewFileSigners state file = do
             text "This file has not been signed."
           a
             ! A.className "Button"
-            #! onClick (navigate Sign)
+            #! onClick (navigate Routing.Sign)
             $ text "Sign it"
 
       Just (HashSigner address) -> do
@@ -122,7 +125,7 @@ viewFileSigners state file = do
         if not selfSigned then
           a
             ! A.className "Button block"
-            #! onClick (navigate Sign)
+            #! onClick (navigate Routing.Sign)
             $ text "Add your signature"
           else empty
 

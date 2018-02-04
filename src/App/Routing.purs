@@ -9,7 +9,7 @@ import Routing.Match (Match)
 import Routing.Match.Class (end, lit)
 
 
-data Location = Verify | Sign
+data Location = Verify | Sign | Identity
 
 
 type LocationChange = { new :: Location, old :: Maybe Location }
@@ -28,11 +28,15 @@ verify =
 sign :: Match Location
 sign = Sign <$ (homeSlash *> lit "sign" <* end)
 
+identity :: Match Location
+identity = Identity <$ (homeSlash *> lit "account" <* end)
+
 
 toURL :: Location -> String
 toURL Verify = "/"
 toURL Sign = "/sign"
+toURL Identity = "/account"
 
 
 routing :: Match Location
-routing = sign <|> verify
+routing = identity <|> sign <|> verify
