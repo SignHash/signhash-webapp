@@ -68,7 +68,7 @@ type Update = EffModel State Event AppEffects
 init :: AppEnvConfig -> State
 init { rpcUrl } =
   { file: Nothing
-  , myAccount: Contracts.Fetching
+  , myAccount: Contracts.LoadingAccount
   , signers: Map.empty
   , signingTx: Nothing
   , contracts: Contracts.Loading

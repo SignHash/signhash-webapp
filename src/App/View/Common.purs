@@ -193,7 +193,7 @@ guardAccountUnlocked ::
   Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
 guardAccountUnlocked state guardedView = do
   case state of
-    Contracts.Fetching -> do
+    Contracts.LoadingAccount -> do
       sectionLoading "Ethereum account"
     Contracts.Unavailable -> do
       renderSectionWarning do
