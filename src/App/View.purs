@@ -8,7 +8,7 @@ import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
-import App.View.Common (addressLink, clear, dataQA, empty, expectResult, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderContractsLoadingError, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
+import App.View.Common (addressLink, clear, dataQA, empty, expectResult, guardAccountUnlocked, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderContractsLoadingError, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
 import App.View.Identity (viewIdentity)
 import Data.Array (fromFoldable)
 import Data.Either (Either(..))
@@ -305,19 +305,3 @@ viewProofs address proofs =
       "https://github.com/" <> username
     methodHref HTTP domain =
       "http://" <> domain
-
-
-
-guardAccountUnlocked ::
-  Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
-guardAccountUnlocked state guardedView = do
-  case state of
-    Contracts.Unavailable -> do
-      renderSectionWarning do
-        sectionStatus (renderIcon "fa-wrench") do
-          text "Please install MetaMask extension"
-    Contracts.Locked ->
-      renderSectionWarning do
-        sectionStatus (renderIcon "fa-unlock-alt") do
-          text "Please unlock MetaMask extension"
-    Contracts.Available address -> guardedView address
