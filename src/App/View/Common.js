@@ -1,5 +1,5 @@
 function requireImg (name) {
-  return require('../../static/images/' + name);
+  return require('../../../static/images/' + name);
 }
 
 

@@ -7,39 +7,28 @@ import App.State (Event(..), State, signerLens)
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
-import App.State.Locations as Locations
 import App.State.Signers as Signers
-import Data.Array (fromFoldable, mapWithIndex)
+import App.View.Common (addressLink, clear, dataQA, empty, expectResult, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
+import Data.Array (fromFoldable)
 import Data.Either (Either(..))
 import Data.Lens ((^.))
 import Data.Map (toUnfoldable, values)
-import Data.Maybe (Maybe(..), fromJust, isJust, maybe)
+import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.Eth.Contracts (class EthContract, ContractLoadingError(..), getAddress)
-import Lib.Eth.Web3 (TxHash(..), TxStatus(..))
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
 import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
-import Lib.SignHash.Types (Address(..), HashSigner(..))
-import Partial.Unsafe (unsafePartial)
-import Prelude (discard, mod, not, show, ($), (-), (<<<), (<>), (==))
-import Pux.DOM.Events (DOMEvent, onChange, onClick, onDragOver, onDrop)
+import Lib.SignHash.Types (Address, HashSigner(..))
+import Prelude (discard, not, show, ($), (-), (<>), (==))
+import Pux.DOM.Events (onChange, onClick, onDragOver, onDrop)
 import Pux.DOM.HTML (HTML, child)
 import Text.Smolder.HTML.Attributes (className, for, id, src, type')
 import Text.Smolder.HTML.Attributes as A
-import Text.Smolder.Markup (Attribute, EventHandlers, attribute, text, (!), (#!))
-
-
-foreign import images ::
-  { logo :: String
-  , ethIcon :: String }
-
-
-dataQA :: String -> Attribute
-dataQA = attribute "data-qa"
+import Text.Smolder.Markup (text, (!), (#!))
 
 
 view :: State -> HTML Event
@@ -122,7 +111,7 @@ viewFileSigners state file = do
 
           case state ^. signerLens address of
             Nothing -> div do
-              text loading
+              loading
               hr
             Just value -> do
               renderList
@@ -218,7 +207,7 @@ viewFile { meta, result, signer } = do
   div ! className "Files Section" $ do
     div ! className "row" $ do
       renderRow "Filename" $ text $ meta.name
-      renderRow "SHA256" $ maybe (text loading) renderHash result
+      renderRow "SHA256" $ maybe loading renderHash result
       renderRow "Size" $ renderSize meta.size
 
   where
@@ -333,133 +322,3 @@ guardAccountUnlocked state guardedView = do
         sectionStatus (renderIcon "fa-unlock-alt") do
           text "Please unlock MetaMask extension"
     Contracts.Available address -> guardedView address
-
-
-sectionHeader :: forall a. String -> HTML a
-sectionHeader msg =
-  h4 ! className "Section-header" $ text msg
-
-
-renderSection :: forall a. HTML a -> HTML a
-renderSection = div ! className "Section"
-
-
-renderSectionWarning :: forall a. HTML a -> HTML a
-renderSectionWarning = div ! className "Section warning"
-
-
-renderSectionHighlighted :: forall a. HTML a -> HTML a
-renderSectionHighlighted = div ! className "Section highlighted"
-
-
-sectionStatus :: forall a. HTML a -> HTML a -> HTML a
-sectionStatus i content =
-  div ! className "status" $ do
-    div ! className "status-icon" $ i
-    content
-
-
-sectionHighlight :: Attribute
-sectionHighlight = className "highlighted"
-
-
-sectionWarning :: Attribute
-sectionWarning = className "warning"
-
-
-renderIcon :: forall a. String -> HTML a
-renderIcon name = i ! className ("fa fa-lg " <> name) $ text ""
-
-renderLinkIcon :: forall a. String -> HTML a
-renderLinkIcon name = i ! className ("Link-icon fa fa-lg " <> name) $ text ""
-
-
-renderEthIcon :: forall a. Html a
-renderEthIcon =
-  img
-  ! className "Icon"
-  ! src images.ethIcon
-
-
-renderBlockie :: forall a. String -> HTML a
-renderBlockie blockieSrc =
-  img ! className "blockie" ! src blockieSrc
-
-
-renderList :: forall a. Array (HTML a) -> HTML a
-renderList elements = do
-  let indexed = mapWithIndex Tuple elements
-  div ! className "List" $
-    for_ indexed \(Tuple i el) ->
-      if i `mod` 2 == 1 then
-        div ! className "row row-even" $ el
-      else
-        div ! className "row row-odd" $ el
-
-
-loading :: String
-loading = "Loading..."
-
-
-empty :: forall a. HTML a
-empty = text ""
-
-
-clear :: forall a. HTML a
-clear = div ! className "Clear" $ empty
-
-
-addressLink :: forall a. Address -> HTML a
-addressLink address = do
-  a
-  ! A.href (addressURL address)
-  ! className "AddressURL"
-  ! A.target "_blank"
-  $ text $ show address
-
-
-txLink :: forall a. TxHash -> Maybe TxStatus -> HTML a
-txLink hash status = do
-  div ! dataQA "tx-status" $ do
-    text case status of
-      Nothing -> "Tx " <> (take 8 $ show hash ) <> "..."
-      Just result -> case result of
-        TxPending -> "Tx Pending..."
-        TxFailed -> "Tx Failed"
-        TxOk -> "Tx Successful"
-    a
-      ! A.href (txURL hash)
-      ! A.target "_blank"
-      $ renderIcon "Link-icon fa-external-link"
-
-
-addressURL :: Address -> String
-addressURL (Address address) =
-  "https://etherscan.io/address/" <> address
-
-
-txURL :: TxHash -> String
-txURL (TxHash hash) =
-  "https://etherscan.io/tx/" <> hash
-
-
-navigate :: Location -> DOMEvent -> Event
-navigate location = Routing <<< Locations.Navigate location
-
-
-ignoreEvent :: DOMEvent -> Event
-ignoreEvent = PreventDefault Nothing
-
-
-preventingDefault :: Event -> DOMEvent -> Event
-preventingDefault next = PreventDefault $ Just next
-
-
-onClickAction :: Event -> EventHandlers (DOMEvent -> Event)
-onClickAction next = onClick $ preventingDefault next
-
-
--- | Use where result is expected to be always `Just` due to the app logic,
--- | eg. in internal store lookups
-expectResult :: forall a. Maybe a -> a
-expectResult a = unsafePartial $ fromJust $ a
