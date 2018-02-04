@@ -8,7 +8,7 @@ import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
-import App.View.Common (addressLink, clear, dataQA, empty, expectResult, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
+import App.View.Common (addressLink, clear, dataQA, empty, expectResult, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderContractsLoadingError, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
 import App.View.Identity (viewIdentity)
 import Data.Array (fromFoldable)
 import Data.Either (Either(..))
@@ -56,11 +56,7 @@ view state =
 
 viewContent :: State -> HTML Event
 viewContent state@{ contracts: Contracts.Error error } = do
-  renderSectionWarning do
-    case error of
-      NotDeployedToNetwork networkId ->
-        sectionStatus (renderIcon "fa-repeat") do
-          text "Please switch to Main Ethereum network"
+  renderContractsLoadingError error
 viewContent state@{ location: Routing.Verify } = do
   withFileDetails state.file $ \file -> do
     viewFileSigners state file

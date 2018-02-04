@@ -4,12 +4,14 @@ import Prelude
 
 import App.Routing (Location)
 import App.State (Event(..))
+import App.State.Contracts as Contracts
 import App.State.Locations as Locations
 import Data.Array (mapWithIndex)
 import Data.Maybe (Maybe(..), fromJust)
 import Data.String (take)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
+import Lib.Eth.Contracts (ContractLoadingError(..))
 import Lib.Eth.Web3 (Address(..), TxHash(..), TxStatus(..))
 import Partial.Unsafe (unsafePartial)
 import Pux.DOM.Events (DOMEvent, onClick)
@@ -156,3 +158,25 @@ onClickAction next = onClick $ preventingDefault next
 -- | eg. in internal store lookups
 expectResult :: forall a. Maybe a -> a
 expectResult a = unsafePartial $ fromJust $ a
+
+
+renderContractsLoadingError :: forall a. ContractLoadingError -> HTML a
+renderContractsLoadingError error =
+  renderSectionWarning do
+    case error of
+      NotDeployedToNetwork networkId ->
+        sectionStatus (renderIcon "fa-repeat") do
+          text "Please switch to Main Ethereum network"
+
+
+guardContractsLoaded ::
+  forall a
+  . Contracts.State
+  -> (Contracts.LoadedState -> HTML a)
+  -> HTML a
+guardContractsLoaded (Contracts.Error error) view =
+  renderContractsLoadingError error
+guardContractsLoaded (Contracts.Loading) view =
+  text "Loading contracts..."
+guardContractsLoaded (Contracts.Loaded contracts) view =
+  view contracts
