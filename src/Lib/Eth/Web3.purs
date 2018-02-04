@@ -47,6 +47,11 @@ instance showAddress :: Show Address where
 derive instance ordAddress :: Ord Address
 
 
+newtype NetworkID = NetworkID Int
+instance showNetworkID :: Show NetworkID where
+  show (NetworkID id) = show id
+
+
 foreign import bytesFromASCII :: String -> Bytes
 foreign import buildWeb3 :: Web3Config -> Web3
 foreign import _getInjectedWeb3 :: forall eff. Eff (dom :: DOM | eff) Foreign
@@ -65,9 +70,11 @@ getInjectedWeb3 = do
 getOrBuildWeb3 :: forall eff. Web3Config -> Eff (dom :: DOM | eff) Web3
 getOrBuildWeb3 config = do
   injectedWeb3 <- getInjectedWeb3
-  pure case injectedWeb3 of
-    Just web3 -> web3
-    Nothing -> buildWeb3 config
+  let web3 = case injectedWeb3 of
+        Just injected -> injected
+        Nothing -> buildWeb3 config
+  storeGlobalWeb3 web3
+  pure web3
 
 
 foreign import storeGlobalWeb3 ::
@@ -93,3 +100,7 @@ getTxResult web3 hash = do
   pure if isNull result
     then Nothing
     else Just (result `property` "status")
+
+
+getNetworkId :: forall eff. Web3 -> Web3Aff eff NetworkID
+getNetworkId web3 = toAffE (web3 `property` "net_version")

@@ -17,7 +17,7 @@ import Data.Maybe (Maybe(..), fromJust, isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
-import Lib.Eth.Contracts (class EthContract, getAddress)
+import Lib.Eth.Contracts (class EthContract, ContractLoadingError(..), getAddress)
 import Lib.Eth.Web3 (TxHash(..), TxStatus(..))
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
 import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
@@ -178,9 +178,10 @@ viewContracts (Contracts.Loaded state) = do
         ! dataQA ((toLower name) <> "-address")
 
 viewContracts (Contracts.Error err) = do
-  div
-    ! A.title err
-    $ text "Error while loading contract"
+  let msg = case err of
+        NotDeployedToNetwork id ->
+          "Contracts have not been deployed to selected network"
+  div $ text msg
 
 
 viewFileInput :: Boolean -> HTML Event

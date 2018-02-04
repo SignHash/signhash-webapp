@@ -3,13 +3,11 @@ module Lib.SignHash.Contracts.SignProof where
 import Prelude
 
 import Control.Monad.Aff (Aff)
-import Control.Monad.Eff.Exception (Error)
 import Control.Promise (toAffE)
-import Data.Either (Either)
 import Data.Maybe (Maybe(..))
 import FFI.Util.Function (callEff2, callEff3)
-import Lib.Eth.Contracts (class EthContract, EthContractData, getDeployed, getResult)
-import Lib.Eth.Web3 (Address, WEB3, Web3)
+import Lib.Eth.Contracts (class EthContract, EthContractData, ContractLoadingResult, getDeployed, getResult)
+import Lib.Eth.Web3 (Address, NetworkID, WEB3, Web3)
 import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
 
 
@@ -21,7 +19,10 @@ foreign import contractData :: EthContractData Contract
 
 
 loadContract ::
-  forall eff. Web3 -> Aff (web3 :: WEB3 | eff) (Either Error Contract)
+  forall eff
+  . Web3
+  -> NetworkID
+  -> Aff (web3 :: WEB3 | eff) (ContractLoadingResult Contract)
 loadContract = getDeployed contractData
 
 
