@@ -169,6 +169,13 @@ renderContractsLoadingError error =
           text "Please switch to Main Ethereum network"
 
 
+sectionLoading :: forall a. String -> HTML a
+sectionLoading loadingWhat = do
+  renderSection do
+    sectionStatus (renderIcon "fa-circle-o-notch") do
+      text $ "Loading " <> loadingWhat
+
+
 guardContractsLoaded ::
   forall a
   . Contracts.State
@@ -177,7 +184,7 @@ guardContractsLoaded ::
 guardContractsLoaded (Contracts.Error error) view =
   renderContractsLoadingError error
 guardContractsLoaded (Contracts.Loading) view =
-  text "Loading contracts..."
+  sectionLoading "Ethereum contracts"
 guardContractsLoaded (Contracts.Loaded contracts) view =
   view contracts
 
@@ -187,9 +194,7 @@ guardAccountUnlocked ::
 guardAccountUnlocked state guardedView = do
   case state of
     Contracts.Fetching -> do
-      renderSection do
-        sectionStatus (renderIcon "fa-circle-o-notch") do
-          text "Loading Ethereum account"
+      sectionLoading "Ethereum account"
     Contracts.Unavailable -> do
       renderSectionWarning do
         sectionStatus (renderIcon "fa-wrench") do
