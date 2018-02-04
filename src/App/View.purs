@@ -65,6 +65,12 @@ view state =
 
 
 viewContent :: State -> HTML Event
+viewContent state@{ contracts: Contracts.Error error } = do
+  renderSectionWarning do
+    case error of
+      NotDeployedToNetwork networkId ->
+        sectionStatus (renderIcon "fa-repeat") do
+          text "Please switch to Main Ethereum network"
 viewContent state@{ location: Verify } = do
   withFileDetails state.file $ \file -> do
     viewFileSigners state file
