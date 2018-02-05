@@ -14,10 +14,11 @@ import Data.StrMap (StrMap, lookup)
 import Data.String (Pattern(..), contains, split)
 import Data.Traversable (for_, traverse)
 import Data.Tuple (Tuple(..))
+import Lib.Eth.Contracts (ContractLoadingError)
+import Lib.Eth.Web3 (WEB3, buildWeb3, getNetworkId)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Lib.SignHash.Types (Address(..), Checksum)
-import Lib.Eth.Web3 (WEB3, buildWeb3)
 import Node.Encoding (Encoding(..))
 import Node.FS.Aff (FS, readTextFile, readdir)
 import Partial.Unsafe (unsafePartial)
@@ -25,8 +26,14 @@ import Simple.JSON (class ReadForeign, readJSON)
 import Tests.Data.Generator as Generator
 
 
-liftError :: forall res eff. Either Error res -> Aff (eff) res
-liftError = either throwError pure
+liftContractError ::
+  forall res eff
+  . Either ContractLoadingError res
+  -> Aff (eff) res
+liftContractError =
+  either throw pure
+  where
+    throw = (throwError <<< error <<< show)
 
 
 type FileFixtureMeta =
@@ -93,8 +100,9 @@ main ::
   ) Unit
 main = void $ runAff logShow do
   let web3 = buildWeb3 "http://localhost:8545"
-  signHash <- liftError =<< SignHash.loadContract web3
-  signProof <- liftError =<< SignProof.loadContract web3
+  networkId <- getNetworkId web3
+  signHash <- liftContractError =<< SignHash.loadContract web3 networkId
+  signProof <- liftContractError =<< SignProof.loadContract web3 networkId
   accounts <- readAccounts
   filePaths <- buildPaths <$> readdir Generator.rootFilesPath
   files <- traverse loadFile filePaths

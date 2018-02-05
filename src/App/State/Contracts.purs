@@ -6,7 +6,6 @@ import Control.Monad.Aff (attempt, delay, launchAff)
 import Control.Monad.Aff.Console (CONSOLE, error)
 import Control.Monad.Eff (Eff)
 import Control.Monad.Eff.Class (liftEff)
-import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Timer (TIMER, setInterval)
 import DOM (DOM)
 import Data.Either (Either(..))
@@ -17,7 +16,8 @@ import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Time.Duration (Milliseconds(..))
-import Lib.Eth.Web3 (Address, TxHash, TxStatus(..), WEB3, Web3, getDefaultAccount, getOrBuildWeb3, getTxResult, isMetaMask, storeGlobalWeb3)
+import Lib.Eth.Contracts (ContractLoadingError)
+import Lib.Eth.Web3 (Address, TxHash, TxStatus(..), WEB3, Web3, getDefaultAccount, getNetworkId, getOrBuildWeb3, getTxResult, isMetaMask)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)
@@ -28,7 +28,7 @@ import Signal.Channel (CHANNEL, Channel, channel, send, subscribe)
 data Event
   = Load String ETHAccountChannel
   | EthLoaded Web3 Contracts ETHAccountChannel
-  | EthError Error
+  | EthError ContractLoadingError
   | PoolTx TxHash
   | PoolTxTry TxHash
   | PoolTxResult TxHash TxStatus
@@ -39,7 +39,7 @@ data Event
 
 data State =
   Loading |
-  Error String |
+  Error ContractLoadingError |
   Loaded LoadedState
 
 
@@ -103,9 +103,9 @@ foldp (Load defaultNetwork channel) state =
   onlyEffects state $ [
     do
       web3 <- liftEff $ getOrBuildWeb3 defaultNetwork
-      liftEff $ storeGlobalWeb3 web3
-      signHashResult <- SignHash.loadContract web3
-      signProofResult <- SignProof.loadContract web3
+      networkId <- getNetworkId web3
+      signHashResult <- SignHash.loadContract web3 networkId
+      signProofResult <- SignProof.loadContract web3 networkId
       let
         loaded =
           { signHash: _, signProof: _ }
@@ -140,7 +140,7 @@ foldp (EthLoaded web3 contracts channel) state =
          pure Nothing
     ]
   }
-foldp (EthError err) state = noEffects $ Error $ show $ err
+foldp (EthError err) state = noEffects $ Error $ err
 foldp
   (AccountChanged (ProviderDetails { address, externalProvider }))
   (Loaded state) =

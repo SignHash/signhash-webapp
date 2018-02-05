@@ -17,7 +17,7 @@ import Data.Maybe (Maybe(..), fromJust, isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
-import Lib.Eth.Contracts (class EthContract, getAddress)
+import Lib.Eth.Contracts (class EthContract, ContractLoadingError(..), getAddress)
 import Lib.Eth.Web3 (TxHash(..), TxStatus(..))
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
 import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
@@ -65,6 +65,12 @@ view state =
 
 
 viewContent :: State -> HTML Event
+viewContent state@{ contracts: Contracts.Error error } = do
+  renderSectionWarning do
+    case error of
+      NotDeployedToNetwork networkId ->
+        sectionStatus (renderIcon "fa-repeat") do
+          text "Please switch to Main Ethereum network"
 viewContent state@{ location: Verify } = do
   withFileDetails state.file $ \file -> do
     viewFileSigners state file
@@ -79,9 +85,9 @@ withFileDetails ::
   Maybe Files.State
   -> (Files.State -> HTML Event)
   -> HTML Event
-withFileDetails file viewDetails = do
-  viewFileInput (isJust file)
-  case file of
+withFileDetails fileState viewDetails = do
+  viewFileInput (isJust fileState)
+  case fileState of
     Nothing -> empty
     Just file -> do
       viewFile file
@@ -178,9 +184,10 @@ viewContracts (Contracts.Loaded state) = do
         ! dataQA ((toLower name) <> "-address")
 
 viewContracts (Contracts.Error err) = do
-  div
-    ! A.title err
-    $ text "Error while loading contract"
+  let msg = case err of
+        NotDeployedToNetwork id ->
+          "Contracts have not been deployed to selected network"
+  div $ text msg
 
 
 viewFileInput :: Boolean -> HTML Event
@@ -315,7 +322,7 @@ viewProofs address proofs =
 
 guardAccountUnlocked ::
   Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
-guardAccountUnlocked state view = do
+guardAccountUnlocked state guardedView = do
   case state of
     Contracts.Unavailable -> do
       renderSectionWarning do
@@ -325,7 +332,7 @@ guardAccountUnlocked state view = do
       renderSectionWarning do
         sectionStatus (renderIcon "fa-unlock-alt") do
           text "Please unlock MetaMask extension"
-    Contracts.Available address -> view address
+    Contracts.Available address -> guardedView address
 
 
 sectionHeader :: forall a. String -> HTML a
