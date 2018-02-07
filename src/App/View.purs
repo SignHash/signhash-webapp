@@ -8,7 +8,7 @@ import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
 import App.State.Signers as Signers
-import App.View.Common (addressLink, clear, dataQA, empty, expectResult, guardAccountUnlocked, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, renderBlockie, renderContractsLoadingError, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
+import App.View.Common (addressLink, clear, dataQA, empty, expectResult, guardAccountUnlocked, ignoreEvent, images, loading, navigate, onClickAction, preventingDefault, proofHref, proofMethodIcon, renderBlockie, renderContractsLoadingError, renderEthIcon, renderIcon, renderLinkIcon, renderList, renderSection, renderSectionHighlighted, renderSectionWarning, sectionHeader, sectionStatus, txLink)
 import App.View.Identity (viewIdentity)
 import Data.Array (fromFoldable)
 import Data.Either (Either(..))
@@ -274,7 +274,7 @@ viewProofs address proofs =
         ! className ("proof " <> "failed")
         ! dataQA ("proof-details-" <> canonicalName method)
         $ do
-          methodIcon method
+          proofMethodIcon method
           span ! dataQA "error" ! A.title (show error)
             $ text $ show method <> " verification failed"
 
@@ -283,25 +283,17 @@ viewProofs address proofs =
         ! className ("proof " <> "verified")
         ! dataQA ("proof-details-" <> canonicalName method)
         $ do
-          methodIcon method
-          a ! A.href (methodHref method proof) ! A.target "_blank" $ text proof
+          proofMethodIcon method
+          a ! A.href (proofHref method proof) ! A.target "_blank" $ text proof
       where
         proof = ProofValues.extract proofValue
 
     renderNetworkError method =
       div ! className ("proof" <> "network-error") $ do
-        methodIcon method
+        proofMethodIcon method
         text $ "Network error while fetching proof"
 
     renderEthProof =
       div ! className "proof" $ do
         renderEthIcon
         (addressLink address) ! dataQA "proof-details-eth"
-
-    methodIcon GitHub = renderIcon "fa-github"
-    methodIcon HTTP = renderIcon "fa-world"
-
-    methodHref GitHub username =
-      "https://github.com/" <> username
-    methodHref HTTP domain =
-      "http://" <> domain

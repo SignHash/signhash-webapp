@@ -13,6 +13,7 @@ import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.Eth.Contracts (ContractLoadingError(..))
 import Lib.Eth.Web3 (Address(..), TxHash(..), TxStatus(..))
+import Lib.SignHash.Proofs.Methods (ProofMethod(..))
 import Partial.Unsafe (unsafePartial)
 import Pux.DOM.Events (DOMEvent, onClick)
 import Pux.DOM.HTML (HTML)
@@ -78,7 +79,7 @@ renderEthIcon =
 
 renderBlockie :: forall a. String -> HTML a
 renderBlockie blockieSrc =
-  H.img ! A.className "blockie" ! A.src blockieSrc
+  H.img ! A.className "Blockie" ! A.src blockieSrc
 
 
 renderList :: forall a. Array (HTML a) -> HTML a
@@ -204,3 +205,12 @@ guardAccountUnlocked state guardedView = do
         sectionStatus (renderIcon "fa-unlock-alt") do
           text "Please unlock MetaMask extension"
     Contracts.Available address -> guardedView address
+
+
+proofMethodIcon :: forall a. ProofMethod -> HTML a
+proofMethodIcon GitHub = renderIcon "fa-github"
+proofMethodIcon HTTP = renderIcon "fa-globe"
+
+proofHref :: ProofMethod -> String -> String
+proofHref GitHub username = "https://github.com/" <> username
+proofHref HTTP domain = "http://" <> domain
