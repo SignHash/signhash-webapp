@@ -13,7 +13,7 @@ import App.View.Identity (viewIdentity)
 import Data.Array (fromFoldable)
 import Data.Either (Either(..))
 import Data.Lens ((^.))
-import Data.Map (toUnfoldable, values)
+import Data.Map as Map
 import Data.Maybe (Maybe(..), isJust, maybe)
 import Data.String (drop, length, take, toLower)
 import Data.Traversable (for_)
@@ -240,10 +240,10 @@ viewSigner { address, proofs, blockie } = do
     viewProofs address proofArray
     clear
   where
-    proofStates = fromFoldable $ values proofs
+    proofStates = fromFoldable $ Map.values proofs
 
     proofArray :: Array (Tuple ProofMethod ProofState)
-    proofArray = toUnfoldable proofs
+    proofArray = Map.toUnfoldable proofs
 
     viewSignerStatus =
       case signerDisplayStatus proofStates of
