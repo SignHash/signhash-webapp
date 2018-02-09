@@ -40,7 +40,7 @@ instance showProofValueError :: Show ProofValueError where
 githubUsernameRegex :: Regex
 githubUsernameRegex =
   unsafePartial $ fromRight $
-  regex "^[a-z\\d-]{0,255}$" $ parseFlags "i"
+  regex "^[a-z\\d-]{1,255}$" $ parseFlags "i"
 
 
 createProofValue :: String -> Either ProofValueError ProofValue

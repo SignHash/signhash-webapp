@@ -53,6 +53,9 @@ view state =
         viewContracts state.contracts
       clear
 
+viewIdentityChild :: State -> HTML Event
+viewIdentityChild = child IdentityUI viewIdentity
+
 
 viewContent :: State -> HTML Event
 viewContent state@{ contracts: Contracts.Error error } = do
@@ -66,7 +69,7 @@ viewContent state@{ location: Routing.Sign } = do
     guardAccountUnlocked state.myAccount $
       viewSigningDetails state file
 viewContent state@{ location: Routing.Identity } = do
-  viewIdentity state
+  viewIdentityChild state
 
 
 withFileDetails ::

@@ -191,7 +191,10 @@ guardContractsLoaded (Contracts.Loaded contracts) view =
 
 
 guardAccountUnlocked ::
-  Contracts.ETHAccountState Address -> (Address -> HTML Event) -> HTML Event
+  forall a
+  . Contracts.ETHAccountState Address
+  -> (Address -> HTML a)
+  -> HTML a
 guardAccountUnlocked state guardedView = do
   case state of
     Contracts.LoadingAccount -> do

@@ -7,6 +7,7 @@ import App.Routing (Location(..))
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
+import App.State.IdentityManagement as IdentityManagement
 import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
@@ -43,6 +44,7 @@ data Event
   | FileSignerFetched HashSigner
   | SignFile Checksum
   | SignFileTx TxResult
+  | IdentityUI IdentityManagement.Event
   | PreventDefault (Maybe Event) DOMEvent.Event
 
 
@@ -55,6 +57,7 @@ type State =
   , defaults ::
        { network :: String }
   , location :: Locations.State
+  , identityUI :: IdentityManagement.State
   }
 
 
@@ -74,6 +77,7 @@ init { rpcUrl } =
   , contracts: Contracts.Loading
   , defaults: { network: rpcUrl }
   , location: Verify
+  , identityUI: IdentityManagement.init
   }
 
 
@@ -196,6 +200,11 @@ foldp (PreventDefault next domEvent) state =
        liftEff $ DOMEvent.preventDefault domEvent
        pure next
   ]
+
+foldp (IdentityUI event) state =
+  IdentityManagement.foldp event state.identityUI
+  # mapEffects IdentityUI
+  # mapState \s -> state { identityUI = s }
 
 
 loadSignerEffModel :: Address -> State -> Update
