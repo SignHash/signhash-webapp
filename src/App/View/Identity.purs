@@ -6,7 +6,7 @@ import App.State (State, signerLens)
 import App.State.IdentityManagement (getMethodUIState)
 import App.State.IdentityManagement as Identity
 import App.View.Common (empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection)
-import Data.Either (isRight)
+import Data.Either (Either(..), fromRight, hush, isRight)
 import Data.Lens ((^.))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
@@ -19,7 +19,7 @@ import Pux.DOM.Events (onClick, onInput, targetValue)
 import Pux.DOM.HTML (HTML)
 import Text.Smolder.HTML as H
 import Text.Smolder.HTML.Attributes as A
-import Text.Smolder.Markup (text, (!), (#!))
+import Text.Smolder.Markup (Markup, text, (!), (#!))
 
 
 viewIdentity :: State -> HTML Identity.Event
@@ -95,17 +95,25 @@ renderProofManagement method proofVerification uiState = do
       H.button
         #! onClick (const $ Identity.Cancel method)
         $ renderIcon "fa-times"
-      H.button
-        #! onClick (const $ Identity.Cancel method)
-        ! A.disabled (if isValid then "" else "disabled")
-        $ renderIcon "fa-check"
+
+      case hush validatedValue of
+        Just proofValue ->
+          H.button
+            #! onClick (const $ Identity.Update method proofValue)
+            $ renderIcon "fa-check"
+        Nothing ->
+          H.button
+            ! A.disabled "disabled"
+            $ renderIcon "fa-check"
 
       H.div do
         text if isValid
           then "Value correct"
           else "Value incorrect"
 
-    Just Identity.Updating -> empty
+    Just Identity.Updating ->
+      H.div do
+        text "Updating..."
 
 
 addButton :: ProofMethod -> HTML Identity.Event

@@ -2,16 +2,19 @@ module App.State.IdentityManagement where
 
 import Prelude
 
+import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Tuple (Tuple(..))
 import Lib.Eth.Web3 (TxHash, WEB3)
 import Lib.SignHash.Proofs.Methods (ProofMethod)
+import Lib.SignHash.Proofs.Values (ProofValue)
 import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event
   = Edit ProofMethod String
   | Delete ProofMethod
+  | Update ProofMethod ProofValue
   | Cancel ProofMethod
   | PendingUpdate ProofMethod TxHash
 
@@ -36,12 +39,14 @@ foldp (Edit method value) state =
   noEffects $ Just $ Tuple method (Editing value)
 foldp (Cancel method) state =
   noEffects $ Nothing
+foldp (Update method value) state =
+  noEffects $ Just $ Tuple method Updating
 foldp event state = noEffects state
 
 
 getMethodUIState :: ProofMethod -> State -> Maybe ProofManagementState
-getMethodUIState methodAsk (Just (Tuple method state))
-  | methodAsk == method = Just state
+getMethodUIState methodAsk (Just (Tuple methodEdited state))
+  | methodAsk == methodEdited = Just state
   | otherwise = Nothing
 getMethodUIState methodAsk _ = Nothing
 
