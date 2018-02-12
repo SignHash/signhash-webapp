@@ -25,9 +25,12 @@ import Data.Lens.Record (prop)
 import Data.Map as Map
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Symbol (SProxy(..))
-import Lib.Eth.Web3 (Address, TxResult, TxStatus(..), WEB3)
+import Lib.Eth.Web3 (Address, TxStatus(..), WEB3, TxResult)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash as SignHash
+import Lib.SignHash.Contracts.SignProof as SignProof
+import Lib.SignHash.Proofs.Methods (canonicalName)
+import Lib.SignHash.Proofs.Values as ProofValue
 import Lib.SignHash.Types (Checksum, HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Network.HTTP.Affjax (AJAX)
@@ -45,6 +48,7 @@ data Event
   | SignFile Checksum
   | SignFileTx TxResult
   | IdentityUI IdentityManagement.Event
+  | PoolTx TxResult (Maybe Event)
   | PreventDefault (Maybe Event) DOMEvent.Event
 
 
@@ -116,11 +120,8 @@ foldp
   @{ signingTx: Just (Right signingTxHash)
    , file: Just loadedFile@{ signer: Just NoSigner }
    , myAccount: Contracts.Available address
-   } =
-    if txHash == signingTxHash then
-      noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
-    else
-      noEffects state
+   } | txHash == signingTxHash =
+    noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts
@@ -200,6 +201,21 @@ foldp (PreventDefault next domEvent) state =
        liftEff $ DOMEvent.preventDefault domEvent
        pure next
   ]
+
+foldp (PoolTx txResult next) state =
+  onlyEffects state $
+  [ pure $ Contract <$> Contracts.PoolTx <$> hush txResult
+  , pure next]
+
+foldp (IdentityUI (IdentityManagement.RequestUpdate method updateValue)) state =
+  whenAccountLoaded state \address c ->
+    onlyEffects state $
+    [ do
+         txResult <- SignProof.update c.signProof method updateValue address
+         let next = Just $ IdentityUI $
+                    IdentityManagement.UpdateTxResult method updateValue txResult
+         pure $ Just $ PoolTx txResult next
+    ]
 
 foldp (IdentityUI event) state =
   IdentityManagement.foldp event state.identityUI

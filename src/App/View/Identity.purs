@@ -3,16 +3,17 @@ module App.View.Identity (viewIdentity) where
 import Prelude
 
 import App.State (State, signerLens)
+import App.State.Contracts (TxStatusGetter, viewTxResult)
 import App.State.IdentityManagement (getMethodUIState)
 import App.State.IdentityManagement as Identity
 import App.State.Signers as Signers
-import App.View.Common (empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection)
+import App.View.Common (empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection, txLink)
 import Data.Either (Either(..), fromRight, hush, isRight)
 import Data.Lens ((^.))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (for_)
-import Lib.Eth.Web3 (Address)
+import Lib.Eth.Web3 (Address, TxHash(..), TxStatus, getTxResult)
 import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
 import Lib.SignHash.Proofs.Types as Proofs
 import Lib.SignHash.Proofs.Values as ProofValue
@@ -29,16 +30,18 @@ viewIdentity state = do
     guardAccountUnlocked state.myAccount \address -> do
       let
         ethState = expectResult $ state ^. signerLens address
+        getTxStatus = (viewTxResult state.contracts)
 
-      viewUnlockedIdentity ethState state.identityUI address
+      viewUnlockedIdentity ethState state.identityUI address getTxStatus
 
 
 viewUnlockedIdentity ::
   Signers.State
   -> Identity.State
   -> Address
+  -> TxStatusGetter
   -> HTML Identity.Event
-viewUnlockedIdentity { blockie, proofs } uiState address = do
+viewUnlockedIdentity { blockie, proofs } uiState address getTxStatus = do
   H.div ! A.className "Identity" $ do
     renderSection do
       H.h4 ! A.className "title" $ do
@@ -54,7 +57,7 @@ viewUnlockedIdentity { blockie, proofs } uiState address = do
           loadedProof = Map.lookup proofMethod proofs
         in
           case loadedProof of
-            Just proof -> viewProofMethod proofMethod methodState proof
+            Just proof -> viewProofMethod proofMethod methodState proof getTxStatus
             Nothing -> empty
 
 
@@ -62,8 +65,9 @@ viewProofMethod ::
   ProofMethod
   -> Maybe Identity.ProofManagementState
   -> Proofs.ProofState
+  -> TxStatusGetter
   -> HTML Identity.Event
-viewProofMethod method uiState value = do
+viewProofMethod method uiState value getTxStatus = do
   renderSection do
     H.h4 ! A.className "title" $ do
       proofMethodIcon method
@@ -72,15 +76,17 @@ viewProofMethod method uiState value = do
       case value of
         Proofs.Pending -> text $ "Loading..."
         Proofs.NetworkError -> text $ "Network error"
-        (Proofs.Finished result) -> renderProofManagement method result uiState
+        (Proofs.Finished result) ->
+          renderProofManagement method result uiState getTxStatus
 
 
 renderProofManagement ::
   ProofMethod
   -> Proofs.ProofVerification
   -> Maybe Identity.ProofManagementState
+  -> TxStatusGetter
   -> HTML Identity.Event
-renderProofManagement method proofVerification uiState = do
+renderProofManagement method proofVerification uiState getTxStatus = do
   let
     storedValue = getStoredValue proofVerification
 
@@ -102,13 +108,13 @@ renderProofManagement method proofVerification uiState = do
         $ renderIcon "fa-times"
 
       case hush validatedValue of
-        Just proofValue ->
-          H.button
-            #! onClick (const $ Identity.RequestUpdate method proofValue)
-            $ renderIcon "fa-check"
         Nothing ->
           H.button
             ! A.disabled "disabled"
+            $ renderIcon "fa-check"
+        justValue ->
+          H.button
+            #! onClick (const $ Identity.RequestUpdate method justValue)
             $ renderIcon "fa-check"
 
       H.div do
@@ -124,8 +130,8 @@ renderProofManagement method proofVerification uiState = do
           Nothing ->
             text $ "Removing proof..."
 
-        text $ show txHash
-
+        H.br
+        txLink txHash (getTxStatus txHash)
 
 addButton :: ProofMethod -> HTML Identity.Event
 addButton method =

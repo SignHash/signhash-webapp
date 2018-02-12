@@ -2,9 +2,10 @@ module App.State.IdentityManagement where
 
 import Prelude
 
+import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Lib.Eth.Web3 (TxHash(..), WEB3)
+import Lib.Eth.Web3 (TxHash(..), WEB3, TxResult)
 import Lib.SignHash.Proofs.Methods (ProofMethod)
 import Lib.SignHash.Proofs.Values (ProofValue)
 import Pux (EffModel, noEffects, onlyEffects)
@@ -12,8 +13,8 @@ import Pux (EffModel, noEffects, onlyEffects)
 
 data Event
   = Edit ProofMethod String
-  | RequestUpdate ProofMethod ProofValue
-  | TxIssued ProofMethod UpdateValue TxHash
+  | RequestUpdate ProofMethod UpdateValue
+  | UpdateTxResult ProofMethod UpdateValue TxResult
   | Cancel ProofMethod
 
 type State = Map.Map ProofMethod ProofManagementState
@@ -39,9 +40,10 @@ foldp (Cancel method) state =
   noEffects $ Map.delete method state
 foldp (RequestUpdate method value) state =
   noEffects state
-foldp (TxIssued method updateValue tx) state =
-  noEffects $ Map.insert method (Updating updateValue tx) state
-
+foldp (UpdateTxResult method updateValue txResult) state =
+  noEffects $ case txResult of
+    Right txHash -> Map.insert method (Updating updateValue txHash) state
+    Left error -> state
 
 getMethodUIState :: ProofMethod -> State -> Maybe ProofManagementState
 getMethodUIState = Map.lookup

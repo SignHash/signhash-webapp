@@ -154,7 +154,7 @@ viewSigningDetails state file address = do
               $ text "Error while issuing transaction"
 
           Just (Right hash) -> do
-            let txStatus = Contracts.viewTxResult hash state.contracts
+            let txStatus = Contracts.viewTxResult state.contracts hash
             div
               ! A.className "Button block disabled"
               $ txLink hash txStatus

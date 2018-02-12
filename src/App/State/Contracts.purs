@@ -88,6 +88,9 @@ type Effects eff =
   , dom :: DOM | eff)
 
 
+type TxStatusGetter = TxHash -> Maybe TxStatus
+
+
 accUpdateInterval :: Int
 accUpdateInterval = 1000
 
@@ -192,8 +195,8 @@ buildAccountsSignal channel =
   (channel # subscribe # dropRepeats) ~> AccountChanged
 
 
-viewTxResult :: TxHash -> State -> Maybe TxStatus
-viewTxResult hash state =
+viewTxResult :: State -> TxStatusGetter
+viewTxResult state hash =
   state ^? (txLens hash <<< _Just)
 
 
