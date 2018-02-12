@@ -5,6 +5,7 @@ import Prelude
 import App.State (State, signerLens)
 import App.State.IdentityManagement (getMethodUIState)
 import App.State.IdentityManagement as Identity
+import App.State.Signers as Signers
 import App.View.Common (empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection)
 import Data.Either (Either(..), fromRight, hush, isRight)
 import Data.Lens ((^.))
@@ -26,14 +27,18 @@ viewIdentity :: State -> HTML Identity.Event
 viewIdentity state = do
   guardContractsLoaded state.contracts \c -> do
     guardAccountUnlocked state.myAccount \address -> do
-      viewUnlockedIdentity state address
+      let
+        ethState = expectResult $ state ^. signerLens address
+
+      viewUnlockedIdentity ethState state.identityUI address
 
 
-viewUnlockedIdentity :: State -> Address -> HTML Identity.Event
-viewUnlockedIdentity state address = do
-  let
-    { blockie, proofs } = expectResult $ state ^. signerLens address
-
+viewUnlockedIdentity ::
+  Signers.State
+  -> Identity.State
+  -> Address
+  -> HTML Identity.Event
+viewUnlockedIdentity { blockie, proofs } uiState address = do
   H.div ! A.className "Identity" $ do
     renderSection do
       H.h4 ! A.className "title" $ do
@@ -45,11 +50,11 @@ viewUnlockedIdentity state address = do
 
       for_ allProofMethods \proofMethod ->
         let
-          uiState = Identity.getMethodUIState proofMethod state.identityUI
+          methodState = Identity.getMethodUIState proofMethod uiState
           loadedProof = Map.lookup proofMethod proofs
         in
           case loadedProof of
-            Just proofState -> viewProofMethod proofMethod uiState proofState
+            Just proof -> viewProofMethod proofMethod methodState proof
             Nothing -> empty
 
 
@@ -99,7 +104,7 @@ renderProofManagement method proofVerification uiState = do
       case hush validatedValue of
         Just proofValue ->
           H.button
-            #! onClick (const $ Identity.Update method proofValue)
+            #! onClick (const $ Identity.RequestUpdate method proofValue)
             $ renderIcon "fa-check"
         Nothing ->
           H.button
@@ -111,9 +116,15 @@ renderProofManagement method proofVerification uiState = do
           then "Value correct"
           else "Value incorrect"
 
-    Just Identity.Updating ->
+    Just (Identity.Updating updateValue txHash) ->
       H.div do
-        text "Updating..."
+        case updateValue of
+          Just nextValue ->
+            text $ "Updating to " <> (ProofValue.extract nextValue)
+          Nothing ->
+            text $ "Removing proof..."
+
+        text $ show txHash
 
 
 addButton :: ProofMethod -> HTML Identity.Event

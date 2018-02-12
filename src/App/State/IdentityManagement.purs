@@ -4,8 +4,7 @@ import Prelude
 
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Data.Tuple (Tuple(..))
-import Lib.Eth.Web3 (TxHash, WEB3)
+import Lib.Eth.Web3 (TxHash(..), WEB3)
 import Lib.SignHash.Proofs.Methods (ProofMethod)
 import Lib.SignHash.Proofs.Values (ProofValue)
 import Pux (EffModel, noEffects, onlyEffects)
@@ -13,18 +12,17 @@ import Pux (EffModel, noEffects, onlyEffects)
 
 data Event
   = Edit ProofMethod String
-  | Delete ProofMethod
-  | Update ProofMethod ProofValue
+  | RequestUpdate ProofMethod ProofValue
+  | TxIssued ProofMethod UpdateValue TxHash
   | Cancel ProofMethod
-  | PendingUpdate ProofMethod TxHash
 
-
-type State = Maybe (Tuple ProofMethod ProofManagementState)
+type State = Map.Map ProofMethod ProofManagementState
+type UpdateValue = Maybe ProofValue
 
 
 data ProofManagementState
   = Editing String
-  | Updating
+  | Updating UpdateValue TxHash
 
 
 type Effects eff = ( web3 :: WEB3 | eff )
@@ -36,20 +34,18 @@ foldp ::
   State ->
   EffModel State Event (Effects eff)
 foldp (Edit method value) state =
-  noEffects $ Just $ Tuple method (Editing value)
+  noEffects $ Map.insert method (Editing value) state
 foldp (Cancel method) state =
-  noEffects $ Nothing
-foldp (Update method value) state =
-  noEffects $ Just $ Tuple method Updating
-foldp event state = noEffects state
+  noEffects $ Map.delete method state
+foldp (RequestUpdate method value) state =
+  noEffects state
+foldp (TxIssued method updateValue tx) state =
+  noEffects $ Map.insert method (Updating updateValue tx) state
 
 
 getMethodUIState :: ProofMethod -> State -> Maybe ProofManagementState
-getMethodUIState methodAsk (Just (Tuple methodEdited state))
-  | methodAsk == methodEdited = Just state
-  | otherwise = Nothing
-getMethodUIState methodAsk _ = Nothing
+getMethodUIState = Map.lookup
 
 
 init :: State
-init = Nothing
+init = Map.empty
