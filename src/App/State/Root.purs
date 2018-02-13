@@ -40,15 +40,15 @@ import Pux (EffModel, mapEffects, mapState, noEffects, onlyEffects)
 data Event
   = Init InitEnv
   | Routing Locations.Event
-  | Contract Contracts.Event
+  | Contract (Contracts.Event Event)
   | FileInput FileInputs.Event
   | File Files.Event
   | Signer Address Signers.Event
   | FileSignerFetched HashSigner
   | SignFile Checksum
   | SignFileTx TxResult
+  | SignFileTxResult TxStatus
   | IdentityUI IdentityManagement.Event
-  | PoolTx TxResult (Maybe Event)
   | PreventDefault (Maybe Event) DOMEvent.Event
 
 
@@ -114,14 +114,8 @@ foldp (Contract (Contracts.OnAccountChanged account)) state =
   where
     updateMyAccount s = noEffects $ s { myAccount = account }
 
-foldp
-  (Contract (Contracts.OnTxResult txHash TxOk))
-  state
-  @{ signingTx: Just (Right signingTxHash)
-   , file: Just loadedFile@{ signer: Just NoSigner }
-   , myAccount: Contracts.Available address
-   } | txHash == signingTxHash =
-    noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
+foldp (Contract (Contracts.OnTxResult txHash txStatus next)) state =
+  onlyEffects state $ [ pure $ next txStatus ]
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts
@@ -192,8 +186,23 @@ foldp (SignFile checksum) state =
 foldp (SignFileTx result) state =
   { state: state { signingTx = Just result }
   , effects:
-    [ pure $ Contract <$> Contracts.PoolTx <$> hush result ]
+    [ do
+      let next = Just <<< SignFileTxResult
+      pure case hush result of
+        Just txHash ->
+          Just $ Contract $ Contracts.PoolTx txHash next
+        Nothing -> Nothing
+    ]
   }
+
+foldp (SignFileTxResult TxOk)
+  state
+  @{ file: Just loadedFile@{ signer: Just NoSigner }
+   , myAccount: Contracts.Available address
+   } =
+    noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
+
+foldp (SignFileTxResult _) state = noEffects state
 
 foldp (PreventDefault next domEvent) state =
   onlyEffects state $
@@ -202,20 +211,18 @@ foldp (PreventDefault next domEvent) state =
        pure next
   ]
 
-foldp (PoolTx txResult next) state =
-  onlyEffects state $
-  [ pure $ Contract <$> Contracts.PoolTx <$> hush txResult
-  , pure next]
-
 foldp (IdentityUI (IdentityManagement.RequestUpdate method updateValue)) state =
   whenAccountLoaded state \address c ->
     onlyEffects state $
     [ do
          txResult <- SignProof.update c.signProof method updateValue address
-         let next = Just $ IdentityUI $
-                    IdentityManagement.UpdateTxResult method updateValue txResult
-         pure $ Just $ PoolTx txResult next
+         pure $ IdentityUI <$>
+           IdentityManagement.UpdateTxHash method updateValue <$> (hush txResult)
     ]
+
+foldp (IdentityUI (IdentityManagement.RequestTxPool txHash next)) state =
+  onlyEffects state [ pure $ Just $ Contract $
+                      Contracts.PoolTx txHash (\_ -> IdentityUI <$> next) ]
 
 foldp (IdentityUI event) state =
   IdentityManagement.foldp event state.identityUI

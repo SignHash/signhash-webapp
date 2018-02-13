@@ -25,22 +25,25 @@ import Signal (Signal, dropRepeats, (~>))
 import Signal.Channel (CHANNEL, Channel, channel, send, subscribe)
 
 
-data Event
+data Event ev
   = Load String ETHAccountChannel
   | EthLoaded Web3 Contracts ETHAccountChannel
   | EthError ContractLoadingError
-  | PoolTx TxHash
-  | PoolTxTry TxHash
-  | PoolTxResult TxHash TxStatus
   | AccountChanged ProviderDetails
   | OnAccountChanged (ETHAccountState Address)
-  | OnTxResult TxHash TxStatus
+  | PoolTx TxHash (TxResultHandler ev)
+  | PoolTxTry TxHash (TxResultHandler ev)
+  | PoolTxResult TxHash TxStatus (TxResultHandler ev)
+  | OnTxResult TxHash TxStatus (TxResultHandler ev)
 
 
 data State =
   Loading |
   Error ContractLoadingError |
   Loaded LoadedState
+
+
+type TxResultHandler ev =  TxStatus -> Maybe ev
 
 
 type Contracts =
@@ -100,10 +103,10 @@ txPoolInterval = Milliseconds 2000.0
 
 
 foldp ::
-  forall eff.
-  Event ->
+  forall eff ev.
+  Event ev ->
   State ->
-  EffModel State Event (Effects eff)
+  EffModel State (Event ev) (Effects eff)
 foldp (Load defaultNetwork channel) state =
   onlyEffects state $ [
     do
@@ -159,27 +162,27 @@ foldp
             Unavailable
         Just loaded -> Available loaded
     ]
-foldp (PoolTx hash) state =
+foldp (PoolTx hash next) state =
   { state: setTxResult hash TxPending state
-  , effects: [ pure $ Just $ PoolTxTry hash ]
+  , effects: [ pure $ Just $ PoolTxTry hash next ]
   }
-foldp (PoolTxTry hash) (Loaded state) =
+foldp (PoolTxTry hash next) (Loaded state) =
   onlyEffects (Loaded state) $
   [ do
        delay txPoolInterval
        fetchingResult <- getTxResult state.web3 hash
        pure $ Just $ case fetchingResult of
-         Nothing -> PoolTxTry hash
+         Nothing -> PoolTxTry hash next
          Just status ->
            let
              txResult = if status then TxOk else TxFailed
            in
-             PoolTxResult hash txResult
+             PoolTxResult hash txResult next
   ]
-foldp (PoolTxResult hash status) state =
+foldp (PoolTxResult hash status next) state =
   { state: setTxResult hash status state
-  , effects: [ pure $ Just $ OnTxResult hash status ] }
-foldp (OnTxResult hash status) state = noEffects state
+  , effects: [ pure $ Just $ OnTxResult hash status next ] }
+foldp (OnTxResult _ _ _) state = noEffects state
 foldp (OnAccountChanged _) state = noEffects state
 foldp _ Loading = noEffects Loading
 foldp _ state@(Error _) = noEffects state
@@ -190,7 +193,7 @@ buildAccountsChannel ::
 buildAccountsChannel =
   channel $ ProviderDetails { address: Nothing, externalProvider: false }
 
-buildAccountsSignal :: ETHAccountChannel -> Signal Event
+buildAccountsSignal :: forall ev. ETHAccountChannel -> Signal (Event ev)
 buildAccountsSignal channel =
   (channel # subscribe # dropRepeats) ~> AccountChanged
 

@@ -5,7 +5,7 @@ import Prelude
 import Data.Either (Either(..))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
-import Lib.Eth.Web3 (TxHash(..), WEB3, TxResult)
+import Lib.Eth.Web3 (TxHash(..), TxResult, TxStatus, WEB3)
 import Lib.SignHash.Proofs.Methods (ProofMethod)
 import Lib.SignHash.Proofs.Values (ProofValue)
 import Pux (EffModel, noEffects, onlyEffects)
@@ -14,7 +14,9 @@ import Pux (EffModel, noEffects, onlyEffects)
 data Event
   = Edit ProofMethod String
   | RequestUpdate ProofMethod UpdateValue
-  | UpdateTxResult ProofMethod UpdateValue TxResult
+  | UpdateTxHash ProofMethod UpdateValue TxHash
+  | RequestTxPool TxHash (TxStatus -> (Maybe Event))
+  | UpdateTxStatus ProofMethod UpdateValue TxStatus
   | Cancel ProofMethod
 
 type State = Map.Map ProofMethod ProofManagementState
@@ -40,10 +42,15 @@ foldp (Cancel method) state =
   noEffects $ Map.delete method state
 foldp (RequestUpdate method value) state =
   noEffects state
-foldp (UpdateTxResult method updateValue txResult) state =
-  noEffects $ case txResult of
-    Right txHash -> Map.insert method (Updating updateValue txHash) state
-    Left error -> state
+foldp (UpdateTxHash method updateValue txHash) state =
+  { state: Map.insert method (Updating updateValue txHash) state
+  , effects: [ pure $ Just $ RequestTxPool txHash $ next]}
+  where
+    next :: TxStatus -> Maybe Event
+    next = Just <<< UpdateTxStatus method updateValue
+foldp (RequestTxPool txHash next) state = noEffects state
+foldp (UpdateTxStatus method updateValue status) state =
+  noEffects state
 
 getMethodUIState :: ProofMethod -> State -> Maybe ProofManagementState
 getMethodUIState = Map.lookup
