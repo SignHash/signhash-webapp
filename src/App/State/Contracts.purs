@@ -17,7 +17,7 @@ import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Data.Time.Duration (Milliseconds(..))
 import Lib.Eth.Contracts (ContractLoadingError)
-import Lib.Eth.Web3 (Address, TxHash, TxStatus(..), WEB3, Web3, getDefaultAccount, getNetworkId, getOrBuildWeb3, getTxResult, isMetaMask)
+import Lib.Eth.Web3 (Address, TxHash, TxStatus(..), WEB3, Web3, TxResult, getDefaultAccount, getNetworkId, getOrBuildWeb3, getTxResult, isMetaMask)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)

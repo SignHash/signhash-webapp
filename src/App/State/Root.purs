@@ -18,19 +18,17 @@ import Control.Monad.Eff.Timer (TIMER)
 import DOM (DOM)
 import DOM.Event.Event as DOMEvent
 import DOM.HTML.Types (HISTORY)
-import Data.Either (Either(Right), hush)
+import Data.Either (Either(..))
 import Data.Lens (Lens', Traversal', _Just, (.~), (^.))
 import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map as Map
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Symbol (SProxy(..))
-import Lib.Eth.Web3 (Address, TxStatus(..), WEB3, TxResult)
+import Lib.Eth.Web3 (Address, TxHash, TxResult, TxStatus(TxOk), WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
-import Lib.SignHash.Proofs.Methods (canonicalName)
-import Lib.SignHash.Proofs.Values as ProofValue
 import Lib.SignHash.Types (Checksum, HashSigner(..))
 import Lib.SignHash.Worker (WORKER)
 import Network.HTTP.Affjax (AJAX)
@@ -47,8 +45,12 @@ data Event
   | FileSignerFetched HashSigner
   | SignFile Checksum
   | SignFileTx TxResult
-  | SignFileTxResult TxStatus
+  | SignFileTxResult TxHash TxStatus
   | IdentityUI IdentityManagement.Event
+  | HandleTxResult
+    { onIssued :: TxResult -> Maybe Event
+    , onStatus :: TxHash -> TxStatus -> Maybe Event }
+    TxResult
   | PreventDefault (Maybe Event) DOMEvent.Event
 
 
@@ -122,6 +124,15 @@ foldp (Contract event) state =
   # mapEffects Contract
   # mapState \s -> state { contracts  = s}
 
+foldp (HandleTxResult { onIssued, onStatus } txResult) state =
+  onlyEffects state $
+  [ pure $ onIssued txResult
+  , pure case txResult of
+      Right txHash ->
+        Just $ Contract $ Contracts.PoolTx txHash (onStatus txHash)
+      Left err -> Nothing
+  ]
+
 foldp (FileInput (FileInputs.NewFile file)) state =
   { state: state { file = Just $ Files.init file
                  , signingTx = Nothing }
@@ -180,29 +191,25 @@ foldp (Routing event) state =
 foldp (SignFile checksum) state =
   whenAccountLoaded state \address c ->
     onlyEffects state $
-    [ Just <$> SignFileTx <$> SignHash.sign c.signHash checksum address
+    [ do
+         txResult <- SignHash.sign c.signHash checksum address
+         pure $ Just $ HandleTxResult
+           { onIssued: Just <<< SignFileTx
+           , onStatus: \hash status -> Just $ SignFileTxResult hash status
+           } txResult
     ]
 
 foldp (SignFileTx result) state =
-  { state: state { signingTx = Just result }
-  , effects:
-    [ do
-      let next = Just <<< SignFileTxResult
-      pure case hush result of
-        Just txHash ->
-          Just $ Contract $ Contracts.PoolTx txHash next
-        Nothing -> Nothing
-    ]
-  }
+  noEffects $ state { signingTx = Just result }
 
-foldp (SignFileTxResult TxOk)
+foldp (SignFileTxResult txHash TxOk)
   state
   @{ file: Just loadedFile@{ signer: Just NoSigner }
    , myAccount: Contracts.Available address
    } =
     noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
 
-foldp (SignFileTxResult _) state = noEffects state
+foldp (SignFileTxResult _ _) state = noEffects state
 
 foldp (PreventDefault next domEvent) state =
   onlyEffects state $
@@ -215,14 +222,19 @@ foldp (IdentityUI (IdentityManagement.RequestUpdate method updateValue)) state =
   whenAccountLoaded state \address c ->
     onlyEffects state $
     [ do
-         txResult <- SignProof.update c.signProof method updateValue address
-         pure $ IdentityUI <$>
-           IdentityManagement.UpdateTxHash method updateValue <$> (hush txResult)
-    ]
+         let
+           onIssued (Right txHash) =
+             Just $ IdentityUI $
+             IdentityManagement.UpdateTxHash method updateValue txHash
+           onIssued (Left err) = Nothing
+           onStatus hash status =
+             Just $ IdentityUI $
+             IdentityManagement.UpdateTxStatus method updateValue hash status
 
-foldp (IdentityUI (IdentityManagement.RequestTxPool txHash next)) state =
-  onlyEffects state [ pure $ Just $ Contract $
-                      Contracts.PoolTx txHash (\_ -> IdentityUI <$> next) ]
+         txResult <- SignProof.update c.signProof method updateValue address
+
+         pure $ Just $ HandleTxResult { onIssued, onStatus } txResult
+    ]
 
 foldp (IdentityUI event) state =
   IdentityManagement.foldp event state.identityUI

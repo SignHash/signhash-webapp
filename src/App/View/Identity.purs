@@ -122,7 +122,8 @@ renderProofManagement method proofVerification uiState getTxStatus = do
           then "Value correct"
           else "Value incorrect"
 
-    Just (Identity.Updating updateValue txHash) ->
+    Just (Identity.Updating updateValue txHash) -> do
+      let txStatus = getTxStatus txHash
       H.div do
         case updateValue of
           Just nextValue ->
@@ -131,7 +132,7 @@ renderProofManagement method proofVerification uiState getTxStatus = do
             text $ "Removing proof..."
 
         H.br
-        txLink txHash (getTxStatus txHash)
+        txLink txHash txStatus
 
 addButton :: ProofMethod -> HTML Identity.Event
 addButton method =
@@ -163,7 +164,7 @@ getStoredValue = case _ of
     case error of
       Proofs.InvalidProofContent proofValue _ ->
         Just $ ProofValue.extract proofValue
-      Proofs.InvalidProofValue value error ->
+      Proofs.InvalidProofValue value valueError ->
         Just value
 
 
