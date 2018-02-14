@@ -2,21 +2,23 @@ module App.State.Signers where
 
 import Prelude
 
+import Control.Monad.Aff (Aff)
 import Control.Monad.Aff.Console (CONSOLE, log)
 import Control.Monad.Eff.Exception (Error)
 import Control.Monad.Eff.Random (RANDOM)
 import Data.Either (either)
 import Data.Lens (Traversal', (%~))
 import Data.Lens.Record (prop)
-import Data.Map (Map, empty, insert)
+import Data.Map (Map, delete, empty, insert)
 import Data.Maybe (Maybe(..))
 import Data.Symbol (SProxy(..))
 import Lib.Eth.Web3 (WEB3)
 import Lib.SignHash.Blockies (standardAddressBlockie)
 import Lib.SignHash.Contracts.SignProof as SignProof
-import Lib.SignHash.Proofs (getSignerProof)
+import Lib.SignHash.Proofs (getSignerProof, validateProofMethod)
 import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification)
+import Lib.SignHash.Proofs.Values (ProofValue)
 import Lib.SignHash.Types (Address)
 import Network.HTTP.Affjax (AJAX)
 import Pux (EffModel, noEffects, onlyEffects)
@@ -24,9 +26,11 @@ import Pux (EffModel, noEffects, onlyEffects)
 
 data Event =
   FetchAll SignProof.Contract |
+  FetchProof SignProof.Contract ProofMethod |
   ProofPending ProofMethod |
   ProofFetched ProofMethod ProofVerification |
-  ProofFetchingError ProofMethod Error
+  ProofFetchingError ProofMethod Error |
+  UpdateProof ProofMethod (Maybe ProofValue)
 
 
 type State =
@@ -62,16 +66,22 @@ foldp ::
   forall eff.
   Event -> State -> EffModel State Event (SignerEffects eff)
 foldp (FetchAll contract) state =
+  onlyEffects state $ pure <$> Just <$> FetchProof contract <$> allProofMethods
+foldp (FetchProof contract method) state =
   onlyEffects state $
-  (fetchProofEffect <$> allProofMethods) <>
-  (pure <$> Just <$> ProofPending <$> allProofMethods)
-  where
-    fetchProofEffect method = do
-      proof <- getSignerProof contract state.address method
-      pure $ Just $ either
-        (ProofFetchingError method)
-        (ProofFetched method)
-        proof
+  [ Just <$> fetchProofEffect contract state.address method
+  , pure $ Just $ ProofPending method]
+foldp (UpdateProof method (Just proofValue)) state =
+  onlyEffects state $
+  [ do
+       validationResult <- validateProofMethod proofValue state.address method
+       pure $ Just $ either
+         (ProofFetchingError method)
+         (ProofFetched method)
+         validationResult
+  ]
+foldp (UpdateProof method Nothing) state =
+  noEffects $ state { proofs = delete method state.proofs }
 foldp (ProofPending method) state =
   noEffects $ signerProofs %~ insertProof $ state
   where
@@ -85,3 +95,17 @@ foldp (ProofFetchingError method error) state =
     effects: [ (log $ show error) *> pure Nothing ] }
   where
     setError = insert method NetworkError
+
+
+fetchProofEffect ::
+  forall eff
+  . SignProof.Contract
+  -> Address
+  -> ProofMethod
+  -> Aff (web3 :: WEB3, ajax :: AJAX | eff) Event
+fetchProofEffect contract address method = do
+  proof <- getSignerProof contract address method
+  pure $ either
+    (ProofFetchingError method)
+    (ProofFetched method)
+    proof
