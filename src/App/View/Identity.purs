@@ -90,6 +90,7 @@ renderProofManagement method proofVerification uiState getTxStatus = do
   let
     storedValue = getStoredValue proofVerification
 
+  renderVerificationIcon proofVerification
   renderProofValue method storedValue uiState
 
   case uiState of
@@ -166,6 +167,13 @@ getStoredValue = case _ of
         Just $ ProofValue.extract proofValue
       Proofs.InvalidProofValue value valueError ->
         Just value
+
+
+renderVerificationIcon :: forall a. Proofs.ProofVerification -> HTML a
+renderVerificationIcon = case _ of
+  Proofs.Unavailable -> empty
+  Proofs.Verified _ -> renderIcon "fa-check"
+  Proofs.Unverified _ -> renderIcon "fa-exclamation-circle"
 
 
 renderProofValue ::
