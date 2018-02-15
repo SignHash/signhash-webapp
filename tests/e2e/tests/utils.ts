@@ -81,3 +81,7 @@ function sleep(ms: number) {
 export const pages = {
   verify: '#/',
 }
+
+
+export const reload = (t: TestController) =>
+  t.eval(() => location.reload(true));
