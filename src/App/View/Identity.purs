@@ -7,14 +7,14 @@ import App.State.Contracts (TxStatusGetter, viewTxResult)
 import App.State.IdentityManagement (getMethodUIState)
 import App.State.IdentityManagement as Identity
 import App.State.Signers as Signers
-import App.View.Common (empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection, txLink)
+import App.View.Common (dataQA, empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection, txLink)
 import Data.Either (Either(..), fromRight, hush, isRight)
 import Data.Lens ((^.))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (for_)
 import Lib.Eth.Web3 (Address, TxHash(..), TxStatus, getTxResult)
-import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
+import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods, canonicalName)
 import Lib.SignHash.Proofs.Types as Proofs
 import Lib.SignHash.Proofs.Values as ProofValue
 import Pux.DOM.Events (onClick, onInput, targetValue)
@@ -182,6 +182,7 @@ renderProofValue ::
   -> Maybe Identity.ProofManagementState
   -> HTML Identity.Event
 renderProofValue method storedValue uiState =
+  H.div ! dataQA ("identity-" <> canonicalName method <> "-content") $
   case uiState of
     Just (Identity.Editing inputValue) -> do
       identityInput method inputValue true
