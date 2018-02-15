@@ -108,15 +108,7 @@ renderProofManagement method proofVerification uiState getTxStatus = do
         #! onClick (const $ Identity.Cancel method)
         $ renderIcon "fa-times"
 
-      case hush validatedValue of
-        Nothing ->
-          H.button
-            ! A.disabled "disabled"
-            $ renderIcon "fa-check"
-        justValue ->
-          H.button
-            #! onClick (const $ Identity.RequestUpdate method justValue)
-            $ renderIcon "fa-check"
+      updateButton method $ hush validatedValue
 
       H.div do
         text if isValid
@@ -138,6 +130,7 @@ renderProofManagement method proofVerification uiState getTxStatus = do
 addButton :: ProofMethod -> HTML Identity.Event
 addButton method =
   H.button
+    ! dataQA ("identity-" <> canonicalName method <> "-add")
     #! onClick (const $ Identity.Edit method "")
     $ renderIcon "fa-plus"
 
@@ -145,13 +138,29 @@ addButton method =
 editButton :: String -> ProofMethod -> HTML Identity.Event
 editButton value method =
   H.button
+    ! dataQA ("identity-" <> canonicalName method <> "-edit")
     #! onClick (const $ Identity.Edit method value)
     $ renderIcon "fa-pencil-square-o"
+
+
+updateButton ::
+  ProofMethod -> Maybe ProofValue.ProofValue -> HTML Identity.Event
+updateButton method validatedValue = case validatedValue of
+  Nothing ->
+    H.button
+      ! A.disabled "disabled"
+      $ renderIcon "fa-check"
+  justValue ->
+    H.button
+      ! dataQA ("identity-" <> canonicalName method <> "-update")
+      #! onClick (const $ Identity.RequestUpdate method justValue)
+      $ renderIcon "fa-check"
 
 
 identityInput :: ProofMethod -> String -> Boolean -> HTML Identity.Event
 identityInput method value enabled = do
   H.input
+    ! dataQA ("identity-" <> canonicalName method <> "-input")
     ! A.value value
     ! A.disabled (if enabled then "" else "disabled")
     #! onInput (\ev -> Identity.Edit method (targetValue ev))
