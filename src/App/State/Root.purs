@@ -24,7 +24,9 @@ import Data.Lens.At (at)
 import Data.Lens.Record (prop)
 import Data.Map as Map
 import Data.Maybe (Maybe(Just, Nothing))
+import Data.Monoid (mempty)
 import Data.Symbol (SProxy(..))
+import Data.Traversable (sequence, traverse)
 import Lib.Eth.Web3 (Address, TxHash, TxResult, TxStatus(TxOk), WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash as SignHash
@@ -48,8 +50,8 @@ data Event
   | SignFileTxResult TxHash TxStatus
   | IdentityUI IdentityManagement.Event
   | HandleTxResult
-    { onIssued :: TxResult -> Maybe Event
-    , onStatus :: TxHash -> TxStatus -> Maybe Event }
+    { onIssued :: TxResult -> Array Event
+    , onStatus :: TxHash -> TxStatus -> Array Event }
     TxResult
   | PreventDefault (Maybe Event) DOMEvent.Event
 
@@ -117,7 +119,7 @@ foldp (Contract (Contracts.OnAccountChanged account)) state =
     updateMyAccount s = noEffects $ s { myAccount = account }
 
 foldp (Contract (Contracts.OnTxResult txHash txStatus next)) state =
-  onlyEffects state $ [ pure $ next txStatus ]
+  onlyEffects state $ pure <$> Just <$> next txStatus
 
 foldp (Contract event) state =
   Contracts.foldp event state.contracts
@@ -126,11 +128,12 @@ foldp (Contract event) state =
 
 foldp (HandleTxResult { onIssued, onStatus } txResult) state =
   onlyEffects state $
-  [ pure $ onIssued txResult
-  , pure case txResult of
-      Right txHash ->
-        Just $ Contract $ Contracts.PoolTx txHash (onStatus txHash)
-      Left err -> Nothing
+  (pure <$> Just <$> onIssued txResult)
+  <>
+  [ pure case txResult of
+       Right txHash ->
+         Just $ Contract $ Contracts.PoolTx txHash (onStatus txHash)
+       Left err -> Nothing
   ]
 
 foldp (FileInput (FileInputs.NewFile file)) state =
@@ -194,8 +197,8 @@ foldp (SignFile checksum) state =
     [ do
          txResult <- SignHash.sign c.signHash checksum address
          pure $ Just $ HandleTxResult
-           { onIssued: Just <<< SignFileTx
-           , onStatus: \hash status -> Just $ SignFileTxResult hash status
+           { onIssued: sequence [SignFileTx]
+           , onStatus: \hash status -> [SignFileTxResult hash status]
            } txResult
     ]
 
@@ -224,11 +227,11 @@ foldp (IdentityUI (IdentityManagement.RequestUpdate method updateValue)) state =
     [ do
          let
            onIssued (Right txHash) =
-             Just $ IdentityUI $
+             pure $ IdentityUI $
              IdentityManagement.UpdateTxHash method updateValue txHash
-           onIssued (Left err) = Nothing
+           onIssued (Left err) = mempty
            onStatus hash status =
-             Just $ Signer address $ Signers.UpdateProof method updateValue
+             pure $ Signer address $ Signers.UpdateProof method updateValue
 
          txResult <- SignProof.update c.signProof method updateValue address
 
