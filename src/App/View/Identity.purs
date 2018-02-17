@@ -163,7 +163,7 @@ identityInput method value enabled = do
     ! dataQA ("identity-" <> canonicalName method <> "-input")
     ! A.value value
     ! A.disabled (if enabled then "" else "disabled")
-    #! onInput (\ev -> Identity.Edit method (targetValue ev))
+    #! onInput (Identity.Edit method <<< targetValue)
 
 
 getStoredValue :: Proofs.ProofVerification -> Maybe String
