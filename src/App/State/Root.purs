@@ -231,7 +231,10 @@ foldp (IdentityUI (IdentityManagement.RequestUpdate method updateValue)) state =
              IdentityManagement.UpdateTxHash method updateValue txHash
            onIssued (Left err) = mempty
            onStatus hash status =
-             pure $ Signer address $ Signers.UpdateProof method updateValue
+             [ Signer address $ Signers.UpdateProof method updateValue
+             , IdentityUI $
+               IdentityManagement.UpdateTxStatus method updateValue hash status
+             ]
 
          txResult <- SignProof.update c.signProof method updateValue address
 
