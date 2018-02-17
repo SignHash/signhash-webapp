@@ -2,9 +2,9 @@ module App.State.IdentityManagement where
 
 import Prelude
 
-import Data.Map as Map
-import Data.Maybe (Maybe)
-import Lib.Eth.Web3 (TxHash, TxStatus, WEB3)
+import Data.Maybe (Maybe(..))
+import Data.Tuple (Tuple(..))
+import Lib.Eth.Web3 (TxHash, TxStatus(..), WEB3)
 import Lib.SignHash.Proofs.Methods (ProofMethod)
 import Lib.SignHash.Proofs.Values (ProofValue)
 import Pux (EffModel, noEffects)
@@ -17,13 +17,16 @@ data Event
   | UpdateTxStatus ProofMethod UpdateValue TxHash TxStatus
   | Cancel ProofMethod
 
-type State = Map.Map ProofMethod ProofManagementState
+
+type State = Maybe ProofMethodChange
 type UpdateValue = Maybe ProofValue
+type ProofMethodChange = Tuple ProofMethod ProofManagementState
 
 
 data ProofManagementState
   = Editing String
   | Updating UpdateValue TxHash
+  | UpdateFailed UpdateValue TxHash
 
 type Effects eff = ( web3 :: WEB3 | eff )
 
@@ -34,19 +37,25 @@ foldp ::
   State ->
   EffModel State Event (Effects eff)
 foldp (Edit method value) state =
-  noEffects $ Map.insert method (Editing value) state
+  noEffects $ setMethodState method (Editing value) state
 foldp (Cancel method) state =
-  noEffects $ Map.delete method state
+  noEffects $ Nothing
 foldp (RequestUpdate method value) state =
   noEffects state
 foldp (UpdateTxHash method updateValue txHash) state =
-  noEffects $ Map.insert method (Updating updateValue txHash) state
-foldp (UpdateTxStatus method updateValue txHash status) state =
+  noEffects $ setMethodState method (Updating updateValue txHash) state
+foldp (UpdateTxStatus method updateValue txHash TxOk) state =
+  noEffects $ Nothing
+foldp (UpdateTxStatus method updateValue txHash TxFailed) state =
+  noEffects $ setMethodState method (UpdateFailed updateValue txHash) state
+foldp (UpdateTxStatus method updateValue txHash TxPending) state =
   noEffects $ state
 
-getMethodUIState :: ProofMethod -> State -> Maybe ProofManagementState
-getMethodUIState = Map.lookup
+
+setMethodState :: ProofMethod -> ProofManagementState -> State -> State
+setMethodState method proofManagement state =
+  Just $ Tuple method proofManagement
 
 
 init :: State
-init = Map.empty
+init = Nothing

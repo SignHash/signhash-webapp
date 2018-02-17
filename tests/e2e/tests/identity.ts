@@ -35,8 +35,9 @@ test('Identity can be added', async t => {
 
 const expectNoProofValue = (t: TestController, method: string) =>
   t
-    .expect(proofValueSelector(method))
-    .notOk(`Proof ${method} expected to be empty`)
+    .expect(proofContentSelector(method))
+    .contains('No proof defined')
+  ;
 
 
 const expectValueUpdated = (
@@ -45,13 +46,13 @@ const expectValueUpdated = (
   expectedValue: string,
 ) =>
   t
-    .expect(proofInputSelector(method).value)
+    .expect(proofContentSelector(method))
     .contains(expectedValue)
   ;
 
 
-const proofValueSelector = (method: string) =>
-  Selector(`[data-qa=identity-${method}-content]`).value;
+const proofContentSelector = (method: string) =>
+  Selector(`[data-qa=identity-${method}-content]`).textContent;
 
 
 const addProofSelector = (method: string) =>

@@ -20,7 +20,7 @@ import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
 import Lib.Eth.Contracts (class EthContract, ContractLoadingError(..), getAddress)
 import Lib.SignHash.Proofs.Display (SignerDisplayStatus(..), signerDisplayStatus)
-import Lib.SignHash.Proofs.Methods (ProofMethod(..), canonicalName)
+import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
 import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values as ProofValues
 import Lib.SignHash.Types (Address, HashSigner(..))
@@ -35,7 +35,7 @@ import Text.Smolder.Markup (text, (!), (#!))
 view :: State -> HTML Event
 view state =
   do
-    div ! className "Content" $ do
+    div ! className "Root" $ do
       div ! className "Header" $ do
         img ! src images.logo
         span ! className "title" $ text "SignHash"
@@ -46,7 +46,8 @@ view state =
           li $ a ! A.href "#" #! onClick (navigate Routing.Sign) $ text "Sign"
           li $ a ! A.href "#" #! onClick (navigate Routing.Verify) $ text "Verify"
 
-      viewContent state
+      div ! className "Content" $ do
+        viewContent state
 
       hr
       div ! className "Contracts-info" $ do
