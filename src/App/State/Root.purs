@@ -125,15 +125,18 @@ foldp (HandleTxResult { onIssued, onStatus } txResult) state =
        Left err -> Nothing
   ]
 -- Contracts
-foldp (Contract (Contracts.OnAccountChanged account)) state =
-  case account of
-    Contracts.Available address ->
-      mergeEffModels updateMyAccount (loadSignerEffModel address) state
-    otherwise -> updateMyAccount state
-  where
-    updateMyAccount s = noEffects $ s { myAccount = account }
-foldp (Contract (Contracts.OnTxResult txHash txStatus next)) state =
-  onlyEffects state $ pure <$> Just <$> next txStatus
+foldp (Contract (Contracts.Signal signal)) state =
+  case signal of
+    Contracts.OnAccountChanged account ->
+      let updateMyAccount s = noEffects $ s { myAccount = account }
+      in case account of
+        Contracts.Available address ->
+          mergeEffModels updateMyAccount (loadSignerEffModel address) state
+        otherwise -> updateMyAccount state
+foldp (Contract (Contracts.Request req)) state =
+  case req of
+    Contracts.HandleTxResult txHash txStatus next ->
+      onlyEffects state $ pure <$> Just <$> next txStatus
 foldp (Contract event) state =
   Contracts.foldp event state.contracts
   # mapEffects Contract

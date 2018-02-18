@@ -21,7 +21,7 @@ import Lib.Eth.Web3 (Address, TxHash, TxStatus(..), WEB3, Web3, getDefaultAccoun
 import Lib.SignHash.Contracts.SignHash as SignHash
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Pux (EffModel, noEffects, onlyEffects)
-import Signal (Signal, dropRepeats, (~>))
+import Signal as SG
 import Signal.Channel (CHANNEL, Channel, channel, send, subscribe)
 
 
@@ -30,11 +30,19 @@ data Event ev
   | EthLoaded Web3 Contracts ETHAccountChannel
   | EthError ContractLoadingError
   | AccountChanged ProviderDetails
-  | OnAccountChanged (ETHAccountState Address)
   | PoolTx TxHash (TxResultHandler ev)
   | PoolTxTry TxHash (TxResultHandler ev)
   | PoolTxResult TxHash TxStatus (TxResultHandler ev)
-  | OnTxResult TxHash TxStatus (TxResultHandler ev)
+  | Signal (Signal ev)
+  | Request (Request ev)
+
+
+data Signal ev
+  = OnAccountChanged (ETHAccountState Address)
+
+
+data Request ev
+  = HandleTxResult TxHash TxStatus (TxResultHandler ev)
 
 
 data State =
@@ -153,7 +161,7 @@ foldp
   (AccountChanged (ProviderDetails { address, externalProvider }))
   (Loaded state) =
     onlyEffects (Loaded state) $
-    [ pure $ Just $ OnAccountChanged
+    [ pure $ Just $ Signal $ OnAccountChanged
       $ case address of
         Nothing ->
           if externalProvider then
@@ -181,9 +189,9 @@ foldp (PoolTxTry hash next) (Loaded state) =
   ]
 foldp (PoolTxResult hash status next) state =
   { state: setTxResult hash status state
-  , effects: [ pure $ Just $ OnTxResult hash status next ] }
-foldp (OnTxResult _ _ _) state = noEffects state
-foldp (OnAccountChanged _) state = noEffects state
+  , effects: [ pure $ Just $ Request $ HandleTxResult hash status next ] }
+foldp (Signal _) state = noEffects state
+foldp (Request _) state = noEffects state
 foldp _ Loading = noEffects Loading
 foldp _ state@(Error _) = noEffects state
 
@@ -193,9 +201,9 @@ buildAccountsChannel ::
 buildAccountsChannel =
   channel $ ProviderDetails { address: Nothing, externalProvider: false }
 
-buildAccountsSignal :: forall ev. ETHAccountChannel -> Signal (Event ev)
+buildAccountsSignal :: forall ev. ETHAccountChannel -> SG.Signal (Event ev)
 buildAccountsSignal channel =
-  (channel # subscribe # dropRepeats) ~> AccountChanged
+  (channel # subscribe # SG.dropRepeats) SG.~> AccountChanged
 
 
 viewTxResult :: State -> TxStatusGetter
