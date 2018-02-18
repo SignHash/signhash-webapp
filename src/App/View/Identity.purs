@@ -48,13 +48,15 @@ viewUnlockedIdentity ::
 viewUnlockedIdentity { blockie, proofs } address = do
   H.div ! A.className "Identity" $ do
     renderSection do
-      H.h4 ! A.className "title" $ do
-        renderEthIcon
-        text "Ethereum"
+      H.h4 $ text "Your address"
       H.div $ do
         renderBlockie blockie
-        H.div $ text $ show address
+        H.div $ do
+          renderEthIcon
+          text $ show address
 
+    renderSection do
+      H.h4 $ text "Identities"
       for_ allProofMethods \proofMethod ->
         let
           loadedProof = Map.lookup proofMethod proofs
@@ -70,9 +72,8 @@ viewProofMethod ::
   -> HTML Identity.Event
 viewProofMethod method value = do
   renderSection do
-    H.h4 ! A.className "title" $ do
-      proofMethodIcon method
-      text $ show method
+    proofMethodIcon method
+    text $ show method
     H.div do
       case value of
         Proofs.Pending -> text $ "Loading..."
@@ -89,7 +90,6 @@ renderFinishedProofRow method verification = do
   let
     storedValue = getStoredValue verification
 
-  renderVerificationIcon verification
   H.div ! dataQA ("identity-" <> canonicalName method <> "-content") $
     case storedValue of
       Just value -> do
@@ -98,6 +98,8 @@ renderFinishedProofRow method verification = do
       Nothing -> do
         text "No proof defined"
         addButton method
+
+  renderVerificationStatus verification
 
 
 viewMethodManagement ::
@@ -111,6 +113,8 @@ viewMethodManagement (Tuple method managementState) getTxStatus = do
       proofMethodIcon method
       text $ show method
 
+    renderProofMethodHowto method
+
     case managementState of
       Identity.Editing inputValue -> do
         let
@@ -121,7 +125,7 @@ viewMethodManagement (Tuple method managementState) getTxStatus = do
 
         H.button
           #! onClick (const $ Identity.Cancel method)
-          $ renderIcon "fa-times"
+          $ renderIcon "fa-arrow-left"
 
         updateButton method $ hush validatedValue
 
@@ -200,11 +204,15 @@ getStoredValue = case _ of
         Just value
 
 
-renderVerificationIcon :: forall a. Proofs.ProofVerification -> HTML a
-renderVerificationIcon = case _ of
+renderVerificationStatus :: forall a. Proofs.ProofVerification -> HTML a
+renderVerificationStatus = case _ of
   Proofs.Unavailable -> empty
-  Proofs.Verified _ -> renderIcon "fa-check"
-  Proofs.Unverified _ -> renderIcon "fa-exclamation-circle"
+  Proofs.Verified _ -> H.div do
+    text "Verified"
+    renderIcon "fa-check"
+  Proofs.Unverified _ -> H.div do
+    text "Verification failed"
+    renderIcon "fa-exclamation-circle"
 
 
 renderProofValue ::
@@ -223,3 +231,13 @@ renderProofValue method storedValue uiState =
           identityInput method value false
         Nothing -> do
           text "No proof defined"
+
+
+renderProofMethodHowto :: forall a. ProofMethod -> HTML a
+renderProofMethodHowto method =
+  H.div $ do
+    text ("This is how to verify your " <> canonicalName method <> " identity:")
+    H.br
+    text "yada yada yada, some useful link."
+    H.br
+    H.br
