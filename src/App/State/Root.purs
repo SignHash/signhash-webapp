@@ -7,7 +7,7 @@ import App.Routing (Location(..))
 import App.State.Contracts as Contracts
 import App.State.FileInputs as FileInputs
 import App.State.Files as Files
-import App.State.IdentityManagement as IdentityManagement
+import App.State.IdentityManagement as IM
 import App.State.Locations as Locations
 import App.State.Signers as Signers
 import Control.Monad.Aff.Console (CONSOLE)
@@ -48,7 +48,7 @@ data Event
   | SignFile Checksum
   | SignFileTx TxResult
   | SignFileTxResult TxHash TxStatus
-  | IdentityUI IdentityManagement.Event
+  | IdentityUI IM.Event
   | HandleTxResult
     { onIssued :: TxResult -> Array Event
     , onStatus :: TxHash -> TxStatus -> Array Event }
@@ -65,7 +65,7 @@ type State =
   , defaults ::
        { network :: String }
   , location :: Locations.State
-  , identityUI :: IdentityManagement.State
+  , identityUI :: IM.State
   }
 
 
@@ -85,7 +85,7 @@ init { rpcUrl } =
   , contracts: Contracts.Loading
   , defaults: { network: rpcUrl }
   , location: Verify
-  , identityUI: IdentityManagement.init
+  , identityUI: IM.init
   }
 
 
@@ -221,28 +221,28 @@ foldp (PreventDefault next domEvent) state =
        pure next
   ]
 
-foldp (IdentityUI (IdentityManagement.RequestUpdate method updateValue)) state =
-  whenAccountLoaded state \address c ->
+foldp (IdentityUI (IM.Request request)) state = case request of
+  (IM.Update method updateValue) ->
+    whenAccountLoaded state \address c ->
     onlyEffects state $
     [ do
          let
            onIssued (Right txHash) =
              pure $ IdentityUI $
-             IdentityManagement.UpdateTxHash method updateValue txHash
+             IM.UpdateTxHash method updateValue txHash
            onIssued (Left err) = mempty
            onStatus hash status =
              [ Signer address $ Signers.UpdateProof method updateValue
              , IdentityUI $
-               IdentityManagement.UpdateTxStatus method updateValue hash status
+               IM.UpdateTxStatus method updateValue hash status
              ]
 
          txResult <- SignProof.update c.signProof method updateValue address
 
          pure $ Just $ HandleTxResult { onIssued, onStatus } txResult
     ]
-
 foldp (IdentityUI event) state =
-  IdentityManagement.foldp event state.identityUI
+  IM.foldp event state.identityUI
   # mapEffects IdentityUI
   # mapState \s -> state { identityUI = s }
 

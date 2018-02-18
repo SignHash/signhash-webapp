@@ -12,10 +12,14 @@ import Pux (EffModel, noEffects)
 
 data Event
   = Edit ProofMethod String
-  | RequestUpdate ProofMethod UpdateValue
   | UpdateTxHash ProofMethod UpdateValue TxHash
   | UpdateTxStatus ProofMethod UpdateValue TxHash TxStatus
   | Cancel ProofMethod
+  | Request Request
+
+
+data Request
+  = Update ProofMethod UpdateValue
 
 
 type State = Maybe ProofMethodChange
@@ -40,8 +44,7 @@ foldp (Edit method value) state =
   noEffects $ setMethodState method (Editing value) state
 foldp (Cancel method) state =
   noEffects $ Nothing
-foldp (RequestUpdate method value) state =
-  noEffects state
+foldp (Request _) state = noEffects state
 foldp (UpdateTxHash method updateValue txHash) state =
   noEffects $ setMethodState method (Updating updateValue txHash) state
 foldp (UpdateTxStatus method updateValue txHash TxOk) state =

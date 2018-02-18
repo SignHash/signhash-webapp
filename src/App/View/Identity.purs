@@ -175,7 +175,7 @@ updateButton method validatedValue = case validatedValue of
   justValue ->
     H.button
       ! dataQA ("identity-" <> canonicalName method <> "-update")
-      #! onClick (const $ Identity.RequestUpdate method justValue)
+      #! onClick (const $ Identity.Request $ Identity.Update method justValue)
       $ renderIcon "fa-check"
 
 
