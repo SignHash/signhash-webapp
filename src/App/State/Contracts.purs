@@ -26,8 +26,8 @@ import Signal.Channel (CHANNEL, Channel, channel, send, subscribe)
 
 
 data Event ev
-  = Load String ETHAccountChannel
-  | EthLoaded Web3 Contracts ETHAccountChannel
+  = Load String
+  | EthLoaded Web3 Contracts
   | EthError ContractLoadingError
   | AccountChanged ProviderDetails
   | PoolTx TxHash (TxResultHandler ev)
@@ -49,6 +49,10 @@ data State =
   Loading |
   Error ContractLoadingError |
   Loaded LoadedState
+
+
+type Env =
+  { ethAccountChannel :: ETHAccountChannel }
 
 
 type TxResultHandler ev =  TxStatus -> Array ev
@@ -111,11 +115,12 @@ txPoolInterval = Milliseconds 2000.0
 
 
 foldp ::
-  forall eff ev.
-  Event ev ->
-  State ->
-  EffModel State (Event ev) (Effects eff)
-foldp (Load defaultNetwork channel) state =
+  forall eff ev
+  . Env
+  -> Event ev
+  -> State
+  -> EffModel State (Event ev) (Effects eff)
+foldp env (Load defaultNetwork) state =
   onlyEffects state $ [
     do
       web3 <- liftEff $ getOrBuildWeb3 defaultNetwork
@@ -130,11 +135,11 @@ foldp (Load defaultNetwork channel) state =
 
       case loaded of
         Right contracts ->
-          pure $ Just $ EthLoaded web3 contracts channel
+          pure $ Just $ EthLoaded web3 contracts
         Left err -> do
           pure $ Just $ EthError err
   ]
-foldp (EthLoaded web3 contracts channel) state =
+foldp env (EthLoaded web3 contracts) state =
   { state: Loaded $
     { web3
     , signHash: contracts.signHash
@@ -148,16 +153,17 @@ foldp (EthLoaded web3 contracts channel) state =
            case result of
              Left err -> do
                error $ show err
-               liftEff $ send channel
+               liftEff $ send env.ethAccountChannel
                  $ ProviderDetails { address: Nothing, externalProvider }
              Right address ->
-               liftEff $ send channel
+               liftEff $ send env.ethAccountChannel
                  $ ProviderDetails { address, externalProvider }
          pure Nothing
     ]
   }
-foldp (EthError err) state = noEffects $ Error $ err
+foldp env (EthError err) state = noEffects $ Error $ err
 foldp
+  env
   (AccountChanged (ProviderDetails { address, externalProvider }))
   (Loaded state) =
     onlyEffects (Loaded state) $
@@ -170,11 +176,11 @@ foldp
             Unavailable
         Just loaded -> Available loaded
     ]
-foldp (PoolTx hash next) state =
+foldp env (PoolTx hash next) state =
   { state: setTxResult hash TxPending state
   , effects: [ pure $ Just $ PoolTxTry hash next ]
   }
-foldp (PoolTxTry hash next) (Loaded state) =
+foldp env (PoolTxTry hash next) (Loaded state) =
   onlyEffects (Loaded state) $
   [ do
        delay txPoolInterval
@@ -187,23 +193,26 @@ foldp (PoolTxTry hash next) (Loaded state) =
            in
              PoolTxResult hash txResult next
   ]
-foldp (PoolTxResult hash status next) state =
+foldp env (PoolTxResult hash status next) state =
   { state: setTxResult hash status state
   , effects: [ pure $ Just $ Request $ HandleTxResult hash status next ] }
-foldp (Signal _) state = noEffects state
-foldp (Request _) state = noEffects state
-foldp _ Loading = noEffects Loading
-foldp _ state@(Error _) = noEffects state
+foldp env (Signal _) state = noEffects state
+foldp env (Request _) state = noEffects state
+foldp env _ Loading = noEffects Loading
+foldp env _ state@(Error _) = noEffects state
 
 
-buildAccountsChannel ::
-  forall eff. Eff (channel :: CHANNEL | eff) ETHAccountChannel
-buildAccountsChannel =
-  channel $ ProviderDetails { address: Nothing, externalProvider: false }
+buildEnv :: forall eff. Eff (channel :: CHANNEL | eff) Env
+buildEnv = do
+  ethAccountChannel <- channel initialValue
+  pure { ethAccountChannel }
+  where
+    initialValue = ProviderDetails { address: Nothing, externalProvider: false }
 
-buildAccountsSignal :: forall ev. ETHAccountChannel -> SG.Signal (Event ev)
-buildAccountsSignal channel =
-  (channel # subscribe # SG.dropRepeats) SG.~> AccountChanged
+
+getInputs :: forall ev. Env -> Array (SG.Signal (Event ev))
+getInputs { ethAccountChannel } =
+  [ (ethAccountChannel # subscribe # SG.dropRepeats) SG.~> AccountChanged ]
 
 
 viewTxResult :: State -> TxStatusGetter

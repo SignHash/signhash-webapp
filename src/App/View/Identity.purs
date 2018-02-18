@@ -8,13 +8,13 @@ import App.State.IdentityManagement (ProofMethodChange)
 import App.State.IdentityManagement as Identity
 import App.State.Signers as Signers
 import App.View.Common (dataQA, empty, expectResult, guardAccountUnlocked, guardContractsLoaded, proofMethodIcon, renderBlockie, renderEthIcon, renderIcon, renderSection, txLink)
-import Data.Either (Either(..), fromRight, hush, isRight)
+import Data.Either (hush, isRight)
 import Data.Lens ((^.))
 import Data.Map as Map
 import Data.Maybe (Maybe(..))
 import Data.Traversable (for_)
 import Data.Tuple (Tuple(..))
-import Lib.Eth.Web3 (Address, TxHash(..), TxStatus, getTxResult)
+import Lib.Eth.Web3 (Address)
 import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods, canonicalName)
 import Lib.SignHash.Proofs.Types as Proofs
 import Lib.SignHash.Proofs.Values as ProofValue
