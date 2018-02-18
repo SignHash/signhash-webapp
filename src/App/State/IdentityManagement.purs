@@ -7,11 +7,12 @@ import Data.Tuple (Tuple(..))
 import Lib.Eth.Web3 (TxHash, TxStatus(..), WEB3)
 import Lib.SignHash.Proofs.Methods (ProofMethod)
 import Lib.SignHash.Proofs.Values (ProofValue)
-import Pux (EffModel, noEffects)
+import Pux (EffModel, noEffects, onlyEffects)
 
 
 data Event
   = Edit ProofMethod String
+  | Remove ProofMethod
   | UpdateTxHash ProofMethod UpdateValue TxHash
   | UpdateTxStatus ProofMethod UpdateValue TxHash TxStatus
   | Cancel ProofMethod
@@ -42,6 +43,8 @@ foldp ::
   EffModel State Event (Effects eff)
 foldp (Edit method value) state =
   noEffects $ setMethodState method (Editing value) state
+foldp (Remove method) state =
+  onlyEffects state [ pure $ Just $ Request $ Update method Nothing ]
 foldp (Cancel method) state =
   noEffects $ Nothing
 foldp (Request _) state = noEffects state

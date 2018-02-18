@@ -1,16 +1,15 @@
 module Lib.SignHash.Contracts.SignProof where
 
-import Prelude
+import Prelude hiding (add)
 
 import Control.Monad.Aff (Aff, attempt)
 import Control.Promise (toAffE)
-import Data.Maybe (Maybe(..), fromJust)
+import Data.Maybe (Maybe(..))
 import FFI.Util.Function (callEff2, callEff3)
 import Lib.Eth.Contracts (class EthContract, EthContractData, ContractLoadingResult, getDeployed, getResult)
-import Lib.Eth.Web3 (Address, NetworkID, WEB3, Web3, TxAff)
+import Lib.Eth.Web3 (Address, NetworkID, TxAff, WEB3, Web3)
 import Lib.SignHash.Proofs.Methods (ProofMethod, canonicalName)
 import Lib.SignHash.Proofs.Values as ProofValue
-import Partial.Unsafe (unsafePartial)
 
 
 foreign import data Contract :: Type
@@ -36,21 +35,32 @@ update ::
   -> Address
   -> TxAff eff
 update contract method updateValue from =
-  add contract methodName value from
+  case updateValue of
+    Just value -> add contract methodName value from
+    Nothing -> remove contract methodName from
   where
     methodName = canonicalName method
-    value = ProofValue.extract $ unsafePartial $ fromJust updateValue
 
 
 add ::
   forall eff
   . Contract
   -> String
+  -> ProofValue.ProofValue
+  -> Address
+  -> TxAff eff
+add contract key value from =
+  attempt $ toAffE $ callEff3 contract "add" key value { from, gas: 70000 }
+
+
+remove ::
+  forall eff
+  . Contract
   -> String
   -> Address
   -> TxAff eff
-add contract key value from = do
-  attempt $ toAffE $ callEff3 contract "add" key value { from }
+remove contract key from =
+  attempt $ toAffE $ callEff2 contract "remove" key { from, gas: 40000 }
 
 
 get ::

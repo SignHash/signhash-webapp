@@ -63,7 +63,7 @@ viewUnlockedIdentity { blockie, proofs } address = do
         in
           case loadedProof of
             Just proof -> viewProofMethod proofMethod proof
-            Nothing -> empty
+            Nothing -> text "NOPE"
 
 
 viewProofMethod ::
@@ -94,9 +94,12 @@ renderFinishedProofRow method verification = do
     case storedValue of
       Just value -> do
         text value
+        H.br
         editButton value method
+        removeButton method
       Nothing -> do
         text "No proof defined"
+        H.br
         addButton method
 
   renderVerificationStatus verification
@@ -113,13 +116,13 @@ viewMethodManagement (Tuple method managementState) getTxStatus = do
       proofMethodIcon method
       text $ show method
 
-    renderProofMethodHowto method
-
     case managementState of
       Identity.Editing inputValue -> do
         let
           validatedValue = ProofValue.createProofValue inputValue
           isValid = isRight validatedValue
+
+        renderProofMethodHowto method
 
         identityInput method inputValue true
 
@@ -167,6 +170,14 @@ editButton value method =
     ! dataQA ("identity-" <> canonicalName method <> "-edit")
     #! onClick (const $ Identity.Edit method value)
     $ renderIcon "fa-pencil-square-o"
+
+
+removeButton :: ProofMethod -> HTML Identity.Event
+removeButton method =
+  H.button
+    ! dataQA ("identity-" <> canonicalName method <> "-remove")
+    #! onClick (const $ Identity.Remove method)
+    $ renderIcon "fa-trash"
 
 
 updateButton ::

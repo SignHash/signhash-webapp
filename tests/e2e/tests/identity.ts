@@ -17,6 +17,21 @@ test('No identity is displayed', async t => {
 });
 
 
+test('Identity can be removed', async t => {
+  await changeAccount(fixtures.accountWithValidGithubProof);
+
+  const method = 'github';
+
+  await t
+    .click(removeProofSelector(method))
+    ;
+
+  await expectNoProofValue(t, method);
+  await reload(t);
+  await expectNoProofValue(t, method);
+});
+
+
 test('Identity can be added', async t => {
   const method = 'github';
   const newProof = 'spam';
@@ -90,3 +105,7 @@ const proofInputSelector = (method: string) =>
 
 const updateProofSelector = (method: string) =>
   Selector(`[data-qa=identity-${method}-update]`);
+
+
+const removeProofSelector = (method: string) =>
+  Selector(`[data-qa=identity-${method}-remove]`);

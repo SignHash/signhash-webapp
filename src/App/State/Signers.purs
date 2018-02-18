@@ -17,7 +17,7 @@ import Lib.SignHash.Blockies (standardAddressBlockie)
 import Lib.SignHash.Contracts.SignProof as SignProof
 import Lib.SignHash.Proofs (getSignerProof, validateProofMethod)
 import Lib.SignHash.Proofs.Methods (ProofMethod, allProofMethods)
-import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification)
+import Lib.SignHash.Proofs.Types (ProofState(..), ProofVerification(..))
 import Lib.SignHash.Proofs.Values (ProofValue)
 import Lib.SignHash.Types (Address)
 import Network.HTTP.Affjax (AJAX)
@@ -81,7 +81,9 @@ foldp (UpdateProof method (Just proofValue)) state =
          validationResult
   ]
 foldp (UpdateProof method Nothing) state =
-  noEffects $ state { proofs = delete method state.proofs }
+  noEffects $ state { proofs = insert method value state.proofs }
+  where
+    value = Finished Unavailable
 foldp (ProofPending method) state =
   noEffects $ signerProofs %~ insertProof $ state
   where
