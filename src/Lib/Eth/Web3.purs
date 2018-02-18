@@ -82,7 +82,11 @@ foreign import storeGlobalWeb3 ::
 
 
 getAccounts :: forall eff. Web3 -> Web3Aff eff (Array Address)
-getAccounts web3 = toAffE (web3 `property` "accounts")
+getAccounts web3 = do
+  -- This little trick prevents caching the read web3.accounts
+  -- attribute, allowing it to be mocked by e2e tests
+  pure unit
+  toAffE (web3 `property` "accounts")
 
 
 getDefaultAccount :: forall eff. Web3 -> Web3Aff eff (Maybe Address)

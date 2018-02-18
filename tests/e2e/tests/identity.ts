@@ -1,5 +1,5 @@
 import { Selector } from 'testcafe';
-import { rootFixture, pages, reload } from './utils';
+import { rootFixture, pages, reload, changeAccount, clearInput } from './utils';
 import * as fixtures from './fixtures';
 
 
@@ -19,7 +19,7 @@ test('No identity is displayed', async t => {
 
 test('Identity can be added', async t => {
   const method = 'github';
-  const newProof = 'foobar';
+  const newProof = 'spam';
 
   await t
     .click(addProofSelector(method))
@@ -29,6 +29,27 @@ test('Identity can be added', async t => {
 
   await expectValueUpdated(t, method, newProof);
   await reload(t);
+  await expectValueUpdated(t, method, newProof);
+});
+
+
+test('Identity can be modified', async t => {
+  const method = 'github';
+  const newProof = 'spam';
+
+  await changeAccount(fixtures.accountWithValidGithubProof);
+
+  await t.click(editProofSelector(method))
+  await clearInput(t, proofInputSelector(method));
+  await t
+    .typeText(proofInputSelector(method), newProof)
+    .click(updateProofSelector(method))
+    ;
+
+  await expectValueUpdated(t, method, newProof);
+  await reload(t);
+
+  await changeAccount(fixtures.accountWithValidGithubProof);
   await expectValueUpdated(t, method, newProof);
 });
 
@@ -57,6 +78,10 @@ const proofContentSelector = (method: string) =>
 
 const addProofSelector = (method: string) =>
   Selector(`[data-qa=identity-${method}-add]`);
+
+
+const editProofSelector = (method: string) =>
+  Selector(`[data-qa=identity-${method}-edit]`);
 
 
 const proofInputSelector = (method: string) =>

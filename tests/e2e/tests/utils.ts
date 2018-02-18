@@ -42,6 +42,14 @@ const boundToTest =
       func.with({ boundTestRun: t })(...args)
 
 
+export const changeAccount = ClientFunction((account: string) => {
+  const web3: any = (window as any).web3;
+  web3.accounts = () => Promise.resolve([account]);
+  return new Promise(resolve => setTimeout(resolve, 3000));
+});
+
+
+
 export function rootFixture(fixture: FixtureFn, endpoint?: string) {
   let lastSnapshotId: string;
 
@@ -85,3 +93,7 @@ export const pages = {
 
 export const reload = (t: TestController) =>
   t.eval(() => location.reload(true));
+
+
+export const clearInput = (t: TestController, sel: Selector) =>
+  t.click(sel).pressKey('ctrl+a delete')
