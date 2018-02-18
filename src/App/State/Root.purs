@@ -26,7 +26,7 @@ import Data.Map as Map
 import Data.Maybe (Maybe(Just, Nothing))
 import Data.Monoid (mempty)
 import Data.Symbol (SProxy(..))
-import Data.Traversable (sequence, traverse)
+import Data.Traversable (sequence)
 import Lib.Eth.Web3 (Address, TxHash, TxResult, TxStatus(TxOk), WEB3)
 import Lib.Pux (mergeEffModels)
 import Lib.SignHash.Contracts.SignHash as SignHash
@@ -109,23 +109,12 @@ foldp (Init env) state =
   [ pure $ Just $ Contract
     $ Contracts.Load state.defaults.network env.ethAccountChannel
   ]
-
-foldp (Contract (Contracts.OnAccountChanged account)) state =
-  case account of
-    Contracts.Available address ->
-      mergeEffModels updateMyAccount (loadSignerEffModel address) state
-    otherwise -> updateMyAccount state
-  where
-    updateMyAccount s = noEffects $ s { myAccount = account }
-
-foldp (Contract (Contracts.OnTxResult txHash txStatus next)) state =
-  onlyEffects state $ pure <$> Just <$> next txStatus
-
-foldp (Contract event) state =
-  Contracts.foldp event state.contracts
-  # mapEffects Contract
-  # mapState \s -> state { contracts  = s}
-
+foldp (PreventDefault next domEvent) state =
+  onlyEffects state $
+  [ do
+       liftEff $ DOMEvent.preventDefault domEvent
+       pure next
+  ]
 foldp (HandleTxResult { onIssued, onStatus } txResult) state =
   onlyEffects state $
   (pure <$> Just <$> onIssued txResult)
@@ -135,28 +124,39 @@ foldp (HandleTxResult { onIssued, onStatus } txResult) state =
          Just $ Contract $ Contracts.PoolTx txHash (onStatus txHash)
        Left err -> Nothing
   ]
-
+-- Contracts
+foldp (Contract (Contracts.OnAccountChanged account)) state =
+  case account of
+    Contracts.Available address ->
+      mergeEffModels updateMyAccount (loadSignerEffModel address) state
+    otherwise -> updateMyAccount state
+  where
+    updateMyAccount s = noEffects $ s { myAccount = account }
+foldp (Contract (Contracts.OnTxResult txHash txStatus next)) state =
+  onlyEffects state $ pure <$> Just <$> next txStatus
+foldp (Contract event) state =
+  Contracts.foldp event state.contracts
+  # mapEffects Contract
+  # mapState \s -> state { contracts  = s}
+-- FileInput
 foldp (FileInput (FileInputs.NewFile file)) state =
   { state: state { file = Just $ Files.init file
                  , signingTx = Nothing }
   , effects: [ pure $ Just $ File $ Files.CalculateHash ]
   }
-
 foldp (FileInput FileInputs.NoFile) state =
   noEffects $ state { file = Nothing }
-
 foldp (FileInput event) state =
   FileInputs.foldp event unit
   # mapEffects FileInput
   # mapState (const state)
-
+-- File
 foldp (File (Files.Signal (Files.OnHashCalculated result))) state =
   whenContractsLoaded state \c -> onlyEffects state $ [
     do
       signer <- SignHash.getSigner c.signHash result.hash
       pure $ Just $ FileSignerFetched signer
     ]
-
 foldp (File event) state =
   case state.file of
     Nothing -> noEffects $ state
@@ -164,7 +164,7 @@ foldp (File event) state =
       Files.foldp event fileState
       # mapEffects File
       # mapState \s -> state { file = Just s }
-
+-- Signer
 foldp (Signer address event) state =
   case state ^. lens of
     Nothing -> noEffects $ state
@@ -174,7 +174,6 @@ foldp (Signer address event) state =
       # mapState \s -> (lens .~ (Just s) $ state)
   where
     lens = signerLens address
-
 foldp (FileSignerFetched signer) state =
   case signer of
     NoSigner -> fileModel state
@@ -183,14 +182,14 @@ foldp (FileSignerFetched signer) state =
   where
     fileModel s =
       onlyEffects s $ [ pure $ Just $ File $ Files.SignerFetched signer ]
-
+-- Routing
 foldp (Routing event) state =
   Locations.foldp event (state ^. lens)
   # mapEffects Routing
   # mapState \s -> lens .~ s $ state
   where
     lens = prop (SProxy :: SProxy "location")
-
+-- File signing
 foldp (SignFile checksum) state =
   whenAccountLoaded state \address c ->
     onlyEffects state $
@@ -201,26 +200,16 @@ foldp (SignFile checksum) state =
            , onStatus: \hash status -> [SignFileTxResult hash status]
            } txResult
     ]
-
 foldp (SignFileTx result) state =
   noEffects $ state { signingTx = Just result }
-
 foldp (SignFileTxResult txHash TxOk)
   state
   @{ file: Just loadedFile@{ signer: Just NoSigner }
    , myAccount: Contracts.Available address
    } =
     noEffects $ (fileSignerLens .~ Just (HashSigner address)) state
-
 foldp (SignFileTxResult _ _) state = noEffects state
-
-foldp (PreventDefault next domEvent) state =
-  onlyEffects state $
-  [ do
-       liftEff $ DOMEvent.preventDefault domEvent
-       pure next
-  ]
-
+-- IdentityUI
 foldp (IdentityUI (IM.Request request)) state = case request of
   (IM.Update method updateValue) ->
     whenAccountLoaded state \address c ->
